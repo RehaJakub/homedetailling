@@ -22,7 +22,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:migrate:sqlite": "node scripts/migrate-sqlite-to-postgres.mjs",
-    "build:ui": "bun run --cwd design-system build"
+    "build:ui": "bun run --cwd design-system build",
+    "db:seed": "bun scripts/seed.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",

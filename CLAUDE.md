@@ -28,6 +28,7 @@ make build              # next build (standalone output)
 make db-generate        # drizzle-kit generate (after editing lib/db/schema.ts)
 make db-migrate         # drizzle-kit migrate against DATABASE_URL from .env
 make db-studio / db-reset / db-up / db-down
+make seed               # dummy users, packages, bookings into the local DB (admin@admin.cz / admin)
 make docker-build       # production image homedetailing/app:local
 make prod-up / prod-down / prod-logs   # compose.prod.yml with .env.production
 ```
@@ -46,7 +47,7 @@ make prod-up / prod-down / prod-logs   # compose.prod.yml with .env.production
 - `lib/validation.ts` — request body parsers (`parseReservation`, `parseReservationPatch`, `parsePricePackage`, `parseSettings`, `validEmail`)
 - `tests/integration/` — route handler tests (`helpers.ts`, `setup.ts`, `global-setup.ts`, `env.mts`)
 - `drizzle/` — generated migrations and snapshots, never hand-edited
-- `scripts/migrate.mjs` — programmatic migrator for the prod stack; `scripts/migrate-sqlite-to-postgres.mjs` — one-off legacy import
+- `scripts/seed.ts` — local dummy data (`make seed`, refuses non-local databases); `scripts/migrate.mjs` — programmatic migrator for the prod stack; `scripts/migrate-sqlite-to-postgres.mjs` — one-off legacy import
 - `compose.yml` — dev Postgres (+ `homedetailing_test` via `docker/postgres/init-test-db.sh`); `compose.prod.yml` + `Dockerfile` — app, Postgres and one-shot migrate service
 - `.design-sync/` — Claude Design sync inputs (config, authored previews, notes, conventions)
 - `.github/workflows/ci.yml` — lint, typecheck, tests, build and Docker image on push/PR
