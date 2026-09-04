@@ -44,7 +44,6 @@ make prod-up / prod-down / prod-logs   # compose.prod.yml with .env.production
 - `lib/auth.ts` — JWT sign/verify, password hashing, `readCookie`, `currentUser(request)`, `requireUser(request, roles)`, cookie header helpers
 - `lib/db/schema.ts` — single source of truth for tables and enums (`reservations` carry `date`, `slot_start`/`slot_end` quarter-hour indices, `booking_status`); `lib/db/index.ts` — lazy `getDb()`, `db` facade, `closeDb()`
 - `lib/validation.ts` — request body parsers (`parseReservation`, `parseReservationPatch`, `parsePricePackage`, `parseSettings`, `validEmail`)
-- `design_handoff_home_detailing/` — the Claude Design handoff (README, prototypes) the current UI was built from
 - `tests/integration/` — route handler tests (`helpers.ts`, `setup.ts`, `global-setup.ts`, `env.mts`)
 - `drizzle/` — generated migrations and snapshots, never hand-edited
 - `scripts/migrate.mjs` — programmatic migrator for the prod stack; `scripts/migrate-sqlite-to-postgres.mjs` — one-off legacy import
