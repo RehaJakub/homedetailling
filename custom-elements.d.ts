@@ -14,6 +14,9 @@ declare module "react" {
         "shadow-intensity"?: string;
         "shadow-softness"?: string;
         "environment-image"?: string;
+        "tone-mapping"?: string;
+        autoplay?: boolean;
+        "animation-name"?: string;
         exposure?: string;
         "camera-orbit"?: string;
         "field-of-view"?: string;

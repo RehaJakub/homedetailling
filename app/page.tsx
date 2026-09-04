@@ -156,10 +156,12 @@ export default function Home() {
                 auto-rotate
                 rotation-per-second="18deg"
                 disable-zoom
-                shadow-intensity="1.4"
-                shadow-softness="0.75"
-                exposure="1.25"
-                environment-image="neutral"
+                shadow-intensity="1.2"
+                shadow-softness="0.85"
+                exposure="1.05"
+                environment-image="legacy"
+                tone-mapping="neutral"
+                autoplay
                 camera-orbit="35deg 74deg auto"
                 field-of-view="24deg"
                 interaction-prompt="none"
