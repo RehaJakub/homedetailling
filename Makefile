@@ -11,7 +11,7 @@ DB_USER      := homedetailing
 TEST_DB      := homedetailing_test
 
 .PHONY: help setup install dev build start lint typecheck test test-unit test-integration test-watch check \
-        db-up db-down db-migrate db-generate db-studio db-reset db-test-ensure ui-build \
+        db-up db-down db-migrate db-generate db-studio db-reset db-test-ensure seed ui-build \
         docker-build docker-run prod-up prod-down prod-logs clean
 
 help: ## Show this help
@@ -85,6 +85,9 @@ db-studio: ## drizzle-kit studio
 db-reset: ## Destroy the dev volume, recreate and migrate
 	$(COMPOSE) down -v
 	$(MAKE) db-up db-migrate
+
+seed: ## Fill the local DB with dummy users, packages and bookings (admin@admin.cz / admin)
+	bun run db:seed
 
 ## Docker / production stack
 

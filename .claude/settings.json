@@ -18,7 +18,8 @@
       "Bash(make test-integration)",
       "Bash(make db-up)",
       "Bash(make db-generate)",
-      "Bash(make build)"
+      "Bash(make build)",
+      "Bash(make seed)"
     ]
   }
 }

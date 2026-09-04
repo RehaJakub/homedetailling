@@ -42,6 +42,7 @@ JWT session je uložena v HttpOnly cookie a platí 8 hodin.
 | `make db-migrate` | aplikuje migrace na lokální databázi |
 | `make db-studio` | Drizzle Studio |
 | `make db-reset` | smaže lokální databázi a založí ji znovu |
+| `make seed` | naplní lokální databázi ukázkovými daty (přihlášení `admin@admin.cz` / `admin`) |
 | `make build` | produkční build (standalone) |
 | `make docker-build` | sestaví produkční image `homedetailing/app:local` |
 | `make prod-up` / `make prod-down` | spustí / zastaví produkční stack z `compose.prod.yml` |
