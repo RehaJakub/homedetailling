@@ -8,7 +8,7 @@ Mobile car detailing service (Ostrava). Public landing page with service overvie
 
 - Next.js 16 App Router in `app/` (no `src/`), React 19, TypeScript strict
 - Tailwind v4, configured only through `@import "tailwindcss"` in `app/globals.css` (no `tailwind.config.*`)
-- Design system `design-system/` (`@homedetailing/ui`): tokens + components used by both pages, imported through the tsconfig path alias; `bun run build:ui` compiles `dist/` only for the Claude Design sync
+- Design system `design-system/` (`@homedetailing/ui`): tokens + components (incl. the `Icon` pack) used by both pages, imported through the tsconfig path alias; `bun run build:ui` compiles `dist/` only for the Claude Design sync
 - PostgreSQL 16 via Drizzle ORM + node-postgres (`pg`), migrations by drizzle-kit; `lib/db` connects lazily on first query
 - Auth: HS256 JWT via `jose` in HttpOnly cookie `homedetailing_session`, 8h expiry, scrypt password hashes, roles `admin` / `manager` / `viewer`; handlers read the session from the incoming `Request`
 - Bun as package manager and script runner (`bun install`, `bun run …`); Next, tsc and drizzle-kit run on Node underneath. Never `bun --bun`, never `bun test` (that is Bun's runner, not Vitest)
@@ -34,13 +34,17 @@ make prod-up / prod-down / prod-logs   # compose.prod.yml with .env.production
 
 ## Layout
 
-- `app/page.tsx` — public landing page (client component); `app/admin/page.tsx` — admin UI
+- `app/page.tsx` — public landing page (client component) composed from `components/landing/*` (booking calendar, FAQ); `app/admin/page.tsx` — admin shell that loads the session and renders `components/admin/AdminApp.tsx`; `app/admin/login/page.tsx` — sign-in + first-admin bootstrap
+- `components/admin/` — admin UI: `AdminApp` (state, API calls, modals), `WeekCalendar`, `OrderModal`, `panels.tsx` (overview, orders, customers, pricing, settings), `Toasts` (stack with undo), `api.ts`, `types.ts`
 - `app/api/health/route.ts` — DB-free liveness probe for container healthchecks
-- `app/api/v2/auth/{bootstrap,login,logout,me}` — first-admin bootstrap (gated by `ADMIN_REGISTRATION_CODE`, closes after the first user), session endpoints
-- `app/api/v2/{pricing,reservations,users}` and `[id]` routes — CRUD route handlers
+- `app/api/v2/auth/{bootstrap,login,logout,me,password}` — first-admin bootstrap (gated by `ADMIN_REGISTRATION_CODE`, closes after the first user), session endpoints, own-password change
+- `app/api/v2/availability` — public busy slots per day (active bookings widened by the buffer, past blocked); `app/api/v2/settings` — opening hours
+- `app/api/v2/{pricing,reservations,users}` and `[id]` routes — CRUD route handlers; public reservation POST is validated against availability, a staff session may pass `status` and overlap
+- `lib/booking.ts` — pure slot/date helpers, conflict rule (`o.slotStart < r.slotEnd && o.slotEnd > r.slotStart` on the same day among new/confirmed), `busyRanges`, `layoutColumns` for the week calendar; `lib/settings.ts` — settings row + business-timezone "now"
 - `lib/auth.ts` — JWT sign/verify, password hashing, `readCookie`, `currentUser(request)`, `requireUser(request, roles)`, cookie header helpers
-- `lib/db/schema.ts` — single source of truth for tables and enums; `lib/db/index.ts` — lazy `getDb()`, `db` facade, `closeDb()`
-- `lib/validation.ts` — request body parsers (`parseReservation`, `parsePricePackage`, `validEmail`)
+- `lib/db/schema.ts` — single source of truth for tables and enums (`reservations` carry `date`, `slot_start`/`slot_end` quarter-hour indices, `booking_status`); `lib/db/index.ts` — lazy `getDb()`, `db` facade, `closeDb()`
+- `lib/validation.ts` — request body parsers (`parseReservation`, `parseReservationPatch`, `parsePricePackage`, `parseSettings`, `validEmail`)
+- `design_handoff_home_detailing/` — the Claude Design handoff (README, prototypes) the current UI was built from
 - `tests/integration/` — route handler tests (`helpers.ts`, `setup.ts`, `global-setup.ts`, `env.mts`)
 - `drizzle/` — generated migrations and snapshots, never hand-edited
 - `scripts/migrate.mjs` — programmatic migrator for the prod stack; `scripts/migrate-sqlite-to-postgres.mjs` — one-off legacy import
