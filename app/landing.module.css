@@ -635,52 +635,13 @@
   animation: hdUp 0.25s ease both;
 }
 
-/* Floating CTA and toast */
-
-.floatingCta {
-  position: fixed;
-  right: 28px;
-  bottom: 28px;
-  z-index: 40;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 18px 14px 20px;
-  background: #080b12;
-  color: #fff;
-  text-decoration: none;
-  box-shadow: var(--hd-shadow-dark);
-  animation: hdToast 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-  transition: background 160ms ease;
-}
-
-.floatingCta:hover {
-  background: #1769ff;
-}
+/* Availability indicators and toast */
 
 .pulse {
   width: 10px;
   height: 10px;
   background: #1769ff;
   animation: hdPulse 2s ease-out infinite;
-}
-
-.floatingCtaText {
-  display: grid;
-  gap: 2px;
-  line-height: 1.2;
-}
-
-.floatingCtaText span {
-  font-family: var(--hd-font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #87909d;
-}
-
-.floatingCtaText strong {
-  font-size: 14px;
 }
 
 .toast {
@@ -794,8 +755,4 @@
     min-height: 44px;
   }
 
-  .floatingCta {
-    right: 14px;
-    bottom: 14px;
-  }
 }

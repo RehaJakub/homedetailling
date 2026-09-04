@@ -29,10 +29,8 @@ const WEEKDAYS = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
 export type BookingFormProps = {
   packages: PricePackage[];
   onToast: (message: string, icon?: IconName) => void;
-  /** Receives the "next free slot" label whenever it changes (hero badge + floating CTA). */
+  /** Receives the "next free slot" label whenever it changes. */
   onNextFree: (label: string) => void;
-  /** Called with `true` while the success dialog is open (hides the floating CTA). */
-  onSentChange: (sent: boolean) => void;
 };
 
 /**
@@ -40,7 +38,7 @@ export type BookingFormProps = {
  * The customer picks the range themselves; the summed package estimate is only
  * a hint, and a warning appears when the chosen range is shorter than it.
  */
-export function BookingForm({ packages, onToast, onNextFree, onSentChange }: BookingFormProps) {
+export function BookingForm({ packages, onToast, onNextFree }: BookingFormProps) {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [today, setToday] = useState(() => toIso(new Date()));
   const [days, setDays] = useState<Record<string, DayInfo>>({});
@@ -114,7 +112,6 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
   }, [days, today, settings]);
 
   useEffect(() => onNextFree(nextFreeLabel), [nextFreeLabel, onNextFree]);
-  useEffect(() => onSentChange(sent), [sent, onSentChange]);
 
   /* ---- derived selection ---- */
 
