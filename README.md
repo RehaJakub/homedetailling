@@ -60,4 +60,14 @@ Každý cíl volá odpovídající `bun run …` skript z `package.json`, takže
 2. `make prod-up` sestaví image, spustí Postgres, jednorázově aplikuje migrace (`scripts/migrate.mjs`) a nastartuje aplikaci na `APP_BIND:APP_PORT` (výchozí `127.0.0.1:3000`, reverse proxy řeší host).
 3. `make prod-logs` pro logy, `make prod-down` pro zastavení (volume s daty zůstává).
 
-Postgres v produkčním stacku není vystavený mimo compose síť. Nasazení do homelabu (ct302) přes GitHub runner zatím není součástí repozitáře.
+Postgres v produkčním stacku není vystavený mimo compose síť.
+
+### Automatické nasazení do homelabu (ct302)
+
+Každý merge do `main` projde CI, sestaví image `ghcr.io/rehajakub/homedetailling:sha-<commit>` (a `:latest`) a job `Deploy to ct302` ho nasadí přes self-hosted runner běžící v LXC kontejneru ct302:
+
+1. Runner se instaluje skriptem `scripts/deploy/install-runner.sh` (spouští se jako root uvnitř ct302 přes jump host `homelab`). Registrační token vydá admin repozitáře v Settings → Actions → Runners → New self-hosted runner, platí hodinu.
+2. Tajné hodnoty žijí jen v ct302 v `/opt/homedetailing/.env.production` (stejný formát jako `.env.production.example`, `APP_BIND=0.0.0.0`, aby na aplikaci dosáhla reverse proxy z jiného kontejneru). Workflow je nečte, jen předá `APP_IMAGE`.
+3. Deploy job udělá `docker compose pull`, `up -d` (migrace proběhnou v jednorázové službě `migrate`) a čeká na `/api/health`. Při neúspěchu vypíše logy a job selže; běžící verze zůstává, dokud nový kontejner nenastartuje.
+
+Ruční nasazení na ct302: znovu spustit workflow `CI` pro `main` v záložce Actions (Re-run jobs).

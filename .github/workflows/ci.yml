@@ -5,6 +5,13 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/rehajakub/homedetailling
+
 jobs:
   checks:
     name: Lint, typecheck, tests, build
@@ -41,18 +48,76 @@ jobs:
       - run: bun run build
 
   docker:
+    # Pull requests only build the image; pushes to main also publish it to GHCR.
     name: Docker image
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
+      - id: meta
+        run: echo "tag=sha-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/build-push-action@v6
         with:
           context: .
-          push: false
-          load: true
-          tags: homedetailing/app:ci
+          push: ${{ github.event_name == 'push' }}
+          load: ${{ github.event_name != 'push' }}
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.meta.outputs.tag }}
+            ${{ env.IMAGE }}:latest
+          labels: |
+            org.opencontainers.image.source=https://github.com/RehaJakub/homedetailling
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Migrator is traced into the image
-        run: docker run --rm homedetailing/app:ci node -e "import('drizzle-orm/node-postgres/migrator').then(() => console.log('migrator ok'))"
+        if: github.event_name != 'push'
+        run: docker run --rm ${{ env.IMAGE }}:latest node -e "import('drizzle-orm/node-postgres/migrator').then(() => console.log('migrator ok'))"
+
+  deploy:
+    # Runs on the self-hosted runner inside the ct302 LXC container
+    # (scripts/deploy/install-runner.sh). Secrets live only on the runner in
+    # /opt/homedetailing/.env.production; the workflow never reads them.
+    name: Deploy to ct302
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [checks, docker]
+    runs-on: [self-hosted, linux, ct302]
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    env:
+      ENV_FILE: /opt/homedetailing/.env.production
+      APP_IMAGE: ghcr.io/rehajakub/homedetailling:${{ needs.docker.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the environment file
+        run: test -r "$ENV_FILE" || { echo "Missing $ENV_FILE on the runner"; exit 1; }
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: Pull the new image
+        run: docker compose -f compose.prod.yml --env-file "$ENV_FILE" pull app migrate
+      - name: Migrate and restart the app
+        run: docker compose -f compose.prod.yml --env-file "$ENV_FILE" up -d --no-build --remove-orphans
+      - name: Wait for the health check
+        run: |
+          port=$(grep -E '^APP_PORT=' "$ENV_FILE" | cut -d= -f2)
+          for i in $(seq 1 30); do
+            if curl -fsS "http://127.0.0.1:${port:-3000}/api/health" >/dev/null; then
+              echo "healthy after $i checks"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "App did not become healthy"
+          docker compose -f compose.prod.yml --env-file "$ENV_FILE" logs --tail 100 app migrate
+          exit 1
+      - name: Remove superseded images
+        if: success()
+        run: docker image prune -f --filter "label=org.opencontainers.image.source=https://github.com/RehaJakub/homedetailling" >/dev/null || true
