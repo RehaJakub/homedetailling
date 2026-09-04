@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useRef, useState } from "react";
 import { Button, Field, Heading, Icon, Input, Notice, Textarea, Select } from "@homedetailing/ui";
 import { conflictsOf, dayLabel, durationLabel, estimateSlots, initials, isActive, priceLabel, slotLabel, slotsForMinutes, STATUS_LABEL, type BookingStatus } from "@/lib/booking";
 import styles from "@/app/admin/admin.module.css";
@@ -36,6 +37,44 @@ export function OrderModal({ draft: d, orig, bookings, packages, settings, custo
   const shift = (n: number) => onChange({ a: Math.max(open, d.a + n), b: Math.min(close, d.b + n) });
   const H = MINI_H / rows;
   const estimate = estimateSlots(d.services, packages);
+
+  // Drag the blue block in the mini-timeline: body moves it (length kept),
+  // the bottom edge resizes it. Snaps to 15-minute rows.
+  const [drag, setDrag] = useState<{ mode: "move" | "resize"; startY: number; a: number; b: number } | null>(null);
+  const dragRef = useRef(drag);
+  useEffect(() => {
+    dragRef.current = drag;
+  }, [drag]);
+  useEffect(() => {
+    if (!drag) return;
+    const onMove = (ev: PointerEvent) => {
+      const g = dragRef.current;
+      if (!g) return;
+      const delta = Math.round((ev.clientY - g.startY) / H);
+      if (g.mode === "move") {
+        const length = g.b - g.a;
+        const a = Math.min(close - length, Math.max(open, g.a + delta));
+        onChange({ a, b: a + length });
+      } else {
+        onChange({ b: Math.min(close, Math.max(g.a + 1, g.b + delta)) });
+      }
+    };
+    const stop = () => setDrag(null);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", stop);
+    window.addEventListener("pointercancel", stop);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", stop);
+      window.removeEventListener("pointercancel", stop);
+    };
+  }, [drag, H, open, close, onChange]);
+  const startDrag = (mode: "move" | "resize") => (ev: React.PointerEvent) => {
+    if (!canEdit || ev.button !== 0) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    setDrag({ mode, startY: ev.clientY, a: d.a, b: d.b });
+  };
   const tooShort = estimate > 0 && d.b - d.a < estimate;
 
   function autoFix() {
@@ -265,6 +304,9 @@ export function OrderModal({ draft: d, orig, bookings, packages, settings, custo
               })}
               <div
                 className={styles.miniDraft}
+                data-dragging={drag ? "true" : "false"}
+                title={canEdit ? "Tažením posunete, spodní hranou změníte délku" : undefined}
+                onPointerDown={startDrag("move")}
                 style={{
                   top: (d.a - open) * H,
                   height: Math.max(0, d.b - d.a) * H - 2,
@@ -273,9 +315,10 @@ export function OrderModal({ draft: d, orig, bookings, packages, settings, custo
                 }}
               >
                 <span>{`${slotLabel(d.a)} – ${slotLabel(d.b)}`}</span>
+                {canEdit && <div className={styles.miniResize} onPointerDown={startDrag("resize")} />}
               </div>
             </div>
-            <span style={{ fontSize: 11, color: "#687080", lineHeight: 1.6 }}>Modrý blok je tato objednávka, šedé jsou ostatní zakázky v ten den. Červený okraj značí překryv.</span>
+            <span style={{ fontSize: 11, color: "#687080", lineHeight: 1.6 }}>Modrý blok je tato objednávka: tažením ho posunete, spodní hranou natáhnete. Šedé jsou ostatní zakázky, červený okraj značí překryv.</span>
           </div>
         </div>
 

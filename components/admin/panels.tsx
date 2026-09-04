@@ -1,6 +1,6 @@
 "use client";
 import { Badge, Button, Card, DataTable, Field, Heading, Icon, Input, Select, Tabs, Text } from "@homedetailing/ui";
-import { conflictsOf, dayLabel, durationLabel, isActive, priceLabel, servicesLabel, slotLabel, slotsForMinutes, STATUS_LABEL, type BookingStatus } from "@/lib/booking";
+import { conflictsOf, dayLabel, durationLabel, isActive, priceLabel, servicesLabel, slotLabel, slotsForMinutes, STATUS_LABEL } from "@/lib/booking";
 import styles from "@/app/admin/admin.module.css";
 import { ROLE_LABEL, type Booking, type Customer, type Package, type PriceDraft, type Settings, type User } from "./types";
 
@@ -13,18 +13,14 @@ export function Overview({
   bookings,
   today,
   weekIso,
-  canEdit,
   onGo,
   onOpen,
-  onConfirm,
 }: {
   bookings: Booking[];
   today: string;
   weekIso: string[];
-  canEdit: boolean;
   onGo: (tab: string, filter?: string) => void;
   onOpen: (b: Booking) => void;
-  onConfirm: (b: Booking) => void;
 }) {
   const newList = bookings.filter((r) => r.status === "new").sort((x, y) => x.date.localeCompare(y.date) || x.slotStart - y.slotStart);
   const todayList = bookings.filter((r) => r.date === today && isActive(r.status)).sort((x, y) => x.slotStart - y.slotStart);
@@ -83,7 +79,7 @@ export function Overview({
           </div>
           {newList.length === 0 && <div className={styles.listEmpty}>Vše je potvrzené.</div>}
           {newList.map((r) => (
-            <div key={r.id} className={styles.listRow} style={{ gridTemplateColumns: "1fr auto auto" }}>
+            <div key={r.id} className={styles.listRow} style={{ gridTemplateColumns: "1fr auto" }}>
               <div style={{ display: "grid", gap: 2, minWidth: 0 }}>
                 <strong style={{ fontSize: 14 }}>{r.name}</strong>
                 <span style={{ fontSize: 12, color: "#687080" }}>
@@ -96,14 +92,9 @@ export function Overview({
                   </span>
                 )}
               </div>
-              <Button variant="ghost" size="sm" onClick={() => onOpen(r)}>
-                Upravit
+              <Button variant="primary" size="sm" onClick={() => onOpen(r)}>
+                Otevřít
               </Button>
-              {canEdit && (
-                <Button variant="primary" size="sm" onClick={() => onConfirm(r)}>
-                  Potvrdit
-                </Button>
-              )}
             </div>
           ))}
         </div>
@@ -131,7 +122,6 @@ export function Orders({
   onFilter,
   onQuery,
   onOpen,
-  onStatus,
   onDelete,
 }: {
   bookings: Booking[];
@@ -141,7 +131,6 @@ export function Orders({
   onFilter: (id: string) => void;
   onQuery: (q: string) => void;
   onOpen: (b: Booking) => void;
-  onStatus: (b: Booking, status: BookingStatus) => void;
   onDelete: (b: Booking) => void;
 }) {
   const q = query.trim().toLowerCase();
@@ -200,19 +189,9 @@ export function Orders({
             ),
             actions: (
               <>
-                <Button variant="ghost" size="sm" onClick={() => onOpen(r)}>
-                  Upravit
+                <Button variant="primary" size="sm" onClick={() => onOpen(r)}>
+                  Otevřít
                 </Button>
-                {canEdit && r.status === "new" && (
-                  <Button variant="primary" size="sm" onClick={() => onStatus(r, "confirmed")}>
-                    Potvrdit
-                  </Button>
-                )}
-                {canEdit && r.status === "confirmed" && (
-                  <Button variant="primary" size="sm" onClick={() => onStatus(r, "done")}>
-                    Hotovo
-                  </Button>
-                )}
                 {canEdit && (
                   <Button variant="outline-danger" size="sm" onClick={() => onDelete(r)}>
                     Smazat

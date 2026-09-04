@@ -140,16 +140,6 @@ export function AdminApp({ user }: { user: User }) {
     }
   }
 
-  async function setStatus(r: Booking, status: BookingStatus) {
-    try {
-      const { reservation } = await api.updateBooking(r.id, { status });
-      setBookings((list) => list.map((x) => (x.id === r.id ? reservation : x)));
-      toast({ icon: "check-circle", title: status === "done" ? "Zakázka dokončena" : "Objednávka potvrzena", text: summary(reservation) });
-    } catch (e) {
-      fail(e);
-    }
-  }
-
   async function deleteBooking(id: number) {
     const r = bookings.find((x) => x.id === id);
     if (!r) return;
@@ -377,7 +367,7 @@ export function AdminApp({ user }: { user: User }) {
 
             <section key={tab} className={styles.content}>
               {error && <div className="hd-notice hd-notice--error">{error}</div>}
-              {tab === "overview" && <Overview bookings={bookings} today={today} weekIso={weekIso} canEdit={canEdit} onGo={go} onOpen={openEdit} onConfirm={(r) => setStatus(r, "confirmed")} />}
+              {tab === "overview" && <Overview bookings={bookings} today={today} weekIso={weekIso} onGo={go} onOpen={openEdit} />}
               {tab === "calendar" && (
                 <WeekCalendar
                   bookings={bookings}
@@ -394,7 +384,7 @@ export function AdminApp({ user }: { user: User }) {
                 />
               )}
               {tab === "orders" && (
-                <Orders bookings={bookings} filter={orderFilter} query={query} canEdit={canEdit} onFilter={setOrderFilter} onQuery={setQuery} onOpen={openEdit} onStatus={setStatus} onDelete={(r) => deleteBooking(r.id)} />
+                <Orders bookings={bookings} filter={orderFilter} query={query} canEdit={canEdit} onFilter={setOrderFilter} onQuery={setQuery} onOpen={openEdit} onDelete={(r) => deleteBooking(r.id)} />
               )}
               {tab === "customers" && <Customers customers={customers} canEdit={canEdit} onDetail={(c) => setModal({ type: "customer", email: c.email })} onNewOrder={(c) => newOrderFor(c.email)} />}
               {tab === "pricing" && <PricingPanel packages={packages} canEdit={canEdit} onEdit={openPrice} onAdd={() => openPrice(null)} />}
