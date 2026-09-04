@@ -69,8 +69,6 @@ export default function Home() {
   const [toast, setToast] = useState<{ message: string; icon: IconName } | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [nextFree, setNextFree] = useState("…");
-  const [sent, setSent] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const [activeHref, setActiveHref] = useState<string | undefined>(undefined);
   const [bookingOpen, setBookingOpen] = useState(false);
 
@@ -108,12 +106,6 @@ export default function Home() {
         if (data.packages?.length) setPackages(data.packages);
       })
       .catch(() => undefined);
-  }, []);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 600);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   // Highlight the nav link of the section currently under the header.
@@ -383,7 +375,7 @@ export default function Home() {
             </button>
           </div>
           <div className={styles.bookingModalBody}>
-            <BookingForm packages={packages} onToast={showToast} onNextFree={setNextFree} onSentChange={setSent} />
+            <BookingForm packages={packages} onToast={showToast} onNextFree={setNextFree} />
           </div>
         </div>
       </div>
@@ -419,17 +411,6 @@ export default function Home() {
           </>
         }
       />
-
-      {scrolled && !sent && !bookingOpen && activeHref !== "#rezervace" && (
-        <a href="#rezervace" className={styles.floatingCta}>
-          <span className={styles.pulse} />
-          <span className={styles.floatingCtaText}>
-            <span>Nejbližší volný termín</span>
-            <strong>{nextFree}</strong>
-          </span>
-          <Icon name="arrow-up-right" size={16} stroke={2} />
-        </a>
-      )}
 
       {toast && (
         <div role="status" className={styles.toast}>
