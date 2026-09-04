@@ -24,8 +24,7 @@
 }
 
 .shell {
-  max-width: 1280px;
-  margin: 0 auto;
+  width: 100%;
   display: grid;
   gap: 18px;
 }
@@ -61,6 +60,7 @@
   grid-template-columns: 224px minmax(0, 1fr);
   gap: 40px;
   align-items: start;
+  min-height: calc(100vh - 160px);
 }
 
 .sidebar {
@@ -554,7 +554,34 @@
   color: #fff;
   font-weight: 600;
   z-index: 2;
-  transition: top 160ms ease, height 160ms ease;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.miniDraft[data-dragging="true"] {
+  cursor: grabbing;
+  transition: none;
+}
+
+.miniResize {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 10px;
+  cursor: ns-resize;
+}
+
+.miniResize::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  width: 28px;
+  height: 2px;
+  transform: translateX(-50%);
+  background: rgb(255 255 255 / 70%);
 }
 
 .miniEvent span,
