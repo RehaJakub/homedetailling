@@ -304,7 +304,7 @@ export default function Home() {
               Vyberte si den a čas.
             </Heading>
             <Text tone="on-blue" lead>
-              Klikněte na den a začátek, zaškrtněte služby a délku dopočítáme. Obsazené časy jsou přeškrtnuté.
+              Klikněte na den, potom na začátek a konec úseku a zaškrtněte služby. Obsazené časy jsou přeškrtnuté.
             </Text>
           </div>
           <BookingForm packages={packages} onToast={showToast} onNextFree={setNextFree} onSentChange={setSent} />

@@ -8,9 +8,7 @@ import {
   durationLabel,
   estimateSlots,
   firstFree,
-  firstStartThatFits,
   freeCount,
-  freeRunFrom,
   isSlotBusy,
   MONTHS,
   priceList,
@@ -38,9 +36,9 @@ export type BookingFormProps = {
 };
 
 /**
- * Booking section: month calendar → start slot → ticked services whose
- * estimated durations (adjustable in 15-minute steps) give the end time.
- * Warns when the chosen start does not leave enough room and offers fixes.
+ * Booking section: month calendar → 15-minute from–to range → ticked services.
+ * The customer picks the range themselves; the summed package estimate is only
+ * a hint, and a warning appears when the chosen range is shorter than it.
  */
 export function BookingForm({ packages, onToast, onNextFree, onSentChange }: BookingFormProps) {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
@@ -53,8 +51,9 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
   });
   const [day, setDay] = useState<string | null>(null);
   const [a, setA] = useState<number | null>(null);
+  const [b, setB] = useState<number | null>(null);
+  const [hov, setHov] = useState<number | null>(null);
   const [services, setServices] = useState<string[]>([]);
-  const [adjust, setAdjust] = useState(0);
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -112,34 +111,54 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
 
   /* ---- derived selection ---- */
 
-  const baseEstimate = estimateSlots(services, packages);
-  const estimate = services.length ? Math.max(1, baseEstimate + adjust) : 0;
+  const estimate = estimateSlots(services, packages);
   const busy = day ? busyOf(day) : null;
   const dayOpen = busy !== null;
-  const free = day && busy && a !== null ? freeRunFrom(a, busy, settings) : 0;
-  const fitsHere = a !== null && estimate > 0 && free >= estimate;
-  const bestStart = day && busy && estimate > 0 ? firstStartThatFits(estimate, busy, settings) : null;
-  const shortfall = a !== null && estimate > 0 && !fitsHere;
-  const nothingFits = shortfall && bestStart === null;
-  const bookedSlots = a === null || estimate === 0 ? 0 : Math.min(estimate, Math.max(1, free));
-  const end = a !== null && bookedSlots ? a + bookedSlots : null;
+  const isBusy = (i: number) => busy === null || isSlotBusy(i, busy);
+  // b is the last selected slot (inclusive); the booking end is b + 1.
+  const n = a !== null && b !== null ? b - a + 1 : 0;
+  const end = a !== null && b !== null ? b + 1 : null;
+  const tooShort = n > 0 && estimate > 0 && n < estimate;
+  // Can the range be stretched to the estimate without hitting a busy slot or closing time?
+  const extendedEnd = a !== null ? a + estimate : null;
+  const canExtend =
+    tooShort && a !== null && extendedEnd !== null && extendedEnd <= settings.closeSlot && Array.from({ length: estimate }, (_, k) => a + k).every((i) => !isBusy(i));
 
   function pickDay(iso: string) {
     setDay(iso);
     setA(null);
+    setB(null);
+    setHov(null);
     setError("");
   }
 
   function pickSlot(i: number) {
-    if (!busy || isSlotBusy(i, busy)) return;
-    setA(i);
+    if (!day || isBusy(i)) return;
+    if (a === null || b !== null) {
+      setA(i);
+      setB(null);
+      setError("");
+      return;
+    }
+    if (i < a) {
+      setA(i);
+      return;
+    }
+    for (let k = a; k <= i; k++) {
+      if (isBusy(k)) {
+        onToast(`Mezi začátkem a koncem je obsazený čas. Začínáme znovu od ${slotLabel(i)}.`, "alert");
+        setA(i);
+        setB(null);
+        return;
+      }
+    }
+    setB(i);
     setError("");
-    if (estimate) onToast(`Začátek ${slotLabel(i)} · ${dayLabel(day as string)}`, "calendar");
+    onToast(`Termín vybrán: ${dayLabel(day)} ${slotLabel(a)} – ${slotLabel(i + 1)}`, "calendar");
   }
 
   function changeServices(next: string[]) {
     setServices(next);
-    setAdjust(0);
     setError("");
   }
 
@@ -202,28 +221,32 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
   const slots = [];
   if (busy && day) {
     for (let i = settings.openSlot; i < settings.closeSlot; i++) {
-      const isBusy = isSlotBusy(i, busy);
-      const isStart = a === i;
-      const inRange = a !== null && end !== null && i > a && i < end;
-      const wanted = a !== null && shortfall && i >= (end ?? a) && i < a + estimate && !isBusy;
+      const slotBusy = isBusy(i);
+      const inSel = a !== null && (b !== null ? i >= a && i <= b : i === a);
+      const inHov = a !== null && b === null && hov !== null && i > a && i <= hov;
+      // Slots the estimate would still need beyond the chosen end.
+      const wanted = tooShort && a !== null && end !== null && i >= end && i < a + estimate && !slotBusy;
       slots.push(
         <button
           key={i}
           type="button"
-          disabled={isBusy}
+          disabled={slotBusy}
           onClick={() => pickSlot(i)}
+          onMouseEnter={() => {
+            if (a !== null && b === null) setHov(i);
+          }}
           style={{
             padding: "10px 0",
             textAlign: "center",
             fontFamily: mono,
             fontSize: 12,
-            border: `1px solid ${isStart || inRange ? "#fff" : wanted ? "rgba(255,224,224,.8)" : "rgba(255,255,255,.22)"}`,
-            color: isStart || inRange ? "#1769ff" : "#fff",
-            background: isStart || inRange ? "#fff" : wanted ? "rgba(255,255,255,.14)" : "transparent",
-            cursor: isBusy ? "not-allowed" : "pointer",
-            opacity: isBusy ? 0.3 : 1,
-            textDecoration: isBusy ? "line-through" : "none",
-            fontWeight: isStart ? 700 : 400,
+            border: `1px solid ${inSel ? "#fff" : wanted ? "rgba(255,224,224,.8)" : "rgba(255,255,255,.22)"}`,
+            color: inSel ? "#1769ff" : "#fff",
+            background: inSel ? "#fff" : inHov ? "rgba(255,255,255,.28)" : wanted ? "rgba(255,255,255,.14)" : "transparent",
+            cursor: slotBusy ? "not-allowed" : "pointer",
+            opacity: slotBusy ? 0.3 : 1,
+            textDecoration: slotBusy ? "line-through" : "none",
+            fontWeight: inSel ? 700 : 400,
             transition: "background 100ms",
             userSelect: "none",
           }}
@@ -240,10 +263,16 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
     ? "Zatím nic nevybráno"
     : a === null
       ? `${dayLabel(day)} · vyberte začátek`
-      : end === null
-        ? `${dayLabel(day)} · od ${slotLabel(a)} · vyberte služby`
-        : `${dayLabel(day)} · ${slotLabel(a)} – ${slotLabel(end)}`;
-  const slotHint = !day ? "nejdřív vyberte den" : a === null ? `${slotLabel(settings.openSlot)} – ${slotLabel(settings.closeSlot)} · klikněte na začátek` : "konec dopočítáme z odhadu";
+      : b === null
+        ? `${dayLabel(day)} · od ${slotLabel(a)} · klikněte na konec`
+        : `${dayLabel(day)} · ${slotLabel(a)} – ${slotLabel(b + 1)}`;
+  const slotHint = !day
+    ? "nejdřív vyberte den"
+    : a === null
+      ? `${slotLabel(settings.openSlot)} – ${slotLabel(settings.closeSlot)} · krok 15 min`
+      : b === null
+        ? "teď zvolte konec"
+        : "kliknutím vyberete znovu";
 
   const tile = (done: boolean) => ({
     display: "grid",
@@ -256,15 +285,15 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
   const progress: Array<{ icon: IconName; label: string; value: string; done: boolean }> = [
     { icon: day ? "check" : "calendar", label: "01 · Den", value: day ? dayLabel(day) : "Vyberte v kalendáři", done: Boolean(day) },
     {
-      icon: end !== null ? "check" : "clock",
+      icon: n ? "check" : "clock",
       label: "02 · Čas",
-      value: a !== null && end !== null ? `${slotLabel(a)} – ${slotLabel(end)} · ${durationLabel(bookedSlots)}` : a !== null ? `od ${slotLabel(a)} · délka podle služeb` : "Vyberte začátek",
-      done: end !== null,
+      value: n && a !== null && b !== null ? `${slotLabel(a)} – ${slotLabel(b + 1)} · ${durationLabel(n)}` : a !== null ? `od ${slotLabel(a)} · zvolte konec` : "Od – do po 15 min",
+      done: n > 0,
     },
     { icon: services.length ? "check" : "car", label: "03 · Služby", value: services.length ? servicesLabel(services) : "Zaškrtněte služby", done: services.length > 0 },
   ];
 
-  const shortNote = nothingFits && estimate > 0 ? `Odhad služeb ${durationLabel(estimate)}, rezervován kratší úsek (${durationLabel(bookedSlots)}) – domluvit postup.` : "";
+  const shortNote = tooShort ? `Odhad služeb ${durationLabel(estimate)}, zákazník rezervoval ${durationLabel(n)} – nemusíme vše stihnout, domluvit postup.` : "";
 
   /* ---- submit ---- */
 
@@ -275,8 +304,8 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
       setError("Vyberte prosím den v kalendáři.");
       return;
     }
+    if (a === null || b === null || end === null) return setError("Vyberte prosím čas od a do.");
     if (!services.length) return setError("Vyberte prosím alespoň jednu službu.");
-    if (a === null || end === null) return setError("Vyberte prosím začátek v mřížce časů.");
     const form = event.currentTarget;
     const fields = Object.fromEntries(new FormData(form)) as Record<string, string>;
     const note = shortNote ? `${shortNote} ${fields.note ?? ""}`.trim() : fields.note;
@@ -289,7 +318,7 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
     });
     setSending(false);
     if (response.ok) {
-      setSentSummary(`${servicesLabel(services)}, ${summary} (${durationLabel(bookedSlots)}).${shortNote ? " Vybrané služby se do úseku nevejdou celé, ozveme se a domluvíme, jak to rozdělit." : ""}`);
+      setSentSummary(`${servicesLabel(services)}, ${summary} (${durationLabel(n)}).${shortNote ? " Úsek je kratší než odhad služeb, ozveme se a domluvíme postup." : ""}`);
       setSent(true);
       form.reset();
       onToast("Rezervace odeslána. Potvrzení přijde na e-mail.", "check-circle");
@@ -299,6 +328,7 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
       setError(data.error ?? "Rezervaci se nepodařilo odeslat. Zkuste to znovu.");
       if (response.status === 409) {
         setA(null);
+        setB(null);
         void loadRange(day, day);
       }
     }
@@ -352,11 +382,20 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
 
           <div style={{ display: "grid", gap: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
-              <span className={styles.stepLabel}>02 · Začátek</span>
+              <span className={styles.stepLabel}>02 · Čas od – do</span>
               <span style={{ fontFamily: mono, fontSize: 11, letterSpacing: ".06em", opacity: 0.8 }}>{slotHint}</span>
             </div>
             {day && !dayOpen && <div className={styles.closedDay}>V tento den nejezdíme. Vyberte prosím jiný.</div>}
-            {dayOpen && <div className={styles.slots}>{slots}</div>}
+            {dayOpen && (
+              <div
+                className={styles.slots}
+                onMouseLeave={() => {
+                  if (hov !== null) setHov(null);
+                }}
+              >
+                {slots}
+              </div>
+            )}
             <div className={styles.summary}>
               <div style={{ display: "grid", gap: 2 }}>
                 <span className={styles.stepLabel} style={{ opacity: 0.75 }}>
@@ -365,9 +404,18 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
                 <strong style={{ fontSize: 17 }}>{summary}</strong>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <span style={{ fontFamily: mono, fontSize: 13, whiteSpace: "nowrap" }}>{bookedSlots ? durationLabel(bookedSlots) : ""}</span>
+                <span style={{ fontFamily: mono, fontSize: 13, whiteSpace: "nowrap" }}>{n ? durationLabel(n) : ""}</span>
                 {a !== null && (
-                  <button type="button" className={`${styles.iconButton} ${styles.iconButtonSmall}`} aria-label="Zrušit výběr" onClick={() => setA(null)}>
+                  <button
+                    type="button"
+                    className={`${styles.iconButton} ${styles.iconButtonSmall}`}
+                    aria-label="Zrušit výběr"
+                    onClick={() => {
+                      setA(null);
+                      setB(null);
+                      setHov(null);
+                    }}
+                  >
                     <Icon name="close" size={14} stroke={2} />
                   </button>
                 )}
@@ -383,48 +431,24 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
           <div className={styles.estimateRow}>
             <div style={{ display: "grid", gap: 2 }}>
               <span className={styles.stepLabel} style={{ opacity: 0.75 }}>
-                Odhadovaný čas
+                Odhadovaný čas · orientačně
               </span>
               <strong style={{ fontSize: 17 }}>{estimate ? durationLabel(estimate) : "vyberte služby"}</strong>
             </div>
-            {services.length > 0 && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <button type="button" className={styles.iconButton} aria-label="Zkrátit o 15 minut" disabled={estimate <= 1} onClick={() => setAdjust((v) => v - 1)}>
-                  <Icon name="minus" size={14} stroke={2} />
-                </button>
-                <button type="button" className={styles.iconButton} aria-label="Prodloužit o 15 minut" onClick={() => setAdjust((v) => v + 1)}>
-                  <Icon name="plus" size={14} stroke={2} />
-                </button>
-                {adjust !== 0 && (
-                  <button type="button" className={styles.linkButton} onClick={() => setAdjust(0)}>
-                    vrátit odhad
-                  </button>
-                )}
-              </div>
-            )}
+            <span style={{ fontSize: 12, opacity: 0.8, textAlign: "right", maxWidth: 190 }}>Čas od–do si vybíráte sami v mřížce vlevo.</span>
           </div>
 
-          {shortfall && !nothingFits && a !== null && (
+          {tooShort && a !== null && (
             <Notice tone="on-blue" style={{ color: "#fff" }}>
-              Na vybrané služby je potřeba {durationLabel(estimate)}, od {slotLabel(a)} je ale volných jen {durationLabel(free)}.
+              Vybraný úsek ({durationLabel(n)}) je kratší než odhad na zvolené služby ({durationLabel(estimate)}). Nemusíme všechno stihnout.
               <span className={styles.warnChips}>
-                {bestStart !== null && (
-                  <button type="button" className={styles.warnChip} onClick={() => setA(bestStart)}>
-                    Začít v {slotLabel(bestStart)}
+                {canExtend && extendedEnd !== null && (
+                  <button type="button" className={styles.warnChip} onClick={() => setB(extendedEnd - 1)}>
+                    Prodloužit do {slotLabel(extendedEnd)}
                   </button>
                 )}
-                {free > 0 && (
-                  <button type="button" className={styles.warnChip} onClick={() => setAdjust(free - baseEstimate)}>
-                    Zkrátit odhad na {durationLabel(free)}
-                  </button>
-                )}
-                <span style={{ opacity: 0.8 }}>nebo vyberte jiný den</span>
+                <span style={{ opacity: 0.85 }}>{canExtend ? "nebo nechte jak je – ozveme se a domluvíme postup." : "Po odeslání se ozveme a domluvíme, jak to rozdělit nebo posunout."}</span>
               </span>
-            </Notice>
-          )}
-          {nothingFits && (
-            <Notice tone="on-blue" style={{ color: "#fff" }}>
-              Do tohoto dne se všechny služby ({durationLabel(estimate)}) nevejdou najednou. Rezervujte volný úsek, ozveme se a domluvíme, jak to rozdělit nebo posunout.
             </Notice>
           )}
 
@@ -461,8 +485,8 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
               setSent(false);
               setDay(null);
               setA(null);
+              setB(null);
               setServices([]);
-              setAdjust(0);
             }}
           >
             Rozumím
