@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Heading, Icon, Text } from "@homedetailing/ui";
 import { addDays, conflictsOf, dayLabel, DOW_SHORT, fromIso, layoutColumns, servicesLabel, slotLabel, slotOf, STATUS_LABEL } from "@/lib/booking";
 import styles from "@/app/admin/admin.module.css";
@@ -19,14 +20,78 @@ export type WeekCalendarProps = {
   onFocusDay: (iso: string) => void;
   onOpen: (booking: Booking) => void;
   onCreateAt: (date: string, slot: number) => void;
+  /** Drop handler: the booking was dragged to another day and/or time. */
+  onMove?: (booking: Booking, target: { date: string; slotStart: number; slotEnd: number }) => void;
 };
 
-/** Week grid: 15 min = 13px, overlapping bookings side by side, conflict stripe, now-line, click to create. */
-export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, focusDay, onWeekChange, onFocusDay, onOpen, onCreateAt }: WeekCalendarProps) {
+type Drag = {
+  booking: Booking;
+  startX: number;
+  startY: number;
+  /** Target after snapping; null until the pointer moved. */
+  target: { col: number; slotStart: number } | null;
+};
+
+const HEADER_COLUMN = 56;
+const DRAG_THRESHOLD = 4;
+
+/** Week grid: 15 min = 13px, overlapping bookings side by side, conflict stripe, now-line, click to create, drag to move. */
+export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, focusDay, onWeekChange, onFocusDay, onOpen, onCreateAt, onMove }: WeekCalendarProps) {
   const { openSlot: open, closeSlot: close, workDays } = settings;
   const rows = close - open;
-  const weekIso = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-  const visible = dayMode ? [focusDay] : weekIso;
+  const weekIso = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
+  const visible = useMemo(() => (dayMode ? [focusDay] : weekIso), [dayMode, focusDay, weekIso]);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [drag, setDrag] = useState<Drag | null>(null);
+  const dragRef = useRef<Drag | null>(null);
+  dragRef.current = drag;
+
+  // Pointer tracking lives on the window so a drag survives leaving the grid.
+  useEffect(() => {
+    if (!drag || !onMove) return;
+    const columns = visible;
+    const onPointerMove = (ev: PointerEvent) => {
+      const d = dragRef.current;
+      const grid = gridRef.current;
+      if (!d || !grid) return;
+      const dx = ev.clientX - d.startX;
+      const dy = ev.clientY - d.startY;
+      if (!d.target && Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return;
+      const rect = grid.getBoundingClientRect();
+      const colWidth = (rect.width - HEADER_COLUMN) / columns.length;
+      const col = Math.min(columns.length - 1, Math.max(0, Math.floor((ev.clientX - rect.left - HEADER_COLUMN) / colWidth)));
+      const length = d.booking.slotEnd - d.booking.slotStart;
+      const slotStart = Math.min(close - length, Math.max(open, d.booking.slotStart + Math.round(dy / PX)));
+      setDrag({ ...d, target: { col, slotStart } });
+    };
+    const finish = (ev: PointerEvent) => {
+      const d = dragRef.current;
+      setDrag(null);
+      if (!d) return;
+      if (!d.target) {
+        // No movement: treat as a click.
+        if (ev.type === "pointerup") onOpen(d.booking);
+        return;
+      }
+      const date = columns[d.target.col];
+      const length = d.booking.slotEnd - d.booking.slotStart;
+      if (date === d.booking.date && d.target.slotStart === d.booking.slotStart) return;
+      onMove(d.booking, { date, slotStart: d.target.slotStart, slotEnd: d.target.slotStart + length });
+    };
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") setDrag(null);
+    };
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", finish);
+    window.addEventListener("pointercancel", finish);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", finish);
+      window.removeEventListener("pointercancel", finish);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [drag, onMove, onOpen, visible, open, close]);
   const now = new Date();
   const nowSlot = slotOf(now);
   const nowTop = (nowSlot - open) * PX + Math.floor(((now.getMinutes() % 15) / 15) * PX);
@@ -104,7 +169,7 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
             );
           })}
         </div>
-        <div className={styles.calendarGrid} style={{ gridTemplateColumns: `56px repeat(${visible.length}, minmax(0, 1fr))` }}>
+        <div ref={gridRef} className={styles.calendarGrid} style={{ gridTemplateColumns: `56px repeat(${visible.length}, minmax(0, 1fr))` }}>
           <div style={{ position: "relative", height: rows * PX }}>
             {hours.map((q) => (
               <span key={q} style={{ position: "absolute", right: 8, top: (q - open) * PX, fontFamily: mono, fontSize: 11, color: "#687080", transform: "translateY(-6px)" }}>
@@ -112,10 +177,11 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
               </span>
             ))}
           </div>
-          {visible.map((iso) => {
+          {visible.map((iso, colIndex) => {
             const d = fromIso(iso);
             const off = !workDays[(d.getDay() + 6) % 7];
             const events = layoutColumns(bookings.filter((r) => r.date === iso && r.status !== "cancelled"));
+            const ghost = drag?.target && drag.target.col === colIndex ? drag : null;
             return (
               <div
                 key={iso}
@@ -131,11 +197,21 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
                 }}
               >
                 {iso === today && nowSlot >= open && nowSlot < close && <div className={styles.nowLine} style={{ top: nowTop }} />}
+                {ghost && ghost.target && (
+                  <div
+                    className={styles.ghost}
+                    style={{ top: (ghost.target.slotStart - open) * PX, height: (ghost.booking.slotEnd - ghost.booking.slotStart) * PX - 2 }}
+                  >
+                    <strong>{ghost.booking.name}</strong>
+                    <span style={{ fontFamily: mono, fontSize: 10 }}>{`${slotLabel(ghost.target.slotStart)} – ${slotLabel(ghost.target.slotStart + ghost.booking.slotEnd - ghost.booking.slotStart)}`}</span>
+                  </div>
+                )}
                 {events.map((e) => {
                   const w = 100 / e.cols;
                   const conflict = conflictsOf(e, bookings).length > 0;
                   const bg = e.status === "confirmed" ? "#1769ff" : e.status === "done" ? "#e1e5eb" : "#dce8ff";
                   const fg = e.status === "confirmed" ? "#fff" : e.status === "done" ? "#687080" : "#1769ff";
+                  const dragging = drag?.booking.id === e.id && drag.target !== null;
                   return (
                     <button
                       key={e.id}
@@ -144,7 +220,13 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
                       title={`${e.name} · ${slotLabel(e.slotStart)} – ${slotLabel(e.slotEnd)} · ${servicesLabel(e.services)} · ${STATUS_LABEL[e.status]}`}
                       onClick={(ev) => {
                         ev.stopPropagation();
-                        onOpen(e);
+                        // With drag enabled the click is handled on pointerup (no movement).
+                        if (!onMove) onOpen(e);
+                      }}
+                      onPointerDown={(ev) => {
+                        if (!onMove || ev.button !== 0) return;
+                        ev.preventDefault();
+                        setDrag({ booking: e, startX: ev.clientX, startY: ev.clientY, target: null });
                       }}
                       style={{
                         top: (e.slotStart - open) * PX,
@@ -155,6 +237,9 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
                         background: bg,
                         color: fg,
                         boxShadow: conflict ? "inset 3px 0 0 #b42318" : "none",
+                        opacity: dragging ? 0.35 : 1,
+                        cursor: onMove ? (drag ? "grabbing" : "grab") : "pointer",
+                        touchAction: onMove ? "none" : undefined,
                       }}
                     >
                       <strong>{e.name}</strong>
