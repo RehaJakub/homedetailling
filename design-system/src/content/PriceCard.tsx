@@ -19,6 +19,8 @@ export type PriceCardProps = {
   badgeLabel?: string;
   /** Small label above the name. */
   kicker?: string;
+  /** Estimated duration shown under the price, e.g. "cca 2 h 30 min". */
+  duration?: string;
   ctaLabel?: string;
   ctaHref?: string;
 };
@@ -36,6 +38,7 @@ export function PriceCard({
   featured = false,
   badgeLabel = "Nejoblíbenější",
   kicker = "Balíček",
+  duration,
   ctaLabel = "Objednat",
   ctaHref = "#kontakt",
 }: PriceCardProps) {
@@ -50,6 +53,7 @@ export function PriceCard({
         <b>{price}</b>
         {showCurrency && ` ${currency}`}
       </div>
+      {duration && <span className="hd-price-card__duration">{duration}</span>}
 
       <ul className="hd-price-card__items">
         {items.map((item) => (

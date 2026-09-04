@@ -8,6 +8,20 @@
       "when": 1788511451237,
       "tag": "0000_dark_the_captain",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788514339784,
+      "tag": "0001_quiet_living_tribunal",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788514340436,
+      "tag": "0002_little_mantis",
+      "breakpoints": true
     }
   ]
 }

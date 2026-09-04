@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { parsePricePackage, parseReservation, parseReservationPatch, parseSettings, parseSlotRange, validEmail } from "@/lib/validation";
+import { parsePricePackage, parseReservation, parseReservationPatch, parseServices, parseSettings, parseSlotRange, validEmail } from "@/lib/validation";
 
 const validReservation = {
   name: "  Jan Novák ",
   phone: "+420 777 123 456",
   email: "Jan@Example.COM",
-  service: "Interiér",
+  services: ["Interiér", " Tepování ", "Interiér"],
   address: "Ostrava, Hlavní 1",
   note: "  Please ring twice. ",
   date: "2026-09-08",
@@ -19,7 +19,7 @@ describe("parseReservation", () => {
       name: "Jan Novák",
       phone: "+420 777 123 456",
       email: "jan@example.com",
-      service: "Interiér",
+      services: ["Interiér", "Tepování"],
       address: "Ostrava, Hlavní 1",
       note: "Please ring twice.",
       date: "2026-09-08",
@@ -39,8 +39,15 @@ describe("parseReservation", () => {
     expect(parseReservation(body)?.note).toBe("");
   });
 
-  it.each(["name", "phone", "email", "service", "address"])("returns null when %s is missing", (field) => {
+  it.each(["name", "phone", "email", "address"])("returns null when %s is missing", (field) => {
     expect(parseReservation({ ...validReservation, [field]: "" })).toBeNull();
+  });
+
+  it("accepts the legacy single service and rejects no services", () => {
+    const body: Record<string, unknown> = { ...validReservation, services: undefined, service: "Exteriér" };
+    expect(parseReservation(body)?.services).toEqual(["Exteriér"]);
+    expect(parseReservation({ ...validReservation, services: [] })).toBeNull();
+    expect(parseReservation({ ...validReservation, services: ["", "  "] })).toBeNull();
   });
 
   it("rejects a single-word name", () => {
@@ -68,6 +75,15 @@ describe("parseReservation", () => {
   });
 });
 
+describe("parseServices", () => {
+  it("normalizes, dedups and caps the list", () => {
+    expect(parseServices({ services: [" A ", "B", "A", ""] })).toEqual(["A", "B"]);
+    expect(parseServices({ service: "Solo" })).toEqual(["Solo"]);
+    expect(parseServices({})).toBeNull();
+    expect(parseServices({ services: Array.from({ length: 20 }, (_, i) => `s${i}`) })).toHaveLength(12);
+  });
+});
+
 describe("parseSlotRange", () => {
   it("returns the range or null", () => {
     expect(parseSlotRange({ date: "2026-09-08", a: 28, b: 32 })).toEqual({ date: "2026-09-08", slotStart: 28, slotEnd: 32 });
@@ -85,6 +101,9 @@ describe("parseReservationPatch", () => {
   it("normalizes and validates present fields", () => {
     expect(parseReservationPatch({ email: " Jana@Example.cz " })).toEqual({ email: "jana@example.cz" });
     expect(parseReservationPatch({ note: "" })).toEqual({ note: "" });
+    expect(parseReservationPatch({ services: ["Interiér"] })).toEqual({ services: ["Interiér"] });
+    expect(parseReservationPatch({ service: "Interiér" })).toEqual({ services: ["Interiér"] });
+    expect(parseReservationPatch({ services: [] })).toBeNull();
     expect(parseReservationPatch({ status: "gone" })).toBeNull();
     expect(parseReservationPatch({ name: "Jana" })).toBeNull();
     expect(parseReservationPatch({ email: "nope" })).toBeNull();
@@ -94,14 +113,23 @@ describe("parseReservationPatch", () => {
 });
 
 describe("parsePricePackage", () => {
-  it("normalizes a valid body and defaults showCurrency to true, featured to false", () => {
+  it("normalizes a valid body and defaults showCurrency, featured and duration", () => {
     expect(parsePricePackage({ name: " Exteriér ", price: " 1500 ", items: [" Mytí ", "", "Vosk"] })).toEqual({
       name: "Exteriér",
       price: "1500",
       showCurrency: true,
       featured: false,
+      durationMinutes: 120,
       items: ["Mytí", "Vosk"],
     });
+  });
+
+  it("validates the duration", () => {
+    expect(parsePricePackage({ name: "X", price: "1", items: ["a"], durationMinutes: 180 })?.durationMinutes).toBe(180);
+    expect(parsePricePackage({ name: "X", price: "1", items: ["a"], durationMinutes: "90" })?.durationMinutes).toBe(90);
+    expect(parsePricePackage({ name: "X", price: "1", items: ["a"], durationMinutes: 100 })).toBeNull();
+    expect(parsePricePackage({ name: "X", price: "1", items: ["a"], durationMinutes: 0 })).toBeNull();
+    expect(parsePricePackage({ name: "X", price: "1", items: ["a"], durationMinutes: 800 })).toBeNull();
   });
 
   it("keeps explicit showCurrency false and featured true", () => {

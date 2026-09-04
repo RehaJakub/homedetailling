@@ -16,6 +16,7 @@ import {
   Text,
   type IconName,
 } from "@homedetailing/ui";
+import { durationLabel, slotsForMinutes } from "@/lib/booking";
 import { Wordmark } from "@/components/Wordmark";
 import { BookingForm, type PricePackage } from "@/components/landing/BookingForm";
 import { Faq } from "@/components/landing/Faq";
@@ -56,9 +57,9 @@ const gallery = [
 
 // Shown until the pricing API answers; mirrors the seed content of the design.
 const fallbackPackages: PricePackage[] = [
-  { id: 1, name: "Exteriér", price: "Domluvou", showCurrency: false, featured: false, items: ["Ruční mytí karoserie", "Dekontaminace laku", "Čištění kol a pneu", "Ochranný vosk"] },
-  { id: 2, name: "Interiér", price: "1 500", showCurrency: true, featured: true, items: ["Hloubkové vysátí", "Čištění plastů a kůže", "Vnitřní okna", "Odstranění zápachu"] },
-  { id: 3, name: "Tepování", price: "od 500", showCurrency: true, featured: false, items: ["Tepování sedaček", "Tepování koberců", "Cena za kus"] },
+  { id: 1, name: "Exteriér", price: "Domluvou", showCurrency: false, featured: false, durationMinutes: 180, items: ["Ruční mytí karoserie", "Dekontaminace laku", "Čištění kol a pneu", "Ochranný vosk"] },
+  { id: 2, name: "Interiér", price: "1 500", showCurrency: true, featured: true, durationMinutes: 150, items: ["Hloubkové vysátí", "Čištění plastů a kůže", "Vnitřní okna", "Odstranění zápachu"] },
+  { id: 3, name: "Tepování", price: "od 500", showCurrency: true, featured: false, durationMinutes: 90, items: ["Tepování sedaček", "Tepování koberců", "Cena za kus"] },
 ];
 
 const marqueeText = "Interiér · Exteriér · Tepování · Ostrava · Poruba · Havířov · Frýdek-Místek · Přijedeme k vám · Termín po 15 minutách ·";
@@ -287,6 +288,7 @@ export default function Home() {
               from={/^od\s/i.test(item.price)}
               showCurrency={item.showCurrency}
               items={item.items}
+              duration={`cca ${durationLabel(slotsForMinutes(item.durationMinutes))}`}
               ctaLabel="Rezervovat"
               ctaHref="#rezervace"
             />
@@ -302,7 +304,7 @@ export default function Home() {
               Vyberte si den a čas.
             </Heading>
             <Text tone="on-blue" lead>
-              Klikněte na den, potom na začátek a konec úseku. Obsazené časy jsou přeškrtnuté.
+              Klikněte na den a začátek, zaškrtněte služby a délku dopočítáme. Obsazené časy jsou přeškrtnuté.
             </Text>
           </div>
           <BookingForm packages={packages} onToast={showToast} onNextFree={setNextFree} onSentChange={setSent} />

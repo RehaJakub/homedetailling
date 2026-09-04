@@ -52,5 +52,5 @@ function draftPayload(d: Partial<Omit<Draft, "id">>) {
 }
 
 export function toDraft(r: Booking): Draft {
-  return { id: r.id, name: r.name, phone: r.phone, email: r.email, address: r.address, service: r.service, date: r.date, a: r.slotStart, b: r.slotEnd, status: r.status, note: r.note };
+  return { id: r.id, name: r.name, phone: r.phone, email: r.email, address: r.address, services: r.services, date: r.date, a: r.slotStart, b: r.slotEnd, status: r.status, note: r.note };
 }

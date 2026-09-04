@@ -1,8 +1,8 @@
 "use client";
 import { Badge, Button, Card, DataTable, Field, Heading, Icon, Input, Select, Tabs, Text } from "@homedetailing/ui";
-import { conflictsOf, dayLabel, durationLabel, isActive, priceLabel, slotLabel, STATUS_LABEL, type BookingStatus } from "@/lib/booking";
+import { conflictsOf, dayLabel, durationLabel, isActive, priceLabel, servicesLabel, slotLabel, slotsForMinutes, STATUS_LABEL, type BookingStatus } from "@/lib/booking";
 import styles from "@/app/admin/admin.module.css";
-import { ROLE_LABEL, type Booking, type Customer, type Package, type Settings, type User } from "./types";
+import { ROLE_LABEL, type Booking, type Customer, type Package, type PriceDraft, type Settings, type User } from "./types";
 
 const mono = "var(--hd-font-mono)";
 const telHref = (phone: string) => `tel:${phone.replace(/\s/g, "")}`;
@@ -67,7 +67,7 @@ export function Overview({
               <div style={{ display: "grid", gap: 2, minWidth: 0 }}>
                 <strong style={{ fontSize: 14 }}>{r.name}</strong>
                 <span style={{ fontSize: 12, color: "#687080" }}>
-                  {r.service} · {r.address}
+                  {servicesLabel(r.services)} · {r.address}
                 </span>
               </div>
               <Button variant="ghost" size="sm" onClick={() => onOpen(r)}>
@@ -87,7 +87,7 @@ export function Overview({
               <div style={{ display: "grid", gap: 2, minWidth: 0 }}>
                 <strong style={{ fontSize: 14 }}>{r.name}</strong>
                 <span style={{ fontSize: 12, color: "#687080" }}>
-                  {dayLabel(r.date)} · {slotLabel(r.slotStart)} – {slotLabel(r.slotEnd)} · {r.service}
+                  {dayLabel(r.date)} · {slotLabel(r.slotStart)} – {slotLabel(r.slotEnd)} · {servicesLabel(r.services)}
                 </span>
                 {conflictsOf(r, bookings).length > 0 && (
                   <span style={{ fontSize: 12, color: "#b42318", display: "flex", alignItems: "center", gap: 5 }}>
@@ -117,7 +117,7 @@ export function Overview({
 const orderColumns = [
   { key: "name", label: "Klient" },
   { key: "when", label: "Termín" },
-  { key: "service", label: "Služba" },
+  { key: "services", label: "Služby" },
   { key: "address", label: "Adresa" },
   { key: "status", label: "Stav" },
   { key: "actions", label: "Akce", actions: true },
@@ -146,7 +146,7 @@ export function Orders({
 }) {
   const q = query.trim().toLowerCase();
   const filtered = bookings
-    .filter((r) => (filter === "all" ? true : r.status === filter) && (!q || `${r.name} ${r.phone} ${r.email} ${r.address}`.toLowerCase().includes(q)))
+    .filter((r) => (filter === "all" ? true : r.status === filter) && (!q || `${r.name} ${r.phone} ${r.email} ${r.address} ${r.services.join(" ")}`.toLowerCase().includes(q)))
     .sort((x, y) => x.date.localeCompare(y.date) || x.slotStart - y.slotStart);
   const tabs = [
     { id: "new", label: "Nové", count: bookings.filter((r) => r.status === "new").length },
@@ -190,7 +190,7 @@ export function Orders({
                 <span style={{ fontFamily: mono, fontSize: 12, color: "#687080" }}>{`${slotLabel(r.slotStart)} – ${slotLabel(r.slotEnd)} · ${durationLabel(r.slotEnd - r.slotStart)}`}</span>
               </div>
             ),
-            service: r.service,
+            services: servicesLabel(r.services),
             address: r.address,
             status: (
               <div style={{ display: "grid", gap: 4, justifyItems: "start" }}>
@@ -276,7 +276,7 @@ export function Customers({ customers, canEdit, onDetail, onNewOrder }: { custom
                 </div>
               ),
               count: <Badge tone="count">{c.orders.length}</Badge>,
-              last: `${dayLabel(last.date)} · ${last.service}`,
+              last: `${dayLabel(last.date)} · ${servicesLabel(last.services)}`,
               actions: (
                 <>
                   <Button variant="ghost" size="sm" onClick={() => onDetail(c)}>
@@ -299,7 +299,7 @@ export function Customers({ customers, canEdit, onDetail, onNewOrder }: { custom
 
 export function CustomerModal({ customer: c, canEdit, onClose, onOpen, onNewOrder }: { customer: Customer; canEdit: boolean; onClose: () => void; onOpen: (b: Booking) => void; onNewOrder: () => void }) {
   const counts: Record<string, number> = {};
-  for (const o of c.orders) counts[o.service] = (counts[o.service] ?? 0) + 1;
+  for (const o of c.orders) for (const name of o.services) counts[name] = (counts[name] ?? 0) + 1;
   const favourite = Object.keys(counts).sort((x, y) => counts[y] - counts[x])[0] ?? "—";
   const stats = [
     { label: "Zakázek", value: String(c.orders.length) },
@@ -349,7 +349,7 @@ export function CustomerModal({ customer: c, canEdit, onClose, onOpen, onNewOrde
               <div key={o.id} className={styles.listRow} style={{ gridTemplateColumns: "1fr auto auto", padding: "12px 0" }}>
                 <div style={{ display: "grid", gap: 2 }}>
                   <strong style={{ fontSize: 14 }}>{`${dayLabel(o.date)} · ${slotLabel(o.slotStart)} – ${slotLabel(o.slotEnd)}`}</strong>
-                  <span style={{ fontSize: 12, color: "#687080" }}>{o.service}</span>
+                  <span style={{ fontSize: 12, color: "#687080" }}>{servicesLabel(o.services)}</span>
                 </div>
                 <Badge tone="soft">{STATUS_LABEL[o.status]}</Badge>
                 <Button variant="ghost" size="sm" onClick={() => onOpen(o)}>
@@ -396,6 +396,7 @@ export function PricingPanel({ packages, canEdit, onEdit, onAdd }: { packages: P
               <strong style={{ fontSize: 22, letterSpacing: "-.02em", color: "#1769ff" }}>{priceLabel(p.price, p.showCurrency)}</strong>
             </div>
             <span style={{ fontSize: 13, color: "#687080", lineHeight: 1.7 }}>{p.items.join(" · ")}</span>
+            <span className={styles.monoLabel}>cca {durationLabel(slotsForMinutes(p.durationMinutes))}</span>
             {canEdit && (
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
                 <Button variant="ghost" size="sm" onClick={() => onEdit(p)}>
@@ -417,8 +418,6 @@ export function PricingPanel({ packages, canEdit, onEdit, onAdd }: { packages: P
     </>
   );
 }
-
-export type PriceDraft = { id: number | null; name: string; price: string; items: string; featured: boolean; showCurrency: boolean };
 
 export function PriceModal({ pd, onChange, onClose, onSave, onDelete }: { pd: PriceDraft; onChange: (patch: Partial<PriceDraft>) => void; onClose: () => void; onSave: () => void; onDelete: () => void }) {
   const items = pd.items
@@ -452,9 +451,18 @@ export function PriceModal({ pd, onChange, onClose, onSave, onDelete }: { pd: Pr
         <Field label="Co balíček obsahuje (jeden řádek = jedna položka)">
           <textarea className="hd-textarea" value={pd.items} onChange={(e) => onChange({ items: e.target.value })} rows={4} />
         </Field>
-        <Field label="Označit jako nejoblíbenější" layout="inline">
-          <Input type="checkbox" checked={pd.featured} onChange={(e) => onChange({ featured: e.target.checked })} />
-        </Field>
+        <div className={styles.twoCols}>
+          <Field label="Odhadovaná délka">
+            <Select
+              options={Array.from({ length: 31 }, (_, i) => 30 + i * 15).map((m) => ({ value: String(m), label: durationLabel(slotsForMinutes(m)) }))}
+              value={String(pd.durationMinutes)}
+              onChange={(e) => onChange({ durationMinutes: Number(e.target.value) })}
+            />
+          </Field>
+          <Field label="Označit jako nejoblíbenější" layout="inline" style={{ alignSelf: "end", paddingBottom: 14 }}>
+            <Input type="checkbox" checked={pd.featured} onChange={(e) => onChange({ featured: e.target.checked })} />
+          </Field>
+        </div>
         <div style={{ border: "1px solid #e1e5eb", padding: "16px 18px", display: "grid", gap: 8, background: "#f5f7fa" }}>
           <span className={styles.monoLabel}>Náhled na webu</span>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -462,6 +470,7 @@ export function PriceModal({ pd, onChange, onClose, onSave, onDelete }: { pd: Pr
             <strong style={{ fontSize: 18, color: "#1769ff" }}>{pd.price ? priceLabel(pd.price, pd.showCurrency) : "—"}</strong>
           </div>
           <span style={{ fontSize: 12, color: "#687080" }}>{items.join(" · ") || "Položky balíčku"}</span>
+          <span className={styles.monoLabel}>cca {durationLabel(slotsForMinutes(pd.durationMinutes))}</span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, paddingTop: 8 }}>
           <div>

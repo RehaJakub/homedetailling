@@ -1,6 +1,6 @@
 "use client";
 import { Button, Field, Heading, Icon, Input, Notice, Textarea, Select } from "@homedetailing/ui";
-import { conflictsOf, dayLabel, durationLabel, initials, isActive, priceLabel, slotLabel, STATUS_LABEL, type BookingStatus } from "@/lib/booking";
+import { conflictsOf, dayLabel, durationLabel, estimateSlots, initials, isActive, priceLabel, slotLabel, slotsForMinutes, STATUS_LABEL, type BookingStatus } from "@/lib/booking";
 import styles from "@/app/admin/admin.module.css";
 import type { Booking, Customer, Draft, Package, Settings } from "./types";
 
@@ -35,6 +35,8 @@ export function OrderModal({ draft: d, orig, bookings, packages, settings, custo
   const timeOptions = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, i) => ({ value: String(from + i), label: slotLabel(from + i) }));
   const shift = (n: number) => onChange({ a: Math.max(open, d.a + n), b: Math.min(close, d.b + n) });
   const H = MINI_H / rows;
+  const estimate = estimateSlots(d.services, packages);
+  const tooShort = estimate > 0 && d.b - d.a < estimate;
 
   function autoFix() {
     const len = d.b - d.a;
@@ -173,15 +175,17 @@ export function OrderModal({ draft: d, orig, bookings, packages, settings, custo
             </div>
 
             <div style={{ display: "grid", gap: 14 }}>
-              {section("car", "Služba a stav")}
+              {section("car", "Služby a stav")}
               <div className={styles.serviceCards}>
                 {packages.map((p) => {
-                  const on = d.service === p.name;
+                  const on = d.services.includes(p.name);
                   return (
                     <button
                       key={p.id}
                       type="button"
-                      onClick={() => onChange({ service: p.name })}
+                      role="checkbox"
+                      aria-checked={on}
+                      onClick={() => onChange({ services: on ? d.services.filter((s) => s !== p.name) : [...d.services, p.name] })}
                       className={styles.serviceCard}
                       style={{ border: `1px solid ${on ? "#1769ff" : "#e1e5eb"}`, background: on ? "#1769ff" : "#fff", color: on ? "#fff" : "#080b12" }}
                     >
@@ -189,11 +193,28 @@ export function OrderModal({ draft: d, orig, bookings, packages, settings, custo
                         <strong style={{ fontSize: 14 }}>{p.name}</strong>
                         {on && <Icon name="check" size={14} stroke={2.5} />}
                       </span>
-                      <span style={{ fontFamily: mono, fontSize: 11, opacity: 0.75 }}>{priceLabel(p.price, p.showCurrency)}</span>
+                      <span style={{ fontFamily: mono, fontSize: 11, opacity: 0.75 }}>
+                        {priceLabel(p.price, p.showCurrency)} · {durationLabel(slotsForMinutes(p.durationMinutes))}
+                      </span>
                     </button>
                   );
                 })}
               </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 12, color: "#687080" }}>
+                  Odhad podle balíčků: <strong style={{ color: "#080b12" }}>{estimate ? durationLabel(estimate) : "—"}</strong>
+                </span>
+                {estimate > 0 && d.b - d.a !== estimate && (
+                  <button type="button" className={styles.shiftChip} onClick={() => onChange({ b: Math.min(close, d.a + estimate) })}>
+                    Použít odhad ({durationLabel(estimate)})
+                  </button>
+                )}
+              </div>
+              {tooShort && (
+                <Notice tone="error">
+                  Odhad služeb {durationLabel(estimate)} je delší než termín ({durationLabel(d.b - d.a)}). Domluvte s klientem prodloužení nebo rozdělení na dva termíny.
+                </Notice>
+              )}
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {(Object.keys(STATUS_LABEL) as BookingStatus[]).map((k) => {
                   const on = d.status === k;

@@ -67,6 +67,9 @@
     },
     "Tabs": {
       "cardMode": "column"
+    },
+    "ServiceChecklist": {
+      "cardMode": "column"
     }
   },
   "readmeHeader": ".design-sync/conventions.md",

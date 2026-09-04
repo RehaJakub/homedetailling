@@ -5,14 +5,14 @@ import { addDays, weekdayIndex } from "@/lib/booking";
 import { businessNow } from "@/lib/settings";
 import { ctx, futureWorkday, json, jsonRequest, loginAs } from "./helpers";
 
-type Reservation = { id: number; name: string; email: string; date: string; slotStart: number; slotEnd: number; status: string };
+type Reservation = { id: number; name: string; email: string; services: string[]; date: string; slotStart: number; slotEnd: number; status: string };
 
 const day = futureWorkday();
 const valid = {
   name: "Jana Nováková",
   phone: "+420 777 123 456",
   email: "Jana@Example.test",
-  service: "Interiér",
+  services: ["Interiér", "Tepování"],
   address: "Nádražní 12, Ostrava",
   note: "Vchod ze dvora",
   date: day,
@@ -32,7 +32,17 @@ describe("POST /api/v2/reservations (public)", () => {
     expect(body.id).toBe(1);
     const { cookie } = await loginAs("viewer");
     const list = await json<{ reservations: Reservation[] }>(await GET(jsonRequest("GET", "/api/v2/reservations", undefined, cookie)));
-    expect(list.reservations[0]).toMatchObject({ date: day, slotStart: 36, slotEnd: 48, status: "new", email: "jana@example.test" });
+    expect(list.reservations[0]).toMatchObject({ date: day, slotStart: 36, slotEnd: 48, status: "new", email: "jana@example.test", services: ["Interiér", "Tepování"] });
+  });
+
+  it("accepts the legacy single service field and rejects an empty list", async () => {
+    const legacy: Record<string, unknown> = { ...valid, services: undefined, service: "Exteriér" };
+    const { response, body } = await create(legacy);
+    expect(response.status).toBe(201);
+    const { cookie } = await loginAs("viewer");
+    const list = await json<{ reservations: Reservation[] }>(await GET(jsonRequest("GET", "/api/v2/reservations", undefined, cookie)));
+    expect(list.reservations.find((x) => x.id === body.id)?.services).toEqual(["Exteriér"]);
+    expect((await create({ ...valid, services: [] })).response.status).toBe(400);
   });
 
   it("rejects an incomplete body", async () => {
@@ -105,9 +115,9 @@ describe("PATCH /api/v2/reservations/[id]", () => {
   it("lets a manager confirm, move and finish a booking", async () => {
     await create();
     const { cookie } = await loginAs("manager");
-    const confirmed = await PATCH(jsonRequest("PATCH", "/api/v2/reservations/1", { status: "confirmed", a: 40, b: 52, note: "Přesunuto" }, cookie), ctx(1));
+    const confirmed = await PATCH(jsonRequest("PATCH", "/api/v2/reservations/1", { status: "confirmed", a: 40, b: 52, note: "Přesunuto", services: ["Interiér"] }, cookie), ctx(1));
     expect(confirmed.status).toBe(200);
-    expect((await json<{ reservation: Reservation }>(confirmed)).reservation).toMatchObject({ status: "confirmed", slotStart: 40, slotEnd: 52 });
+    expect((await json<{ reservation: Reservation }>(confirmed)).reservation).toMatchObject({ status: "confirmed", slotStart: 40, slotEnd: 52, services: ["Interiér"] });
     const done = await PATCH(jsonRequest("PATCH", "/api/v2/reservations/1", { status: "done" }, cookie), ctx(1));
     expect((await json<{ reservation: Reservation }>(done)).reservation.status).toBe("done");
   });

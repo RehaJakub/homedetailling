@@ -1,6 +1,6 @@
 "use client";
 import { Button, Heading, Icon, Text } from "@homedetailing/ui";
-import { addDays, conflictsOf, dayLabel, DOW_SHORT, fromIso, layoutColumns, slotLabel, slotOf, STATUS_LABEL } from "@/lib/booking";
+import { addDays, conflictsOf, dayLabel, DOW_SHORT, fromIso, layoutColumns, servicesLabel, slotLabel, slotOf, STATUS_LABEL } from "@/lib/booking";
 import styles from "@/app/admin/admin.module.css";
 import type { Booking, Settings } from "./types";
 
@@ -141,7 +141,7 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
                       key={e.id}
                       type="button"
                       className={styles.event}
-                      title={`${e.name} · ${slotLabel(e.slotStart)} – ${slotLabel(e.slotEnd)} · ${STATUS_LABEL[e.status]}`}
+                      title={`${e.name} · ${slotLabel(e.slotStart)} – ${slotLabel(e.slotEnd)} · ${servicesLabel(e.services)} · ${STATUS_LABEL[e.status]}`}
                       onClick={(ev) => {
                         ev.stopPropagation();
                         onOpen(e);
@@ -159,7 +159,7 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
                     >
                       <strong>{e.name}</strong>
                       <span style={{ fontFamily: mono, fontSize: 10, letterSpacing: ".04em" }}>{`${slotLabel(e.slotStart)} – ${slotLabel(e.slotEnd)}`}</span>
-                      <span style={{ fontSize: 11, opacity: 0.8 }}>{e.service}</span>
+                      <span style={{ fontSize: 11, opacity: 0.8 }}>{servicesLabel(e.services)}</span>
                     </button>
                   );
                 })}

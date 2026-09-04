@@ -6,7 +6,7 @@ import { ctx, json, jsonRequest, loginAs } from "./helpers";
 const interior = { name: "Interiér", price: "1 500", items: ["Vysávání", "Plasty"] };
 const exterior = { name: "Exteriér", price: "Domluvou", showCurrency: false, items: ["Čištění kol"] };
 
-type Package = { id: number; name: string; price: string; showCurrency: boolean; items: string[]; sortOrder: number };
+type Package = { id: number; name: string; price: string; showCurrency: boolean; items: string[]; sortOrder: number; durationMinutes: number };
 
 describe("GET /api/v2/pricing (public)", () => {
   it("returns packages ordered by sortOrder", async () => {
@@ -34,7 +34,14 @@ describe("POST /api/v2/pricing", () => {
     const response = await POST(jsonRequest("POST", "/api/v2/pricing", interior, cookie));
     expect(response.status).toBe(201);
     const body = await json<{ package: Package }>(response);
-    expect(body.package).toMatchObject({ name: "Interiér", price: "1 500", showCurrency: true, items: ["Vysávání", "Plasty"], sortOrder: 1 });
+    expect(body.package).toMatchObject({ name: "Interiér", price: "1 500", showCurrency: true, items: ["Vysávání", "Plasty"], sortOrder: 1, durationMinutes: 120 });
+  });
+
+  it("stores and validates the estimated duration", async () => {
+    const { cookie } = await loginAs("admin");
+    const saved = await POST(jsonRequest("POST", "/api/v2/pricing", { ...interior, durationMinutes: 180 }, cookie));
+    expect((await json<{ package: Package }>(saved)).package.durationMinutes).toBe(180);
+    expect((await POST(jsonRequest("POST", "/api/v2/pricing", { ...exterior, durationMinutes: 100 }, cookie))).status).toBe(400);
   });
 
   it("rejects a package without items", async () => {

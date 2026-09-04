@@ -40,6 +40,8 @@ export { Textarea } from "./forms/Textarea";
 export type { TextareaProps } from "./forms/Textarea";
 export { Select } from "./forms/Select";
 export type { SelectProps, SelectOption } from "./forms/Select";
+export { ServiceChecklist } from "./forms/ServiceChecklist";
+export type { ServiceChecklistProps, ServiceChoice } from "./forms/ServiceChecklist";
 export { ServiceDropdown } from "./forms/ServiceDropdown";
 export type { ServiceDropdownProps, ServiceOption } from "./forms/ServiceDropdown";
 

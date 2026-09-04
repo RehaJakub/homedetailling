@@ -5,15 +5,21 @@ import {
   dayLabel,
   defaultSettings,
   durationLabel,
+  estimateSlots,
   firstFree,
+  firstStartThatFits,
   freeCount,
+  freeRunFrom,
   initials,
   isIsoDate,
   isWorkDay,
   layoutColumns,
   mergeRanges,
   priceLabel,
+  priceList,
+  servicesLabel,
   slotLabel,
+  slotsForMinutes,
   weekdayIndex,
 } from "./booking";
 
@@ -101,5 +107,39 @@ describe("layoutColumns", () => {
     expect([byId.a.col, byId.a.cols]).toEqual([0, 2]);
     expect([byId.b.col, byId.b.cols]).toEqual([1, 2]);
     expect([byId.c.col, byId.c.cols]).toEqual([0, 1]);
+  });
+});
+
+describe("services and estimates", () => {
+  const packages = [
+    { name: "Exteriér", price: "Domluvou", showCurrency: false, durationMinutes: 180 },
+    { name: "Interiér", price: "1 500", durationMinutes: 150 },
+    { name: "Tepování", price: "od 500", durationMinutes: 100 },
+  ];
+
+  it("converts minutes to whole slots and sums estimates", () => {
+    expect(slotsForMinutes(15)).toBe(1);
+    expect(slotsForMinutes(100)).toBe(7);
+    expect(slotsForMinutes(0)).toBe(1);
+    expect(estimateSlots(["Interiér", "Tepování"], packages)).toBe(10 + 7);
+    expect(estimateSlots(["Neznámá"], packages)).toBe(0);
+    expect(estimateSlots([], packages)).toBe(0);
+  });
+
+  it("labels services and lists prices side by side", () => {
+    expect(servicesLabel(["Interiér", "Tepování"])).toBe("Interiér + Tepování");
+    expect(priceList(["Interiér", "Exteriér", "Tepování"], packages)).toBe("Interiér 1 500 Kč · Exteriér Domluvou · Tepování od 500 Kč");
+    expect(priceList([], packages)).toBe("");
+  });
+
+  it("measures the free run from a start and finds the first fitting start", () => {
+    const busy: Array<[number, number]> = [[36, 44], [60, 76]];
+    expect(freeRunFrom(28, busy, s)).toBe(8);
+    expect(freeRunFrom(44, busy, s)).toBe(16);
+    expect(freeRunFrom(60, busy, s)).toBe(0);
+    expect(firstStartThatFits(8, busy, s)).toBe(28);
+    expect(firstStartThatFits(9, busy, s)).toBe(44);
+    expect(firstStartThatFits(17, busy, s)).toBeNull();
+    expect(firstStartThatFits(48, [], s)).toBe(28);
   });
 });
