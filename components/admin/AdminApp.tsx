@@ -28,6 +28,7 @@ export function AdminApp({ user }: { user: User }) {
   const [weekStart, setWeekStart] = useState(() => mondayOf(today));
   const [focusDay, setFocusDay] = useState(today);
   const [dayMode, setDayMode] = useState(false);
+  const [narrow, setNarrow] = useState(false);
   const [orderFilter, setOrderFilter] = useState("new");
   const [query, setQuery] = useState("");
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -61,11 +62,19 @@ export function AdminApp({ user }: { user: User }) {
   }, [isAdmin]);
 
   useEffect(() => {
-    const media = window.matchMedia("(max-width: 760px)");
-    const update = () => setDayMode(media.matches);
+    const day = window.matchMedia("(max-width: 760px)");
+    const phone = window.matchMedia("(max-width: 900px)");
+    const update = () => {
+      setDayMode(day.matches);
+      setNarrow(phone.matches);
+    };
     update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
+    day.addEventListener("change", update);
+    phone.addEventListener("change", update);
+    return () => {
+      day.removeEventListener("change", update);
+      phone.removeEventListener("change", update);
+    };
   }, []);
 
   const weekIso = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
@@ -353,13 +362,15 @@ export function AdminApp({ user }: { user: User }) {
                   {user.name} · {ROLE_LABEL[user.role]}
                 </span>
               </div>
-              <Tabs items={tabs} value={tab} onChange={(id) => setTab(id as Tab)} />
+              <Tabs items={tabs} value={tab} onChange={(id) => setTab(id as Tab)} orientation={narrow ? "horizontal" : "vertical"} />
               {canEdit && (
-                <Button variant="primary" fullWidth onClick={() => openEdit(null)}>
-                  Nová objednávka
-                </Button>
+                <div className={styles.sidebarCta}>
+                  <Button variant="primary" fullWidth onClick={() => openEdit(null)}>
+                    Nová objednávka
+                  </Button>
+                </div>
               )}
-              <span style={{ fontSize: 12, color: "#687080", lineHeight: 1.6, display: "flex", gap: 8, alignItems: "flex-start" }}>
+              <span className={styles.sidebarTip} style={{ fontSize: 12, color: "#687080", lineHeight: 1.6, display: "flex", gap: 8, alignItems: "flex-start" }}>
                 <Icon name="info" size={14} style={{ marginTop: 2 }} />
                 Tip: v kalendáři klikněte do volného místa a založíte zakázku na ten čas. Zakázky lze chytit a přetáhnout na jiný čas nebo den.
               </span>
@@ -380,6 +391,7 @@ export function AdminApp({ user }: { user: User }) {
                   onFocusDay={setFocusDay}
                   onOpen={openEdit}
                   onCreateAt={(date, slot) => canEdit && openEdit(null, { date, a: slot })}
+                  stepSlots={Math.max(1, Math.round(settings.stepMinutes / 15))}
                   onMove={canEdit ? moveBooking : undefined}
                 />
               )}
@@ -462,6 +474,14 @@ export function AdminApp({ user }: { user: User }) {
           </div>
         )}
       </Dialog>
+
+      {canEdit && !modal && (
+        <div className={styles.mobileCta}>
+          <Button variant="primary" fullWidth onClick={() => openEdit(null)}>
+            Nová objednávka
+          </Button>
+        </div>
+      )}
 
       <ToastStack toasts={toasts} dismiss={dismiss} />
     </main>

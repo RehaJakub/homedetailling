@@ -71,6 +71,35 @@ export default function Home() {
   const [nextFree, setNextFree] = useState("…");
   const [sent, setSent] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [activeHref, setActiveHref] = useState<string | undefined>(undefined);
+  const [bookingOpen, setBookingOpen] = useState(false);
+
+  // Every "#rezervace" link opens the booking modal instead of scrolling.
+  useEffect(() => {
+    const onClick = (event: MouseEvent) => {
+      const link = (event.target as HTMLElement | null)?.closest<HTMLAnchorElement>('a[href="#rezervace"]');
+      if (!link) return;
+      event.preventDefault();
+      setBookingOpen(true);
+    };
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
+  }, []);
+
+  // Lock page scroll and close on Escape while the modal is open.
+  useEffect(() => {
+    if (!bookingOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setBookingOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [bookingOpen]);
 
   useEffect(() => {
     fetch("/api/v2/pricing")
@@ -82,14 +111,24 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY;
-      const section = document.getElementById("rezervace");
-      const inBooking = section !== null && y + window.innerHeight > section.offsetTop + 200 && y < section.offsetTop + section.offsetHeight;
-      setScrolled(y > 600 && !inBooking);
-    };
+    const onScroll = () => setScrolled(window.scrollY > 600);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Highlight the nav link of the section currently under the header.
+  useEffect(() => {
+    const ids = navLinks.map((l) => l.href.slice(1)).concat("rezervace");
+    const sections = ids.map((id) => document.getElementById(id)).filter((el): el is HTMLElement => el !== null);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting).sort((x, y) => y.intersectionRatio - x.intersectionRatio)[0];
+        if (visible) setActiveHref(`#${visible.target.id}`);
+      },
+      { rootMargin: "-40% 0px -50% 0px", threshold: [0, 0.2, 0.5] },
+    );
+    sections.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
   }, []);
 
   const showToast = useCallback((message: string, icon: IconName = "check") => {
@@ -104,7 +143,7 @@ export default function Home() {
 
   return (
     <main className={styles.page}>
-      <SiteHeader logo={<Wordmark />} links={navLinks} cta={{ href: "#rezervace", label: "Rezervovat termín" }} />
+      <SiteHeader logo={<Wordmark />} links={navLinks} cta={{ href: "#rezervace", label: "Rezervovat termín" }} sticky activeHref={activeHref} />
 
       <Container as="section" id="uvod" style={{ display: "block" }}>
         <div className={styles.hero}>
@@ -130,6 +169,14 @@ export default function Home() {
                 Jak to funguje
               </Button>
             </div>
+            <a href="#rezervace" className={`${styles.nextFreeMobile} ${styles.up}`} style={{ animationDelay: ".35s" }}>
+              <span className={styles.pulse} />
+              <span>
+                <span>Nejbližší volný termín</span>
+                <strong>{nextFree}</strong>
+              </span>
+              <Icon name="arrow-up-right" size={16} stroke={2} />
+            </a>
             <div className={`${styles.metrics} ${styles.up}`} style={{ animationDelay: ".4s" }}>
               {(
                 [
@@ -298,17 +345,47 @@ export default function Home() {
 
       <div id="rezervace" className={styles.bookingBand}>
         <Container as="section" className={styles.section}>
-          <div className={styles.bookingIntro}>
-            <Eyebrow tone="on-blue">Rezervace</Eyebrow>
-            <Heading level={2} size="section" style={{ color: "#fff" }}>
-              Vyberte si den a čas.
-            </Heading>
-            <Text tone="on-blue" lead>
-              Klikněte na den, potom na začátek a konec úseku a zaškrtněte služby. Obsazené časy jsou přeškrtnuté.
-            </Text>
+          <div className={styles.bookingCta}>
+            <div className={styles.bookingIntro} style={{ marginBottom: 0 }}>
+              <Eyebrow tone="on-blue">Rezervace</Eyebrow>
+              <Heading level={2} size="section" style={{ color: "#fff" }}>
+                Vyberte si den a čas.
+              </Heading>
+              <Text tone="on-blue" lead>
+                V kalendáři kliknete na den, potom na začátek a konec úseku a zaškrtnete služby. Celé to zabere minutu.
+              </Text>
+            </div>
+            <div className={styles.bookingCtaSide}>
+              <span className={styles.bookingCtaNext}>
+                <span>Nejbližší volný termín</span>
+                <strong>{nextFree}</strong>
+              </span>
+              <Button variant="light" icon="arrow-up-right" onClick={() => setBookingOpen(true)}>
+                Otevřít rezervaci
+              </Button>
+            </div>
           </div>
-          <BookingForm packages={packages} onToast={showToast} onNextFree={setNextFree} onSentChange={setSent} />
         </Container>
+      </div>
+
+      <div className={styles.bookingModal} hidden={!bookingOpen} role="dialog" aria-modal="true" aria-label="Rezervace termínu">
+        <div className={styles.bookingModalBackdrop} onClick={() => setBookingOpen(false)} />
+        <div className={styles.bookingModalPanel}>
+          <div className={styles.bookingModalHead}>
+            <div>
+              <Eyebrow tone="on-blue">Rezervace</Eyebrow>
+              <Heading level={2} size="card" style={{ color: "#fff", marginTop: 6 }}>
+                Vyberte si den a čas.
+              </Heading>
+            </div>
+            <button type="button" className={styles.bookingModalClose} onClick={() => setBookingOpen(false)} aria-label="Zavřít rezervaci">
+              <Icon name="close" size={18} stroke={2} />
+            </button>
+          </div>
+          <div className={styles.bookingModalBody}>
+            <BookingForm packages={packages} onToast={showToast} onNextFree={setNextFree} onSentChange={setSent} />
+          </div>
+        </div>
       </div>
 
       <Container as="section" id="faq" className={styles.section}>
@@ -330,11 +407,18 @@ export default function Home() {
         </div>
       </Container>
 
-      <Footer logo={<Wordmark size={20} />} tagline="Mobilní detailing · Ostrava a okolí" note="© 2026 Home Detailing. Všechna práva vyhrazena." />
-
-      <Link href="/admin" className="admin-corner-link">
-        Admin panel
-      </Link>
+      <Footer
+        logo={<Wordmark size={20} />}
+        tagline="Mobilní detailing · Ostrava a okolí"
+        note={
+          <>
+            © 2026 Home Detailing. Všechna práva vyhrazena. ·{" "}
+            <Link href="/admin" className={styles.footerLink}>
+              Administrace
+            </Link>
+          </>
+        }
+      />
 
       {scrolled && !sent && (
         <a href="#rezervace" className={styles.floatingCta}>

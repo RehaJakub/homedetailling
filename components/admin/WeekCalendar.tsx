@@ -22,6 +22,8 @@ export type WeekCalendarProps = {
   onCreateAt: (date: string, slot: number) => void;
   /** Drop handler: the booking was dragged to another day and/or time. */
   onMove?: (booking: Booking, target: { date: string; slotStart: number; slotEnd: number }) => void;
+  /** Snap for click-to-create and dragging, in quarter-hour slots (booking step from settings). */
+  stepSlots?: number;
 };
 
 type Drag = {
@@ -36,7 +38,7 @@ const HEADER_COLUMN = 56;
 const DRAG_THRESHOLD = 4;
 
 /** Week grid: 15 min = 13px, overlapping bookings side by side, conflict stripe, now-line, click to create, drag to move. */
-export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, focusDay, onWeekChange, onFocusDay, onOpen, onCreateAt, onMove }: WeekCalendarProps) {
+export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, focusDay, onWeekChange, onFocusDay, onOpen, onCreateAt, onMove, stepSlots = 1 }: WeekCalendarProps) {
   const { openSlot: open, closeSlot: close, workDays } = settings;
   const rows = close - open;
   const weekIso = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
@@ -61,7 +63,8 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
       const colWidth = (rect.width - HEADER_COLUMN) / columns.length;
       const col = Math.min(columns.length - 1, Math.max(0, Math.floor((ev.clientX - rect.left - HEADER_COLUMN) / colWidth)));
       const length = d.booking.slotEnd - d.booking.slotStart;
-      const slotStart = Math.min(close - length, Math.max(open, d.booking.slotStart + Math.round(dy / PX)));
+      const snapped = Math.round(dy / PX / stepSlots) * stepSlots;
+      const slotStart = Math.min(close - length, Math.max(open, d.booking.slotStart + snapped));
       setDrag({ ...d, target: { col, slotStart } });
     };
     const finish = (ev: PointerEvent) => {
@@ -91,7 +94,7 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
       window.removeEventListener("pointercancel", finish);
       window.removeEventListener("keydown", onKey);
     };
-  }, [drag, onMove, onOpen, visible, open, close]);
+  }, [drag, onMove, onOpen, visible, open, close, stepSlots]);
   const now = new Date();
   const nowSlot = slotOf(now);
   const nowTop = (nowSlot - open) * PX + Math.floor(((now.getMinutes() % 15) / 15) * PX);
@@ -192,7 +195,7 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
                 }}
                 onClick={(ev) => {
                   if (ev.target !== ev.currentTarget) return;
-                  const q = open + Math.floor(ev.nativeEvent.offsetY / (PX * 4)) * 4;
+                  const q = open + Math.floor(ev.nativeEvent.offsetY / (PX * stepSlots)) * stepSlots;
                   onCreateAt(iso, q);
                 }}
               >

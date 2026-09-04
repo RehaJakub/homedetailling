@@ -1,5 +1,5 @@
 "use client";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "../actions/Button";
 import { Icon } from "../content/Icon";
 
@@ -19,6 +19,10 @@ export type SiteHeaderProps = {
   cta?: SiteHeaderLink;
   /** Accessible label for the mobile menu toggle. */
   menuLabel?: string;
+  /** Keep the header pinned to the top while scrolling (white bar with a hairline once scrolled). */
+  sticky?: boolean;
+  /** `href` of the link that matches the section currently in view. */
+  activeHref?: string;
 };
 
 /**
@@ -31,10 +35,21 @@ export function SiteHeader({
   links,
   cta,
   menuLabel = "Menu",
+  sticky = false,
+  activeHref,
 }: SiteHeaderProps) {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
-  return (
+  useEffect(() => {
+    if (!sticky) return;
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [sticky]);
+
+  const header = (
     <header className="hd-header hd-container">
       <a href={logoHref} className="hd-header__logo" aria-label={logoLabel}>
         {logo}
@@ -52,7 +67,13 @@ export function SiteHeader({
 
       <nav className={open ? "hd-header__nav hd-header__nav--open" : "hd-header__nav"}>
         {links.map((link) => (
-          <a key={link.href} href={link.href} className="hd-header__link" onClick={() => setOpen(false)}>
+          <a
+            key={link.href}
+            href={link.href}
+            className={link.href === activeHref ? "hd-header__link hd-header__link--active" : "hd-header__link"}
+            aria-current={link.href === activeHref ? "true" : undefined}
+            onClick={() => setOpen(false)}
+          >
             {link.label}
           </a>
         ))}
@@ -64,4 +85,7 @@ export function SiteHeader({
       </nav>
     </header>
   );
+
+  if (!sticky) return header;
+  return <div className={scrolled ? "hd-header-bar hd-header-bar--scrolled" : "hd-header-bar"}>{header}</div>;
 }
