@@ -23,7 +23,7 @@ body {
   color: var(--hd-black);
   background: var(--hd-white);
   font-family: var(--hd-font-sans);
-  overflow-x: hidden;
+  /* No overflow here: it would turn <body> into its own scroll container and break the sticky header. */
 }
 
 a {
@@ -40,29 +40,12 @@ main {
   display: block;
   width: 100%;
   min-height: 100vh;
-  overflow: hidden;
+  overflow: clip;
 }
 
-.admin-corner-link {
-  position: fixed;
-  right: 8px;
-  bottom: 8px;
-  z-index: 30;
-  padding: 5px 7px;
-  color: rgb(104 112 128 / 42%);
-  background: rgb(255 255 255 / 70%);
-  font-size: 9px;
-  line-height: 1;
-  opacity: 0.55;
-  transition:
-    opacity 180ms ease,
-    color 180ms ease;
-}
-
-.admin-corner-link:hover,
-.admin-corner-link:focus-visible {
-  color: var(--hd-black);
-  opacity: 1;
+/* Anchored sections stop below the sticky header. */
+[id] {
+  scroll-margin-top: 96px;
 }
 
 /* MOTION */

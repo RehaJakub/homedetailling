@@ -55,6 +55,13 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
   const [hov, setHov] = useState<number | null>(null);
   const [services, setServices] = useState<string[]>([]);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const slotsRef = useRef<HTMLDivElement>(null);
+  const servicesRef = useRef<HTMLDivElement>(null);
+  const narrow = () => typeof window !== "undefined" && window.innerWidth < 900;
+  const scrollTo = (el: HTMLElement | null) => {
+    if (el && narrow()) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [sentSummary, setSentSummary] = useState("");
@@ -114,15 +121,17 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
   const estimate = estimateSlots(services, packages);
   const busy = day ? busyOf(day) : null;
   const dayOpen = busy !== null;
-  const isBusy = (i: number) => busy === null || isSlotBusy(i, busy);
-  // b is the last selected slot (inclusive); the booking end is b + 1.
-  const n = a !== null && b !== null ? b - a + 1 : 0;
-  const end = a !== null && b !== null ? b + 1 : null;
+  // Booking step from the admin settings: one grid cell = `step` quarter-hour slots.
+  const step = Math.max(1, Math.round(settings.stepMinutes / 15));
+  const isBusy = (i: number) => busy === null || Array.from({ length: step }, (_, k) => i + k).some((q) => q >= settings.closeSlot || isSlotBusy(q, busy));
+  // b is the first slot of the last selected cell (inclusive); the booking end is b + step.
+  const n = a !== null && b !== null ? b - a + step : 0;
+  const end = a !== null && b !== null ? b + step : null;
   const tooShort = n > 0 && estimate > 0 && n < estimate;
   // Can the range be stretched to the estimate without hitting a busy slot or closing time?
-  const extendedEnd = a !== null ? a + estimate : null;
+  const extendedEnd = a !== null ? a + Math.ceil(estimate / step) * step : null;
   const canExtend =
-    tooShort && a !== null && extendedEnd !== null && extendedEnd <= settings.closeSlot && Array.from({ length: estimate }, (_, k) => a + k).every((i) => !isBusy(i));
+    tooShort && a !== null && extendedEnd !== null && extendedEnd <= settings.closeSlot && Array.from({ length: (extendedEnd - a) / step }, (_, k) => a + k * step).every((i) => !isBusy(i));
 
   function pickDay(iso: string) {
     setDay(iso);
@@ -130,6 +139,7 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
     setB(null);
     setHov(null);
     setError("");
+    setTimeout(() => scrollTo(slotsRef.current), 50);
   }
 
   function pickSlot(i: number) {
@@ -144,7 +154,7 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
       setA(i);
       return;
     }
-    for (let k = a; k <= i; k++) {
+    for (let k = a; k <= i; k += step) {
       if (isBusy(k)) {
         onToast(`Mezi začátkem a koncem je obsazený čas. Začínáme znovu od ${slotLabel(i)}.`, "alert");
         setA(i);
@@ -154,7 +164,8 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
     }
     setB(i);
     setError("");
-    onToast(`Termín vybrán: ${dayLabel(day)} ${slotLabel(a)} – ${slotLabel(i + 1)}`, "calendar");
+    onToast(`Termín vybrán: ${dayLabel(day)} ${slotLabel(a)} – ${slotLabel(i + step)}`, "calendar");
+    setTimeout(() => scrollTo(servicesRef.current), 50);
   }
 
   function changeServices(next: string[]) {
@@ -220,11 +231,12 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
 
   const slots = [];
   if (busy && day) {
-    for (let i = settings.openSlot; i < settings.closeSlot; i++) {
+    const starts = Array.from({ length: Math.floor((settings.closeSlot - settings.openSlot) / step) }, (_, k) => settings.openSlot + k * step);
+    for (const i of starts) {
       const slotBusy = isBusy(i);
       const inSel = a !== null && (b !== null ? i >= a && i <= b : i === a);
       const inHov = a !== null && b === null && hov !== null && i > a && i <= hov;
-      // Slots the estimate would still need beyond the chosen end.
+      // Cells the estimate would still need beyond the chosen end.
       const wanted = tooShort && a !== null && end !== null && i >= end && i < a + estimate && !slotBusy;
       slots.push(
         <button
@@ -236,7 +248,7 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
             if (a !== null && b === null) setHov(i);
           }}
           style={{
-            padding: "10px 0",
+            padding: "12px 0",
             textAlign: "center",
             fontFamily: mono,
             fontSize: 12,
@@ -265,11 +277,11 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
       ? `${dayLabel(day)} · vyberte začátek`
       : b === null
         ? `${dayLabel(day)} · od ${slotLabel(a)} · klikněte na konec`
-        : `${dayLabel(day)} · ${slotLabel(a)} – ${slotLabel(b + 1)}`;
+        : `${dayLabel(day)} · ${slotLabel(a)} – ${slotLabel(b + step)}`;
   const slotHint = !day
     ? "nejdřív vyberte den"
     : a === null
-      ? `${slotLabel(settings.openSlot)} – ${slotLabel(settings.closeSlot)} · krok 15 min`
+      ? `${slotLabel(settings.openSlot)} – ${slotLabel(settings.closeSlot)} · krok ${settings.stepMinutes} min`
       : b === null
         ? "teď zvolte konec"
         : "kliknutím vyberete znovu";
@@ -287,7 +299,7 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
     {
       icon: n ? "check" : "clock",
       label: "02 · Čas",
-      value: n && a !== null && b !== null ? `${slotLabel(a)} – ${slotLabel(b + 1)} · ${durationLabel(n)}` : a !== null ? `od ${slotLabel(a)} · zvolte konec` : "Od – do po 15 min",
+      value: n && a !== null && b !== null ? `${slotLabel(a)} – ${slotLabel(b + step)} · ${durationLabel(n)}` : a !== null ? `od ${slotLabel(a)} · zvolte konec` : `Od – do po ${settings.stepMinutes} min`,
       done: n > 0,
     },
     { icon: services.length ? "check" : "car", label: "03 · Služby", value: services.length ? servicesLabel(services) : "Zaškrtněte služby", done: services.length > 0 },
@@ -297,17 +309,44 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
 
   /* ---- submit ---- */
 
+  function validateFields(fields: Record<string, string>) {
+    const errors: Record<string, string> = {};
+    if (fields.name.trim().split(/\s+/).filter(Boolean).length < 2) errors.name = "Zadejte jméno i příjmení.";
+    if (fields.phone.replace(/\D/g, "").length < 9) errors.phone = "Zadejte telefon včetně předvolby.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email.trim())) errors.email = "Zadejte platný e-mail.";
+    if (!fields.address.trim()) errors.address = "Napište adresu, kde auto stojí.";
+    return errors;
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = event.currentTarget;
     if (!day) {
       onToast("Nejdřív vyberte den v kalendáři.", "alert");
       setError("Vyberte prosím den v kalendáři.");
+      scrollTo(form);
       return;
     }
-    if (a === null || b === null || end === null) return setError("Vyberte prosím čas od a do.");
-    if (!services.length) return setError("Vyberte prosím alespoň jednu službu.");
-    const form = event.currentTarget;
+    if (a === null || b === null || end === null) {
+      setError("Vyberte prosím čas od a do.");
+      scrollTo(slotsRef.current);
+      return;
+    }
+    if (!services.length) {
+      setError("Vyberte prosím alespoň jednu službu.");
+      scrollTo(servicesRef.current);
+      return;
+    }
     const fields = Object.fromEntries(new FormData(form)) as Record<string, string>;
+    const errors = validateFields(fields);
+    setFieldErrors(errors);
+    if (Object.keys(errors).length) {
+      const first = form.querySelector<HTMLElement>(`[name="${Object.keys(errors)[0]}"]`);
+      first?.focus();
+      if (narrow()) first?.scrollIntoView({ behavior: "smooth", block: "center" });
+      setError("");
+      return;
+    }
     const note = shortNote ? `${shortNote} ${fields.note ?? ""}`.trim() : fields.note;
     setSending(true);
     setError("");
@@ -348,7 +387,7 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
         ))}
       </div>
 
-      <form className={styles.bookingForm} onSubmit={submit}>
+      <form className={styles.bookingForm} onSubmit={submit} noValidate>
         <div className={styles.bookingLeft}>
           <div style={{ display: "grid", gap: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
@@ -388,7 +427,9 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
             {day && !dayOpen && <div className={styles.closedDay}>V tento den nejezdíme. Vyberte prosím jiný.</div>}
             {dayOpen && (
               <div
+                ref={slotsRef}
                 className={styles.slots}
+                style={{ gridTemplateColumns: `repeat(${step === 1 ? 8 : step === 2 ? 6 : 4}, minmax(0, 1fr))` }}
                 onMouseLeave={() => {
                   if (hov !== null) setHov(null);
                 }}
@@ -424,7 +465,7 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
           </div>
         </div>
 
-        <div className={styles.bookingRight}>
+        <div className={styles.bookingRight} ref={servicesRef}>
           <span className={styles.stepLabel}>03 · Služby a kontakt</span>
           <ServiceChecklist options={packages} values={services} onChange={changeServices} />
 
@@ -453,11 +494,23 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
           )}
 
           <div className={styles.twoCols}>
-            <Input tone="on-blue" name="name" placeholder="Jméno a příjmení" pattern="\S+(?:\s+\S+)+" title="Zadejte jméno i příjmení." autoComplete="name" required />
-            <Input tone="on-blue" type="tel" name="phone" placeholder="Telefon" minLength={9} autoComplete="tel" required />
+            <div style={{ display: "grid", gap: 6 }}>
+              <Input tone="on-blue" name="name" placeholder="Jméno a příjmení" autoComplete="name" aria-invalid={fieldErrors.name ? "true" : undefined} onChange={() => fieldErrors.name && setFieldErrors((e) => ({ ...e, name: "" }))} />
+              {fieldErrors.name && <span className="hd-field-error hd-field-error--on-blue">{fieldErrors.name}</span>}
+            </div>
+            <div style={{ display: "grid", gap: 6 }}>
+              <Input tone="on-blue" type="tel" name="phone" placeholder="Telefon" autoComplete="tel" aria-invalid={fieldErrors.phone ? "true" : undefined} onChange={() => fieldErrors.phone && setFieldErrors((e) => ({ ...e, phone: "" }))} />
+              {fieldErrors.phone && <span className="hd-field-error hd-field-error--on-blue">{fieldErrors.phone}</span>}
+            </div>
           </div>
-          <Input tone="on-blue" type="email" name="email" placeholder="E-mail" autoComplete="email" required />
-          <Input tone="on-blue" name="address" placeholder="Adresa, kde auto stojí" autoComplete="street-address" required />
+          <div style={{ display: "grid", gap: 6 }}>
+            <Input tone="on-blue" type="email" name="email" placeholder="E-mail" autoComplete="email" aria-invalid={fieldErrors.email ? "true" : undefined} onChange={() => fieldErrors.email && setFieldErrors((e) => ({ ...e, email: "" }))} />
+            {fieldErrors.email && <span className="hd-field-error hd-field-error--on-blue">{fieldErrors.email}</span>}
+          </div>
+          <div style={{ display: "grid", gap: 6 }}>
+            <Input tone="on-blue" name="address" placeholder="Adresa, kde auto stojí" autoComplete="street-address" aria-invalid={fieldErrors.address ? "true" : undefined} onChange={() => fieldErrors.address && setFieldErrors((e) => ({ ...e, address: "" }))} />
+            {fieldErrors.address && <span className="hd-field-error hd-field-error--on-blue">{fieldErrors.address}</span>}
+          </div>
           <Textarea tone="on-blue" name="note" placeholder="Poznámka (typ auta, vchod, cokoliv důležitého)" rows={3} />
           {error && <Notice tone="on-blue">{error}</Notice>}
           <div className={styles.priceRow}>

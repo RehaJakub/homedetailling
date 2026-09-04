@@ -7,8 +7,8 @@ export type FooterProps = {
   logoLabel?: string;
   /** One-line description, e.g. "Mobilní detailing · Ostrava a okolí". */
   tagline: string;
-  /** Copyright or legal line. */
-  note: string;
+  /** Copyright or legal line; may contain links. */
+  note: ReactNode;
 };
 
 /**
