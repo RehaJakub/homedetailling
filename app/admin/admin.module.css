@@ -135,6 +135,25 @@
 
 .stat:hover {
   border-color: #1769ff;
+  background: #f7f9ff;
+}
+
+.statLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1769ff;
+}
+
+.statLink svg {
+  transition: transform 120ms ease;
+}
+
+.stat:hover .statLink svg {
+  transform: translateX(3px);
 }
 
 .stat strong {
@@ -208,6 +227,23 @@
 .calendarFrame {
   border: 1px solid #e1e5eb;
   overflow: hidden;
+  container-type: inline-size;
+}
+
+/* On wide screens the day columns are roomy: show address and note inside the blocks. */
+.event .eventExtra {
+  display: none;
+}
+
+@container (min-width: 1000px) {
+  .event .eventExtra {
+    display: block;
+    margin-top: 2px;
+    padding-top: 4px;
+    border-top: 1px solid rgb(255 255 255 / 25%);
+    font-size: 11px;
+    opacity: 0.85;
+  }
 }
 
 .calendarHead {

@@ -420,7 +420,7 @@ export default function Home() {
         }
       />
 
-      {scrolled && !sent && (
+      {scrolled && !sent && !bookingOpen && activeHref !== "#rezervace" && (
         <a href="#rezervace" className={styles.floatingCta}>
           <span className={styles.pulse} />
           <span className={styles.floatingCtaText}>

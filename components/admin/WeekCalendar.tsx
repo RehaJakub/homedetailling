@@ -248,6 +248,11 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
                       <strong>{e.name}</strong>
                       <span style={{ fontFamily: mono, fontSize: 10, letterSpacing: ".04em" }}>{`${slotLabel(e.slotStart)} – ${slotLabel(e.slotEnd)}`}</span>
                       <span style={{ fontSize: 11, opacity: 0.8 }}>{servicesLabel(e.services)}</span>
+                      {!dayMode && (
+                        <span className={styles.eventExtra} style={{ borderTopColor: e.status === "confirmed" ? "rgb(255 255 255 / 25%)" : "rgb(8 11 18 / 10%)" }}>
+                          {[e.address, e.note].filter(Boolean).join(" · ")}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
