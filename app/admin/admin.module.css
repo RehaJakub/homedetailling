@@ -246,6 +246,30 @@
   transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
+.ghost {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px dashed #080b12;
+  background: rgb(8 11 18 / 8%);
+  color: #080b12;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ghost strong,
+.ghost span {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
 .event strong,
 .event span {
   display: block;

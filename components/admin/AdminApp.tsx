@@ -114,6 +114,32 @@ export function AdminApp({ user }: { user: User }) {
     }
   }
 
+  /** Drag-and-drop in the calendar: move a booking, keep its length, offer undo. */
+  async function moveBooking(r: Booking, target: { date: string; slotStart: number; slotEnd: number }) {
+    try {
+      const { reservation } = await api.updateBooking(r.id, { date: target.date, a: target.slotStart, b: target.slotEnd });
+      setBookings((list) => list.map((x) => (x.id === r.id ? reservation : x)));
+      const conf = conflictsOf(reservation, bookings.filter((x) => x.id !== r.id)).length > 0;
+      toast({
+        tone: conf ? "warn" : "ok",
+        icon: conf ? "alert" : "calendar",
+        title: conf ? "Přesunuto s překryvem" : "Objednávka přesunuta",
+        text: `${r.name} · ${dayLabel(reservation.date)} ${slotLabel(reservation.slotStart)} – ${slotLabel(reservation.slotEnd)}`,
+        actionLabel: "Vrátit",
+        action: async () => {
+          try {
+            const { reservation: restored } = await api.updateBooking(r.id, { date: r.date, a: r.slotStart, b: r.slotEnd });
+            setBookings((list) => list.map((x) => (x.id === r.id ? restored : x)));
+          } catch (e) {
+            fail(e);
+          }
+        },
+      });
+    } catch (e) {
+      fail(e);
+    }
+  }
+
   async function setStatus(r: Booking, status: BookingStatus) {
     try {
       const { reservation } = await api.updateBooking(r.id, { status });
@@ -345,7 +371,7 @@ export function AdminApp({ user }: { user: User }) {
               )}
               <span style={{ fontSize: 12, color: "#687080", lineHeight: 1.6, display: "flex", gap: 8, alignItems: "flex-start" }}>
                 <Icon name="info" size={14} style={{ marginTop: 2 }} />
-                Tip: v kalendáři klikněte do volného místa a rovnou založíte zakázku na ten čas.
+                Tip: v kalendáři klikněte do volného místa a založíte zakázku na ten čas. Zakázky lze chytit a přetáhnout na jiný čas nebo den.
               </span>
             </aside>
 
@@ -364,6 +390,7 @@ export function AdminApp({ user }: { user: User }) {
                   onFocusDay={setFocusDay}
                   onOpen={openEdit}
                   onCreateAt={(date, slot) => canEdit && openEdit(null, { date, a: slot })}
+                  onMove={canEdit ? moveBooking : undefined}
                 />
               )}
               {tab === "orders" && (
