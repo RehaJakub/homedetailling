@@ -9,7 +9,7 @@ function validId(value: string) {
 }
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
-  const auth = await requireUser(["admin", "manager"]);
+  const auth = await requireUser(request, ["admin", "manager"]);
   if (auth.error) return auth.error;
   const id = validId((await context.params).id);
   if (!id) return Response.json({ error: "Neplatné ID rezervace." }, { status: 400 });
@@ -20,8 +20,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   return Response.json({ reservation: updated[0] });
 }
 
-export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
-  const auth = await requireUser(["admin", "manager"]);
+export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
+  const auth = await requireUser(request, ["admin", "manager"]);
   if (auth.error) return auth.error;
   const id = validId((await context.params).id);
   if (!id) return Response.json({ error: "Neplatné ID rezervace." }, { status: 400 });

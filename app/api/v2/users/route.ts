@@ -6,15 +6,15 @@ import { validEmail } from "@/lib/validation";
 
 const roles: Role[] = ["admin", "manager", "viewer"];
 
-export async function GET() {
-  const auth = await requireUser(["admin"]);
+export async function GET(request: Request) {
+  const auth = await requireUser(request, ["admin"]);
   if (auth.error) return auth.error;
   const rows = await db.select({ id: users.id, name: users.name, email: users.email, role: users.role, active: users.active, createdAt: users.createdAt }).from(users).orderBy(asc(users.name));
   return Response.json({ users: rows });
 }
 
 export async function POST(request: Request) {
-  const auth = await requireUser(["admin"]);
+  const auth = await requireUser(request, ["admin"]);
   if (auth.error) return auth.error;
   const body = (await request.json()) as Record<string, unknown>;
   const name = String(body.name ?? "").trim();

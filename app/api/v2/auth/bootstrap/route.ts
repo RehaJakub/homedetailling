@@ -1,7 +1,7 @@
 import { count } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
-import { createSessionToken, hashPassword, sessionCookieName, sessionCookieOptions } from "@/lib/auth";
+import { createSessionToken, hashPassword, sessionCookieHeader } from "@/lib/auth";
 import { validEmail } from "@/lib/validation";
 
 export async function GET() {
@@ -25,6 +25,6 @@ export async function POST(request: Request) {
   const [user] = await db.insert(users).values({ name, email, passwordHash: await hashPassword(password), role: "admin" }).returning();
   const token = await createSessionToken(user);
   const response = Response.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role } }, { status: 201 });
-  response.headers.append("Set-Cookie", `${sessionCookieName}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${sessionCookieOptions.maxAge}${sessionCookieOptions.secure ? "; Secure" : ""}`);
+  response.headers.append("Set-Cookie", sessionCookieHeader(token));
   return response;
 }

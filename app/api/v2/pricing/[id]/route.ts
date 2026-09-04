@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { parsePricePackage } from "@/lib/validation";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
-  const auth = await requireUser(["admin", "manager"]);
+  const auth = await requireUser(request, ["admin", "manager"]);
   if (auth.error) return auth.error;
   const id = Number((await context.params).id);
   const parsed = parsePricePackage((await request.json()) as Record<string, unknown>);

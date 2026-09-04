@@ -4,8 +4,8 @@ import { reservations } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth";
 import { parseReservation } from "@/lib/validation";
 
-export async function GET() {
-  const auth = await requireUser(["admin", "manager", "viewer"]);
+export async function GET(request: Request) {
+  const auth = await requireUser(request, ["admin", "manager", "viewer"]);
   if (auth.error) return auth.error;
   return Response.json({ reservations: await db.select().from(reservations).orderBy(desc(reservations.createdAt), desc(reservations.id)) });
 }

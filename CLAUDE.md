@@ -8,48 +8,58 @@ Mobile car detailing service (Ostrava). Public landing page with service overvie
 
 - Next.js 16 App Router in `app/` (no `src/`), React 19, TypeScript strict
 - Tailwind v4, configured only through `@import "tailwindcss"` in `app/globals.css` (no `tailwind.config.*`)
-- PostgreSQL 16 via Drizzle ORM + node-postgres (`pg`), migrations by drizzle-kit
-- Auth: HS256 JWT via `jose` in HttpOnly cookie `homedetailing_session`, 8h expiry, scrypt password hashes, roles `admin` / `manager` / `viewer`
-- ESLint 9 flat config, Vitest for unit tests, npm as package manager
-- Path alias `@/*` → repo root (tsconfig and `vitest.config.mts`)
+- Design system `design-system/` (`@homedetailing/ui`): tokens + components used by both pages, imported through the tsconfig path alias; `bun run build:ui` compiles `dist/` only for the Claude Design sync
+- PostgreSQL 16 via Drizzle ORM + node-postgres (`pg`), migrations by drizzle-kit; `lib/db` connects lazily on first query
+- Auth: HS256 JWT via `jose` in HttpOnly cookie `homedetailing_session`, 8h expiry, scrypt password hashes, roles `admin` / `manager` / `viewer`; handlers read the session from the incoming `Request`
+- Bun as package manager and script runner (`bun install`, `bun run …`); Next, tsc and drizzle-kit run on Node underneath. Never `bun --bun`, never `bun test` (that is Bun's runner, not Vitest)
+- ESLint 9 flat config, Vitest with two projects (`unit`, `integration`), `make` as the developer entry point
+- Path aliases `@/*` → repo root, `@homedetailing/ui` → `design-system/src/index.ts` (tsconfig and `vitest.config.mts`)
 
 ## Commands
 
+`make help` lists everything; each target wraps a `bun run` script from `package.json`.
+
 ```
-docker compose up -d postgres   # local DB (see docker-compose.yml)
-npm run dev                     # http://localhost:3000, admin at /admin
-npm run lint
-npx tsc --noEmit
-npm test                        # vitest run
-npm run build
-npm run db:generate             # drizzle-kit generate (after editing lib/db/schema.ts)
-npm run db:migrate              # drizzle-kit migrate (needs DATABASE_URL)
-npm run db:studio
+make setup              # first run: .env from .env.example, bun install, Postgres up, migrate
+make dev                # next dev, http://localhost:3000, admin at /admin
+make check              # bun run lint + bun run typecheck + bun run test:unit
+make test-integration   # route handlers against homedetailing_test (starts Postgres, creates the DB)
+make build              # next build (standalone output)
+make db-generate        # drizzle-kit generate (after editing lib/db/schema.ts)
+make db-migrate         # drizzle-kit migrate against DATABASE_URL from .env
+make db-studio / db-reset / db-up / db-down
+make docker-build       # production image homedetailing/app:local
+make prod-up / prod-down / prod-logs   # compose.prod.yml with .env.production
 ```
 
 ## Layout
 
 - `app/page.tsx` — public landing page (client component); `app/admin/page.tsx` — admin UI
+- `app/api/health/route.ts` — DB-free liveness probe for container healthchecks
 - `app/api/v2/auth/{bootstrap,login,logout,me}` — first-admin bootstrap (gated by `ADMIN_REGISTRATION_CODE`, closes after the first user), session endpoints
 - `app/api/v2/{pricing,reservations,users}` and `[id]` routes — CRUD route handlers
-- `lib/auth.ts` — JWT sign/verify, password hashing, role helpers
-- `lib/db/schema.ts` — single source of truth for tables and enums; `lib/db/index.ts` — pool + drizzle instance
+- `lib/auth.ts` — JWT sign/verify, password hashing, `readCookie`, `currentUser(request)`, `requireUser(request, roles)`, cookie header helpers
+- `lib/db/schema.ts` — single source of truth for tables and enums; `lib/db/index.ts` — lazy `getDb()`, `db` facade, `closeDb()`
 - `lib/validation.ts` — request body parsers (`parseReservation`, `parsePricePackage`, `validEmail`)
+- `tests/integration/` — route handler tests (`helpers.ts`, `setup.ts`, `global-setup.ts`, `env.mts`)
 - `drizzle/` — generated migrations and snapshots, never hand-edited
-- `scripts/migrate-sqlite-to-postgres.mjs` — one-off import from the legacy SQLite DB
+- `scripts/migrate.mjs` — programmatic migrator for the prod stack; `scripts/migrate-sqlite-to-postgres.mjs` — one-off legacy import
+- `compose.yml` — dev Postgres (+ `homedetailing_test` via `docker/postgres/init-test-db.sh`); `compose.prod.yml` + `Dockerfile` — app, Postgres and one-shot migrate service
+- `.design-sync/` — Claude Design sync inputs (config, authored previews, notes, conventions)
+- `.github/workflows/ci.yml` — lint, typecheck, tests, build and Docker image on push/PR
 
 ## Conventions
 
 - Code, identifiers, comments and commit messages in English. UI copy, README and anything the customer sees in Czech.
-- Before touching Next.js-specific APIs (route handlers, `cookies()`, caching, metadata, proxy, server/client boundaries), read the matching guide in `node_modules/next/dist/docs/01-app/` or delegate to the `nextjs-docs-guide` agent. Do not rely on memory of older Next versions.
-- Every `app/api/v2` handler checks the session and role from `lib/auth.ts` before reading or writing data, and parses bodies through `lib/validation.ts`.
-- Schema changes: edit `lib/db/schema.ts`, run `npm run db:generate`, review the SQL, then migrate. Keep `lib/auth.ts` role literals and the `user_role` enum identical.
-- Environment: `DATABASE_URL`, `JWT_SECRET` (at least 32 chars), `ADMIN_REGISTRATION_CODE`. Copy `.env.example` to `.env`; `.env` is git-ignored and must never be committed or printed.
-- Unit tests live next to the module as `lib/<name>.test.ts`; import from `vitest` explicitly (no globals). Test pure logic only; no live Postgres in unit tests.
+- Before touching Next.js-specific APIs (route handlers, caching, metadata, proxy, server/client boundaries), read the matching guide in `node_modules/next/dist/docs/01-app/` or delegate to the `nextjs-docs-guide` agent. Do not rely on memory of older Next versions.
+- Every `app/api/v2` handler receives `request: Request`, checks the session and role through `requireUser(request, roles)` from `lib/auth.ts` before reading or writing data, and parses bodies through `lib/validation.ts`.
+- Schema changes: edit `lib/db/schema.ts`, run `make db-generate`, review the SQL, then `make db-migrate`. Keep `lib/auth.ts` role literals and the `user_role` enum identical. Keep the `outputFileTracingIncludes` entry in `next.config.ts`; the prod image needs `drizzle/` at runtime.
+- Environment: `DATABASE_URL`, `JWT_SECRET` (at least 32 chars), `ADMIN_REGISTRATION_CODE`; optional `TEST_DATABASE_URL`. Copy `.env.example` to `.env` (`bun run` loads it automatically). The prod stack reads `.env.production` (see `.env.production.example`). Neither file is ever committed or printed.
+- Tests: unit tests live next to the module as `lib/<name>.test.ts` (Vitest project `unit`, pure logic, never a DB connection). Integration tests live in `tests/integration/*.test.ts` (project `integration`), call route handlers directly and use only the `homedetailing_test` database. Import from `vitest` explicitly (no globals).
 
 ## Definition of done
 
-`npm run lint`, `npx tsc --noEmit` and `npm test` all pass before work is reported as complete. Run `npm run build` too when routing, config or layout code changed.
+`make check` passes before work is reported as complete. Run `make test-integration` too when route handlers, `lib/auth.ts`, `lib/db/**`, `drizzle/` or `tests/integration/**` changed, and `bun run build` when routing, config or layout code changed.
 
 ## Git
 
@@ -62,5 +72,5 @@ npm run db:studio
 |---|---|
 | `nextjs-docs-guide` | before writing any Next-specific code; returns the current API shape from the bundled docs |
 | `db-migrator` | any schema, enum or migration change |
-| `test-runner` | after a change, to run lint + typecheck + tests, or to write/fix tests |
+| `test-runner` | after a change, to run `make check` (and the integration suite), or to write/fix tests |
 | `code-reviewer` | before handing a branch to the user for commit or merge |

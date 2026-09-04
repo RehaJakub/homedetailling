@@ -7,7 +7,7 @@ import { validEmail } from "@/lib/validation";
 const roles: Role[] = ["admin", "manager", "viewer"];
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
-  const auth = await requireUser(["admin"]);
+  const auth = await requireUser(request, ["admin"]);
   if (auth.error) return auth.error;
   const id = Number((await context.params).id);
   if (!Number.isInteger(id) || id < 1) return Response.json({ error: "Neplatné ID uživatele." }, { status: 400 });
@@ -35,8 +35,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   return Response.json({ user: updated });
 }
 
-export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
-  const auth = await requireUser(["admin"]);
+export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
+  const auth = await requireUser(request, ["admin"]);
   if (auth.error) return auth.error;
   const id = Number((await context.params).id);
   if (!Number.isInteger(id) || id < 1) return Response.json({ error: "Neplatné ID uživatele." }, { status: 400 });
