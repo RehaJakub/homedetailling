@@ -1,0 +1,3 @@
+/* Remote Geist for the standalone design-system bundle. The Next app loads
+   Geist through next/font and sets --font-geist / --font-mono itself. */
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;700;800;900&family=Geist+Mono:wght@700&display=swap");

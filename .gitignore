@@ -52,3 +52,16 @@ next-env.d.ts
 data/*.sqlite
 data/*.sqlite-shm
 data/*.sqlite-wal
+
+# design system build output
+/design-system/dist
+
+# design-sync (claude.ai/design) staged scripts, bundle and machine state
+/.ds-sync/
+/ds-bundle/
+/.design-sync/.cache/
+/.design-sync/learnings/
+/.design-sync/node_modules
+
+# Playwright MCP scratch
+/.playwright-mcp/

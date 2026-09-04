@@ -1,0 +1,74 @@
+{
+  "pkg": "@homedetailing/ui",
+  "globalName": "HomeDetailingUI",
+  "shape": "package",
+  "buildCmd": "npm run build:ui",
+  "tsconfig": "tsconfig.build.json",
+  "cssEntry": "dist/styles.css",
+  "dtsPropsFor": {
+    "Button": "  /** Visual style. `primary` is the blue brand button, `dark` the near-black one, `light` white-on-blue for use on blue surfaces, `ghost` a grey secondary, `danger` / `outline-danger` destructive. */\n  variant?: \"primary\" | \"dark\" | \"light\" | \"ghost\" | \"danger\" | \"outline-danger\";\n  /** `sm` is the compact table-action size. */\n  size?: \"md\" | \"sm\";\n  /** Tighter padding used inside the site header. */\n  nav?: boolean;\n  /** Stretch to the container width. */\n  fullWidth?: boolean;\n  /** Trailing icon; the brand uses the diagonal arrow on calls to action. */\n  icon?: \"none\" | \"arrow-up-right\" | \"arrow-down\";\n  /** Renders an `<a>` instead of a `<button>`. */\n  href?: string;\n  target?: string;\n  /** Defaults to `button`; pass `submit` inside forms. */\n  type?: \"button\" | \"submit\" | \"reset\";\n  disabled?: boolean;\n  onClick?: () => void;\n  children: React.ReactNode;\n  className?: string;\n  id?: string;\n  style?: CSSProperties;",
+    "Input": "  /** `light` white admin input, `on-blue` translucent input for the blue contact band. */\n  tone?: \"light\" | \"on-blue\";\n  /** `checkbox` renders the compact brand-blue checkbox. */\n  type?: \"text\" | \"email\" | \"tel\" | \"password\" | \"number\" | \"date\" | \"search\" | \"checkbox\" | \"hidden\";\n  name?: string;\n  placeholder?: string;\n  value?: string;\n  defaultValue?: string;\n  checked?: boolean;\n  defaultChecked?: boolean;\n  required?: boolean;\n  disabled?: boolean;\n  readOnly?: boolean;\n  minLength?: number;\n  autoComplete?: string;\n  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;\n  className?: string;\n  id?: string;\n  style?: CSSProperties;",
+    "Textarea": "  /** `light` white admin textarea, `on-blue` translucent one for the blue contact band. */\n  tone?: \"light\" | \"on-blue\";\n  name?: string;\n  placeholder?: string;\n  value?: string;\n  defaultValue?: string;\n  required?: boolean;\n  disabled?: boolean;\n  rows?: number;\n  onChange?: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;\n  className?: string;\n  id?: string;\n  style?: CSSProperties;",
+    "Select": "  /** Options rendered as `<option>`s. */\n  options: Array<{ value: string; label: string }>;\n  /** `light` white admin select, `on-blue` translucent one for the blue contact band. */\n  tone?: \"light\" | \"on-blue\";\n  name?: string;\n  value?: string;\n  defaultValue?: string;\n  required?: boolean;\n  disabled?: boolean;\n  onChange?: (event: React.ChangeEvent<HTMLSelectElement>) => void;\n  className?: string;\n  id?: string;\n  style?: CSSProperties;",
+    "Card": "  /** `dashed` marks an \"add new\" card, `panel` is the large elevated admin panel. */\n  variant?: \"default\" | \"dashed\" | \"panel\";\n  /** Optional heading rendered at the top of the card. */\n  title?: string;\n  /** Element to render; `form` turns the card into a form (use with `onSubmit`). */\n  as?: \"div\" | \"section\" | \"form\";\n  onSubmit?: (event: React.FormEvent<HTMLFormElement>) => void;\n  children: React.ReactNode;\n  className?: string;\n  id?: string;\n  style?: CSSProperties;",
+    "Field": "  /** Label text. */\n  label: string;\n  /** `stacked` is the larger login-form label; `inline` puts the label beside a checkbox. */\n  layout?: \"default\" | \"stacked\" | \"inline\";\n  htmlFor?: string;\n  /** The control (`Input`, `Select`, `Textarea`, checkbox). */\n  children: React.ReactNode;\n  className?: string;\n  id?: string;\n  style?: CSSProperties;"
+  },
+  "overrides": {
+    "SiteHeader": {
+      "cardMode": "column"
+    },
+    "Footer": {
+      "cardMode": "column"
+    },
+    "ServiceGrid": {
+      "cardMode": "column"
+    },
+    "DataTable": {
+      "cardMode": "column"
+    },
+    "PriceCard": {
+      "cardMode": "column"
+    },
+    "Container": {
+      "cardMode": "column"
+    },
+    "Dialog": {
+      "cardMode": "column"
+    },
+    "Button": {
+      "cardMode": "column"
+    },
+    "BeforeAfterSlider": {
+      "cardMode": "column"
+    },
+    "Notice": {
+      "cardMode": "column"
+    },
+    "ServiceCard": {
+      "cardMode": "column"
+    },
+    "Field": {
+      "cardMode": "column"
+    },
+    "Input": {
+      "cardMode": "column"
+    },
+    "Select": {
+      "cardMode": "column"
+    },
+    "ServiceDropdown": {
+      "cardMode": "column"
+    },
+    "Textarea": {
+      "cardMode": "column"
+    },
+    "Card": {
+      "cardMode": "column"
+    },
+    "Tabs": {
+      "cardMode": "column"
+    }
+  },
+  "readmeHeader": ".design-sync/conventions.md",
+  "projectId": "0a41195d-8c29-454c-9946-6395fee68c5f"
+}

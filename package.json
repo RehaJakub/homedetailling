@@ -12,7 +12,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "db:migrate:sqlite": "node scripts/migrate-sqlite-to-postgres.mjs"
+    "db:migrate:sqlite": "node scripts/migrate-sqlite-to-postgres.mjs",
+    "build:ui": "npm run build --prefix design-system"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
