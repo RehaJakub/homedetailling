@@ -1,6 +1,13 @@
 "use client";
 import { useState } from "react";
-import { ArrowsHorizontalIcon } from "../internal/icons";
+
+function ArrowsIcon() {
+  return (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="square" strokeLinejoin="miter" aria-hidden="true">
+      <path d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4" />
+    </svg>
+  );
+}
 
 export type BeforeAfterSliderProps = {
   title: string;
@@ -51,7 +58,7 @@ export function BeforeAfterSlider({
 
         <div className="hd-compare__line" style={{ left: `${position}%` }}>
           <span className="hd-compare__handle">
-            <ArrowsHorizontalIcon />
+            <ArrowsIcon />
           </span>
         </div>
 

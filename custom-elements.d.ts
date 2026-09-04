@@ -13,6 +13,7 @@ declare module "react" {
         "disable-zoom"?: boolean;
         "shadow-intensity"?: string;
         "shadow-softness"?: string;
+        "environment-image"?: string;
         exposure?: string;
         "camera-orbit"?: string;
         "field-of-view"?: string;

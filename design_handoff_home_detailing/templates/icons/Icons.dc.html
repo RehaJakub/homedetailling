@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Icon pack" description="Sada 42 čárových ikon Home Detailing (hd-icon web component): navigace, rezervace, služby, administrace, stavy." -->
+<helmet><script src="./ds-base.js"></script><script src="../_shared/icons.js"></script><style>body{margin:0;background:#fff;color:#080b12;font-family:var(--hd-font-sans)}a{color:#1769ff}a:hover{color:#080b12}</style></helmet>
+<div style="max-width:1180px;margin:0 auto;padding:72px 24px 120px;display:grid;gap:48px">
+<div style="display:grid;gap:18px;max-width:680px">
+<x-import component-from-global-scope="HomeDetailingUI.Eyebrow" hint-size="120px,16px">Design system</x-import>
+<x-import component-from-global-scope="HomeDetailingUI.Heading" size="section" hint-size="100%,120px">Ikony <em>Home Detailing.</em></x-import>
+<x-import component-from-global-scope="HomeDetailingUI.Text" tone="muted" lead="{{ true }}" hint-size="100%,60px">Čárové ikony na mřížce 24 px, tah 1,75 px, hranaté konce. Dědí barvu textu. Použití: <code style="font-family:var(--hd-font-mono);font-size:14px;background:#f5f7fa;padding:2px 6px">&lt;hd-icon name="calendar" size="20"&gt;</code></x-import>
+</div>
+<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+<span style="font-family:var(--hd-font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#687080;margin-right:8px">Velikost</span>
+<sc-for list="{{ sizes }}" as="s" hint-placeholder-count="4"><button type="button" onClick="{{ s.pick }}" style="{{ s.style }}">{{ s.label }}</button></sc-for>
+<span style="font-family:var(--hd-font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#687080;margin-left:24px;margin-right:8px">Tah</span>
+<sc-for list="{{ strokes }}" as="s" hint-placeholder-count="3"><button type="button" onClick="{{ s.pick }}" style="{{ s.style }}">{{ s.label }}</button></sc-for>
+<div style="margin-left:auto;width:260px"><x-import component-from-global-scope="HomeDetailingUI.Input" type="search" placeholder="Hledat ikonu…" value="{{ q }}" onChange="{{ setQ }}" hint-size="100%,46px"></x-import></div>
+</div>
+<sc-for list="{{ groups }}" as="g" hint-placeholder-count="5">
+<div style="display:grid;gap:16px">
+<div style="display:flex;align-items:baseline;gap:12px;border-bottom:1px solid #e1e5eb;padding-bottom:10px"><strong style="font-size:16px">{{ g.label }}</strong><span style="font-family:var(--hd-font-mono);font-size:11px;color:#687080">{{ g.count }}</span></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px">
+<sc-for list="{{ g.icons }}" as="i" hint-placeholder-count="8"><button type="button" onClick="{{ i.copy }}" title="Kopírovat název" style="display:grid;gap:12px;justify-items:center;padding:22px 10px 16px;border:1px solid #e1e5eb;background:#fff;cursor:pointer;font:inherit;color:inherit;transition:border-color 120ms" style-hover="border-color:#1769ff;color:#1769ff"><hd-icon name="{{ i.name }}" size="{{ size }}" stroke="{{ stroke }}"></hd-icon><span style="font-family:var(--hd-font-mono);font-size:11px;letter-spacing:.04em;color:#687080">{{ i.name }}</span></button></sc-for>
+</div>
+</div>
+</sc-for>
+<div style="display:grid;gap:18px;padding:32px;background:#080b12;color:#fff">
+<span style="font-family:var(--hd-font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#87909d">V kontextu</span>
+<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+<span style="display:inline-flex;align-items:center;gap:8px;padding:12px 18px;background:#1769ff;font-weight:600;font-size:14px">Rezervovat termín<hd-icon name="arrow-up-right" size="16" stroke="2"></hd-icon></span>
+<span style="display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border:1px solid #29303b;font-size:14px"><hd-icon name="calendar" size="16"></hd-icon>Út 8. 9. · 9:00 – 11:30</span>
+<span style="display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border:1px solid #29303b;font-size:14px"><hd-icon name="pin" size="16"></hd-icon>Nádražní 12, Ostrava</span>
+<span style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;background:#fff;color:#080b12;font-size:13px"><hd-icon name="check-circle" size="16" stroke="2" style="color:#1769ff"></hd-icon>Objednávka uložena</span>
+<span style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;background:#fff;color:#b42318;font-size:13px"><hd-icon name="alert" size="16" stroke="2"></hd-icon>Překryv s jinou zakázkou</span>
+</div>
+</div>
+<sc-if value="{{ copied }}" hint-placeholder-val="{{ false }}"><div style="position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#080b12;color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:13px;box-shadow:var(--hd-shadow-dark)"><hd-icon name="check" size="16" stroke="2" style="color:#1769ff"></hd-icon>Zkopírováno: <code style="font-family:var(--hd-font-mono)">{{ copiedName }}</code></div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { size: 24, stroke: 1.75, q: '', copied: '' };
+  GROUPS = [
+    ['Navigace', ['arrow-up-right', 'arrow-down', 'arrow-left', 'arrow-right', 'chevron-left', 'chevron-right', 'chevron-down', 'menu', 'external', 'close']],
+    ['Rezervace', ['calendar', 'clock', 'pin', 'phone', 'mail', 'user', 'users', 'home', 'wallet', 'tag']],
+    ['Služby', ['car', 'droplet', 'spray', 'sparkle', 'shield', 'star']],
+    ['Administrace', ['plus', 'minus', 'search', 'edit', 'trash', 'undo', 'refresh', 'settings', 'grid', 'list', 'file', 'logout', 'bell']],
+    ['Stavy', ['check', 'check-circle', 'info', 'alert']]
+  ];
+  renderVals() {
+    const S = this.state, mono = 'var(--hd-font-mono)';
+    const chip = (on) => ({ padding: '8px 12px', border: '1px solid ' + (on ? '#1769ff' : '#e1e5eb'), background: on ? '#1769ff' : '#fff', color: on ? '#fff' : '#080b12', fontFamily: mono, fontSize: 12, cursor: 'pointer' });
+    const q = S.q.trim().toLowerCase();
+    return {
+      size: String(S.size), stroke: String(S.stroke), q: S.q, setQ: (e) => this.setState({ q: e.target.value }),
+      sizes: [16, 20, 24, 32].map(n => ({ label: n + ' px', style: chip(S.size === n), pick: () => this.setState({ size: n }) })),
+      strokes: [1.5, 1.75, 2].map(n => ({ label: String(n), style: chip(S.stroke === n), pick: () => this.setState({ stroke: n }) })),
+      groups: this.GROUPS.map(([label, names]) => { const list = names.filter(n => !q || n.includes(q)); return { label, count: list.length + ' ikon', icons: list.map(name => ({ name, copy: () => { try { navigator.clipboard.writeText('<hd-icon name="' + name + '"></hd-icon>'); } catch (e) {} this.setState({ copied: name }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ copied: '' }), 1800); } })) }; }).filter(g => g.icons.length),
+      copied: !!S.copied, copiedName: S.copied
+    };
+  }
+}
+</script>
+</body>
+</html>
