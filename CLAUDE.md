@@ -50,7 +50,7 @@ make prod-up / prod-down / prod-logs   # compose.prod.yml with .env.production
 - `scripts/seed.ts` — local dummy data (`make seed`, refuses non-local databases); `scripts/migrate.mjs` — programmatic migrator for the prod stack; `scripts/migrate-sqlite-to-postgres.mjs` — one-off legacy import
 - `compose.yml` — dev Postgres (+ `homedetailing_test` via `docker/postgres/init-test-db.sh`); `compose.prod.yml` + `Dockerfile` — app, Postgres and one-shot migrate service
 - `.design-sync/` — Claude Design sync inputs (config, authored previews, notes, conventions)
-- `.github/workflows/ci.yml` — lint, typecheck, tests, build and Docker image on push/PR
+- `.github/workflows/ci.yml` — lint, typecheck, tests, build and Docker image on push/PR; on `main` it also pushes the image to GHCR and runs the `deploy` job on the self-hosted runner in LXC ct302 (`scripts/deploy/install-runner.sh`; secrets only in `/opt/homedetailing/.env.production` on the runner)
 
 ## Conventions
 
