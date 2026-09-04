@@ -6,7 +6,7 @@ export function Pricing() {
   return (
     <div style={grid}>
       <PriceCard name="Exteriér" price="Domluvou" showCurrency={false} items={['Čištění kol', 'Umytí rukavicí', 'Voskování', 'Čištění vnějších skel']} />
-      <PriceCard featured name="Interiér" price="1 500" items={['Koberce látkové a gumové', 'Plasty', 'Vysávání', 'Vnitřní okna', 'Čištění kůže a impregnace', 'Stropnice po domluvě']} />
+      <PriceCard featured name="Interiér" price="1 500" duration="cca 2 h 30 min" items={['Koberce látkové a gumové', 'Plasty', 'Vysávání', 'Vnitřní okna', 'Čištění kůže a impregnace', 'Stropnice po domluvě']} />
       <PriceCard name="Tepování" price="500" items={['Tepování koberců po domluvě', 'Tepování sedaček']} />
     </div>
   );

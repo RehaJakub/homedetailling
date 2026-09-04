@@ -12,6 +12,16 @@ function slot(value: unknown) {
 }
 
 /**
+ * Ticked package names: `services` (array) or the legacy single `service`
+ * string. Trimmed, de-duplicated, at most 12 × 80 chars; `null` when empty.
+ */
+export function parseServices(body: Record<string, unknown>) {
+  const raw = Array.isArray(body.services) ? body.services : body.service !== undefined ? [body.service] : [];
+  const services = [...new Set(raw.map((v) => text(v).slice(0, 80)).filter(Boolean))].slice(0, 12);
+  return services.length ? services : null;
+}
+
+/**
  * Contact + slot payload of a reservation. `slotStart`/`slotEnd` are
  * quarter-hour indices with `slotEnd` exclusive (also accepted as `a`/`b`).
  */
@@ -19,10 +29,10 @@ export function parseReservation(body: Record<string, unknown>) {
   const name = text(body.name);
   const phone = text(body.phone);
   const email = text(body.email).toLowerCase();
-  const service = text(body.service);
+  const services = parseServices(body);
   const address = text(body.address);
   const note = text(body.note);
-  if (!name || !phone || !email || !service || !address) return null;
+  if (!name || !phone || !email || !services || !address) return null;
   if (name.split(/\s+/).length < 2 || phone.replace(/\D/g, "").length < 9) return null;
   if (!validEmail(email)) return null;
   const when = parseSlotRange(body);
@@ -31,7 +41,7 @@ export function parseReservation(body: Record<string, unknown>) {
     name: name.slice(0, 120),
     phone: phone.slice(0, 40),
     email: email.slice(0, 254),
-    service: service.slice(0, 80),
+    services,
     address: address.slice(0, 240),
     note: note.slice(0, 1000),
     ...when,
@@ -53,7 +63,7 @@ export function parseSlotRange(body: Record<string, unknown>) {
  */
 export function parseReservationPatch(body: Record<string, unknown>) {
   const patch: Record<string, unknown> = {};
-  const strings: Array<[string, number]> = [["name", 120], ["phone", 40], ["email", 254], ["service", 80], ["address", 240], ["note", 1000]];
+  const strings: Array<[string, number]> = [["name", 120], ["phone", 40], ["email", 254], ["address", 240], ["note", 1000]];
   for (const [key, max] of strings) {
     if (body[key] === undefined) continue;
     const value = text(body[key]).slice(0, max);
@@ -61,6 +71,11 @@ export function parseReservationPatch(body: Record<string, unknown>) {
     if (key === "email" && !validEmail(value)) return null;
     if (key === "name" && value.split(/\s+/).length < 2) return null;
     patch[key] = key === "email" ? value.toLowerCase() : value;
+  }
+  if (body.services !== undefined || body.service !== undefined) {
+    const services = parseServices(body);
+    if (!services) return null;
+    patch.services = services;
   }
   if (body.status !== undefined) {
     if (!bookingStatuses.includes(body.status as BookingStatus)) return null;
@@ -84,7 +99,7 @@ export function parseReservationPatch(body: Record<string, unknown>) {
     name: string;
     phone: string;
     email: string;
-    service: string;
+    services: string[];
     address: string;
     note: string;
     status: BookingStatus;
@@ -99,11 +114,14 @@ export function parsePricePackage(body: Record<string, unknown>) {
   const price = text(body.price);
   const items = Array.isArray(body.items) ? body.items.map(String).map((item) => item.trim()).filter(Boolean) : [];
   if (!name || !price || items.length === 0) return null;
+  const durationMinutes = body.durationMinutes === undefined ? 120 : Number(body.durationMinutes);
+  if (!Number.isInteger(durationMinutes) || durationMinutes < 15 || durationMinutes > 720 || durationMinutes % 15 !== 0) return null;
   return {
     name: name.slice(0, 80),
     price: price.slice(0, 30),
     showCurrency: body.showCurrency !== false,
     featured: body.featured === true,
+    durationMinutes,
     items: items.slice(0, 12),
   };
 }

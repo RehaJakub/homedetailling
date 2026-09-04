@@ -5,7 +5,7 @@ export type Booking = {
   name: string;
   phone: string;
   email: string;
-  service: string;
+  services: string[];
   address: string;
   note: string;
   date: string;
@@ -22,9 +22,13 @@ export type Package = {
   price: string;
   showCurrency: boolean;
   featured: boolean;
+  durationMinutes: number;
   items: string[];
   sortOrder: number;
 };
+
+/** Editable copy of a package in the pricing modal; `items` is newline-separated. */
+export type PriceDraft = { id: number | null; name: string; price: string; items: string; featured: boolean; showCurrency: boolean; durationMinutes: number };
 
 export type Role = "admin" | "manager" | "viewer";
 
@@ -46,7 +50,7 @@ export type Draft = {
   phone: string;
   email: string;
   address: string;
-  service: string;
+  services: string[];
   date: string;
   a: number;
   b: number;
@@ -58,7 +62,7 @@ export type Customer = { email: string; name: string; phone: string; orders: Boo
 
 export type Modal =
   | { type: "edit"; draft: Draft; orig: string | null }
-  | { type: "price"; pd: { id: number | null; name: string; price: string; items: string; featured: boolean; showCurrency: boolean } }
+  | { type: "price"; pd: PriceDraft }
   | { type: "customer"; email: string }
   | { type: "user"; ud: { name: string; email: string; role: Role; password: string } }
   | null;

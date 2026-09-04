@@ -40,9 +40,9 @@ make prod-up / prod-down / prod-logs   # compose.prod.yml with .env.production
 - `app/api/v2/auth/{bootstrap,login,logout,me,password}` — first-admin bootstrap (gated by `ADMIN_REGISTRATION_CODE`, closes after the first user), session endpoints, own-password change
 - `app/api/v2/availability` — public busy slots per day (active bookings widened by the buffer, past blocked); `app/api/v2/settings` — opening hours
 - `app/api/v2/{pricing,reservations,users}` and `[id]` routes — CRUD route handlers; public reservation POST is validated against availability, a staff session may pass `status` and overlap
-- `lib/booking.ts` — pure slot/date helpers, conflict rule (`o.slotStart < r.slotEnd && o.slotEnd > r.slotStart` on the same day among new/confirmed), `busyRanges`, `layoutColumns` for the week calendar; `lib/settings.ts` — settings row + business-timezone "now"
+- `lib/booking.ts` — pure slot/date helpers, service estimates (`estimateSlots`, `freeRunFrom`, `firstStartThatFits`), conflict rule (`o.slotStart < r.slotEnd && o.slotEnd > r.slotStart` on the same day among new/confirmed), `busyRanges`, `layoutColumns` for the week calendar; `lib/settings.ts` — settings row + business-timezone "now"
 - `lib/auth.ts` — JWT sign/verify, password hashing, `readCookie`, `currentUser(request)`, `requireUser(request, roles)`, cookie header helpers
-- `lib/db/schema.ts` — single source of truth for tables and enums (`reservations` carry `date`, `slot_start`/`slot_end` quarter-hour indices, `booking_status`); `lib/db/index.ts` — lazy `getDb()`, `db` facade, `closeDb()`
+- `lib/db/schema.ts` — single source of truth for tables and enums (`reservations` carry `date`, `slot_start`/`slot_end` quarter-hour indices, `booking_status` and a `services` name array; `price_packages.duration_minutes` feeds the estimate); `lib/db/index.ts` — lazy `getDb()`, `db` facade, `closeDb()`
 - `lib/validation.ts` — request body parsers (`parseReservation`, `parseReservationPatch`, `parsePricePackage`, `parseSettings`, `validEmail`)
 - `tests/integration/` — route handler tests (`helpers.ts`, `setup.ts`, `global-setup.ts`, `env.mts`)
 - `drizzle/` — generated migrations and snapshots, never hand-edited

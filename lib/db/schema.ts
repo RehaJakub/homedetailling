@@ -37,7 +37,8 @@ export const reservations = pgTable("reservations", {
   name: varchar("name", { length: 120 }).notNull(),
   phone: varchar("phone", { length: 40 }).notNull(),
   email: varchar("email", { length: 254 }).notNull(),
-  service: varchar("service", { length: 80 }).notNull(),
+  /** Package names the customer ticked; several per booking. */
+  services: jsonb("services").$type<string[]>().notNull().default([]),
   address: varchar("address", { length: 240 }).notNull(),
   note: text("note").notNull().default(""),
   date: date("date").notNull(),
@@ -57,6 +58,8 @@ export const pricePackages = pgTable("price_packages", {
   price: varchar("price", { length: 30 }).notNull(),
   showCurrency: boolean("show_currency").notNull().default(true),
   featured: boolean("featured").notNull().default(false),
+  /** Estimated duration used to derive the booking end; multiples of 15. */
+  durationMinutes: integer("duration_minutes").notNull().default(120),
   items: jsonb("items").$type<string[]>().notNull().default([]),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

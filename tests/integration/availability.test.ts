@@ -22,8 +22,8 @@ describe("GET /api/v2/availability", () => {
     let sunday = day;
     while (weekdayIndex(sunday) !== 6) sunday = addDays(sunday, 1);
     const { cookie } = await loginAs("manager");
-    await POST(jsonRequest("POST", "/api/v2/reservations", { name: "Jana Nováková", phone: "+420777123456", email: "j@example.test", service: "Interiér", address: "Ostrava", date: day, a: 36, b: 48, status: "confirmed" }, cookie));
-    await POST(jsonRequest("POST", "/api/v2/reservations", { name: "Petr Dvořák", phone: "+420777123456", email: "p@example.test", service: "Interiér", address: "Ostrava", date: day, a: 60, b: 64, status: "cancelled" }, cookie));
+    await POST(jsonRequest("POST", "/api/v2/reservations", { name: "Jana Nováková", phone: "+420777123456", email: "j@example.test", services: ["Interiér"], address: "Ostrava", date: day, a: 36, b: 48, status: "confirmed" }, cookie));
+    await POST(jsonRequest("POST", "/api/v2/reservations", { name: "Petr Dvořák", phone: "+420777123456", email: "p@example.test", services: ["Interiér"], address: "Ostrava", date: day, a: 60, b: 64, status: "cancelled" }, cookie));
 
     const body = await json<Availability>(await get(`from=${day}&to=${sunday}`));
     expect(body.settings).toMatchObject({ openSlot: 28, closeSlot: 76, bufferMinutes: 30 });

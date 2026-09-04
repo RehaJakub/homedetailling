@@ -187,3 +187,54 @@ export function priceLabel(price: string, showCurrency = true) {
   if (!showCurrency) return p;
   return /^\d/.test(p) || /^od\s/i.test(p) ? `${p} Kč` : p;
 }
+
+/* ---------- services and estimates ---------- */
+
+export type PackageLike = { name: string; price: string; showCurrency?: boolean; durationMinutes: number };
+
+export function slotsForMinutes(minutes: number) {
+  return Math.max(1, Math.ceil(minutes / 15));
+}
+
+/** Total estimated slots for the ticked package names; 0 when nothing (known) is selected. */
+export function estimateSlots(selected: string[], packages: PackageLike[]) {
+  let total = 0;
+  for (const name of selected) {
+    const pkg = packages.find((p) => p.name === name);
+    if (pkg) total += slotsForMinutes(pkg.durationMinutes);
+  }
+  return total;
+}
+
+/** "Interiér + Tepování" */
+export function servicesLabel(services: string[]) {
+  return services.join(" + ");
+}
+
+/** "Interiér 1 500 Kč · Tepování od 500 Kč" — prices are listed, never summed. */
+export function priceList(selected: string[], packages: PackageLike[]) {
+  return selected
+    .map((name) => {
+      const pkg = packages.find((p) => p.name === name);
+      return pkg ? `${pkg.name} ${priceLabel(pkg.price, pkg.showCurrency ?? true)}` : name;
+    })
+    .join(" · ");
+}
+
+/** Consecutive free slots from `start` until the next busy range or closing time. */
+export function freeRunFrom(start: number, busy: Array<[number, number]>, s: Settings) {
+  let n = 0;
+  for (let i = start; i < s.closeSlot; i++) {
+    if (isSlotBusy(i, busy)) break;
+    n++;
+  }
+  return n;
+}
+
+/** Earliest start whose free run covers `len` slots, or null when the day cannot host them. */
+export function firstStartThatFits(len: number, busy: Array<[number, number]>, s: Settings) {
+  for (let i = s.openSlot; i + len <= s.closeSlot; i++) {
+    if (!isSlotBusy(i, busy) && freeRunFrom(i, busy, s) >= len) return i;
+  }
+  return null;
+}

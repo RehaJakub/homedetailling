@@ -15,12 +15,17 @@ try {
   const reservations = sqlite.prepare("SELECT * FROM reservations ORDER BY id").all();
   const packages = sqlite.prepare("SELECT * FROM price_packages ORDER BY sort_order, id").all();
 
+  // The legacy site stored no appointment time: the booking lands on the day it
+  // was created with a placeholder 9:00–11:00 slot and a note to fix the time.
   for (const row of reservations) {
+    const createdAt = row.created_at ? new Date(row.created_at) : new Date();
+    const date = createdAt.toISOString().slice(0, 10);
+    const note = ["Import ze starého webu, termín upřesnit.", row.note ?? ""].filter(Boolean).join(" ");
     await postgres.query(
-      `INSERT INTO reservations (id, name, phone, email, service, address, note, status, created_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+      `INSERT INTO reservations (id, name, phone, email, services, address, note, date, slot_start, slot_end, status, created_at)
+       VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,$10,$11,$12)
        ON CONFLICT (id) DO NOTHING`,
-      [row.id, row.name, row.phone, row.email ?? "", row.service, row.address ?? "", row.note ?? "", row.status === "hotová" ? "completed" : "active", row.created_at],
+      [row.id, row.name, row.phone, row.email ?? "", JSON.stringify([row.service]), row.address ?? "", note, date, 36, 44, row.status === "hotová" ? "done" : "new", row.created_at],
     );
   }
 

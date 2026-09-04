@@ -1,23 +1,27 @@
 "use client";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Dialog, Icon, Input, Notice, ServiceDropdown, Textarea, type IconName } from "@homedetailing/ui";
+import { Button, Dialog, Icon, Input, Notice, ServiceChecklist, Textarea, type IconName } from "@homedetailing/ui";
 import {
   addDays,
   dayLabel,
   defaultSettings,
   durationLabel,
+  estimateSlots,
   firstFree,
+  firstStartThatFits,
   freeCount,
+  freeRunFrom,
   isSlotBusy,
   MONTHS,
-  priceLabel,
+  priceList,
+  servicesLabel,
   slotLabel,
   toIso,
   type Settings,
 } from "@/lib/booking";
 import styles from "@/app/landing.module.css";
 
-export type PricePackage = { id: number; name: string; price: string; showCurrency: boolean; items: string[]; featured: boolean };
+export type PricePackage = { id: number; name: string; price: string; showCurrency: boolean; items: string[]; featured: boolean; durationMinutes: number };
 type DayInfo = { closed: boolean; busy: Array<[number, number]> };
 type Availability = { settings: Settings; today: string; days: Record<string, DayInfo> };
 
@@ -34,9 +38,9 @@ export type BookingFormProps = {
 };
 
 /**
- * Booking section: month calendar → 15-minute slot grid (from–to range) →
- * service and contact. Availability comes from /api/v2/availability; the
- * selection logic mirrors the design prototype 1:1.
+ * Booking section: month calendar → start slot → ticked services whose
+ * estimated durations (adjustable in 15-minute steps) give the end time.
+ * Warns when the chosen start does not leave enough room and offers fixes.
  */
 export function BookingForm({ packages, onToast, onNextFree, onSentChange }: BookingFormProps) {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
@@ -49,14 +53,12 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
   });
   const [day, setDay] = useState<string | null>(null);
   const [a, setA] = useState<number | null>(null);
-  const [b, setB] = useState<number | null>(null);
-  const [hov, setHov] = useState<number | null>(null);
-  const [service, setService] = useState("");
+  const [services, setServices] = useState<string[]>([]);
+  const [adjust, setAdjust] = useState(0);
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [sentSummary, setSentSummary] = useState("");
-  const formRef = useRef<HTMLFormElement>(null);
 
   const loadRange = useCallback(async (from: string, to: string) => {
     try {
@@ -84,11 +86,10 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
     void loadRange(from, to);
   }, [monthKey, month, today, loadRange]);
 
-  const isBusy = useCallback(
-    (iso: string, slot: number) => {
+  const busyOf = useCallback(
+    (iso: string): Array<[number, number]> | null => {
       const info = days[iso];
-      if (!info || info.closed) return true;
-      return isSlotBusy(slot, info.busy);
+      return !info || info.closed ? null : info.busy;
     },
     [days],
   );
@@ -109,40 +110,41 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
   useEffect(() => onNextFree(nextFreeLabel), [nextFreeLabel, onNextFree]);
   useEffect(() => onSentChange(sent), [sent, onSentChange]);
 
+  /* ---- derived selection ---- */
+
+  const baseEstimate = estimateSlots(services, packages);
+  const estimate = services.length ? Math.max(1, baseEstimate + adjust) : 0;
+  const busy = day ? busyOf(day) : null;
+  const dayOpen = busy !== null;
+  const free = day && busy && a !== null ? freeRunFrom(a, busy, settings) : 0;
+  const fitsHere = a !== null && estimate > 0 && free >= estimate;
+  const bestStart = day && busy && estimate > 0 ? firstStartThatFits(estimate, busy, settings) : null;
+  const shortfall = a !== null && estimate > 0 && !fitsHere;
+  const nothingFits = shortfall && bestStart === null;
+  const bookedSlots = a === null || estimate === 0 ? 0 : Math.min(estimate, Math.max(1, free));
+  const end = a !== null && bookedSlots ? a + bookedSlots : null;
+
   function pickDay(iso: string) {
     setDay(iso);
     setA(null);
-    setB(null);
-    setHov(null);
     setError("");
   }
 
   function pickSlot(i: number) {
-    if (!day || isBusy(day, i)) return;
-    if (a === null || b !== null) {
-      setA(i);
-      setB(null);
-      setError("");
-      return;
-    }
-    if (i < a) {
-      setA(i);
-      return;
-    }
-    for (let k = a; k <= i; k++) {
-      if (isBusy(day, k)) {
-        onToast(`Mezi začátkem a koncem je obsazený čas. Začínáme znovu od ${slotLabel(i)}.`, "alert");
-        setA(i);
-        setB(null);
-        return;
-      }
-    }
-    setB(i);
+    if (!busy || isSlotBusy(i, busy)) return;
+    setA(i);
     setError("");
-    onToast(`Termín vybrán: ${dayLabel(day)} ${slotLabel(a)} – ${slotLabel(i + 1)}`, "calendar");
+    if (estimate) onToast(`Začátek ${slotLabel(i)} · ${dayLabel(day as string)}`, "calendar");
   }
 
-  // Calendar grid
+  function changeServices(next: string[]) {
+    setServices(next);
+    setAdjust(0);
+    setError("");
+  }
+
+  /* ---- calendar grid ---- */
+
   const first = month;
   const offset = (first.getDay() + 6) % 7;
   const daysInMonth = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
@@ -194,37 +196,34 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
     );
   }
   const monthLabel = `${MONTHS[first.getMonth()]} ${first.getFullYear()}`;
-  const dayInfo = day ? days[day] : undefined;
-  const dayOpen = Boolean(day && dayInfo && !dayInfo.closed);
 
-  // Slot grid
+  /* ---- slot grid ---- */
+
   const slots = [];
-  if (dayOpen && day) {
+  if (busy && day) {
     for (let i = settings.openSlot; i < settings.closeSlot; i++) {
-      const busy = isBusy(day, i);
-      const inSel = a !== null && (b !== null ? i >= a && i <= b : i === a);
-      const inHov = a !== null && b === null && hov !== null && i > a && i <= hov;
+      const isBusy = isSlotBusy(i, busy);
+      const isStart = a === i;
+      const inRange = a !== null && end !== null && i > a && i < end;
+      const wanted = a !== null && shortfall && i >= (end ?? a) && i < a + estimate && !isBusy;
       slots.push(
         <button
           key={i}
           type="button"
-          disabled={busy}
+          disabled={isBusy}
           onClick={() => pickSlot(i)}
-          onMouseEnter={() => {
-            if (a !== null && b === null) setHov(i);
-          }}
           style={{
             padding: "10px 0",
             textAlign: "center",
             fontFamily: mono,
             fontSize: 12,
-            border: `1px solid ${inSel ? "#fff" : "rgba(255,255,255,.22)"}`,
-            color: inSel ? "#1769ff" : "#fff",
-            background: inSel ? "#fff" : inHov ? "rgba(255,255,255,.28)" : "transparent",
-            cursor: busy ? "not-allowed" : "pointer",
-            opacity: busy ? 0.3 : 1,
-            textDecoration: busy ? "line-through" : "none",
-            fontWeight: inSel ? 700 : 400,
+            border: `1px solid ${isStart || inRange ? "#fff" : wanted ? "rgba(255,224,224,.8)" : "rgba(255,255,255,.22)"}`,
+            color: isStart || inRange ? "#1769ff" : "#fff",
+            background: isStart || inRange ? "#fff" : wanted ? "rgba(255,255,255,.14)" : "transparent",
+            cursor: isBusy ? "not-allowed" : "pointer",
+            opacity: isBusy ? 0.3 : 1,
+            textDecoration: isBusy ? "line-through" : "none",
+            fontWeight: isStart ? 700 : 400,
             transition: "background 100ms",
             userSelect: "none",
           }}
@@ -235,22 +234,16 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
     }
   }
 
-  const n = a !== null && b !== null ? b - a + 1 : 0;
+  /* ---- labels ---- */
+
   const summary = !day
     ? "Zatím nic nevybráno"
     : a === null
       ? `${dayLabel(day)} · vyberte začátek`
-      : b === null
-        ? `${dayLabel(day)} · od ${slotLabel(a)} · klikněte na konec`
-        : `${dayLabel(day)} · ${slotLabel(a)} – ${slotLabel(b + 1)}`;
-  const pkg = packages.find((p) => p.name === service);
-  const slotHint = !day
-    ? "nejdřív vyberte den"
-    : a === null
-      ? `${slotLabel(settings.openSlot)} – ${slotLabel(settings.closeSlot)} · krok 15 min`
-      : b === null
-        ? "teď zvolte konec"
-        : "kliknutím vyberete znovu";
+      : end === null
+        ? `${dayLabel(day)} · od ${slotLabel(a)} · vyberte služby`
+        : `${dayLabel(day)} · ${slotLabel(a)} – ${slotLabel(end)}`;
+  const slotHint = !day ? "nejdřív vyberte den" : a === null ? `${slotLabel(settings.openSlot)} – ${slotLabel(settings.closeSlot)} · klikněte na začátek` : "konec dopočítáme z odhadu";
 
   const tile = (done: boolean) => ({
     display: "grid",
@@ -263,13 +256,17 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
   const progress: Array<{ icon: IconName; label: string; value: string; done: boolean }> = [
     { icon: day ? "check" : "calendar", label: "01 · Den", value: day ? dayLabel(day) : "Vyberte v kalendáři", done: Boolean(day) },
     {
-      icon: n ? "check" : "clock",
+      icon: end !== null ? "check" : "clock",
       label: "02 · Čas",
-      value: n && a !== null && b !== null ? `${slotLabel(a)} – ${slotLabel(b + 1)} · ${durationLabel(n)}` : a !== null ? `od ${slotLabel(a)} · zvolte konec` : "Od – do po 15 min",
-      done: n > 0,
+      value: a !== null && end !== null ? `${slotLabel(a)} – ${slotLabel(end)} · ${durationLabel(bookedSlots)}` : a !== null ? `od ${slotLabel(a)} · délka podle služeb` : "Vyberte začátek",
+      done: end !== null,
     },
-    { icon: service ? "check" : "car", label: "03 · Služba", value: pkg ? pkg.name : "Vyberte balíček", done: Boolean(service) },
+    { icon: services.length ? "check" : "car", label: "03 · Služby", value: services.length ? servicesLabel(services) : "Zaškrtněte služby", done: services.length > 0 },
   ];
+
+  const shortNote = nothingFits && estimate > 0 ? `Odhad služeb ${durationLabel(estimate)}, rezervován kratší úsek (${durationLabel(bookedSlots)}) – domluvit postup.` : "";
+
+  /* ---- submit ---- */
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -278,19 +275,21 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
       setError("Vyberte prosím den v kalendáři.");
       return;
     }
-    if (a === null || b === null) return setError("Vyberte prosím čas od a do.");
-    if (!service) return setError("Vyberte prosím službu.");
+    if (!services.length) return setError("Vyberte prosím alespoň jednu službu.");
+    if (a === null || end === null) return setError("Vyberte prosím začátek v mřížce časů.");
     const form = event.currentTarget;
+    const fields = Object.fromEntries(new FormData(form)) as Record<string, string>;
+    const note = shortNote ? `${shortNote} ${fields.note ?? ""}`.trim() : fields.note;
     setSending(true);
     setError("");
     const response = await fetch("/api/v2/reservations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...Object.fromEntries(new FormData(form)), date: day, a, b: b + 1 }),
+      body: JSON.stringify({ ...fields, note, services, date: day, a, b: end }),
     });
     setSending(false);
     if (response.ok) {
-      setSentSummary(`${service}, ${summary} (${durationLabel(n)}).`);
+      setSentSummary(`${servicesLabel(services)}, ${summary} (${durationLabel(bookedSlots)}).${shortNote ? " Vybrané služby se do úseku nevejdou celé, ozveme se a domluvíme, jak to rozdělit." : ""}`);
       setSent(true);
       form.reset();
       onToast("Rezervace odeslána. Potvrzení přijde na e-mail.", "check-circle");
@@ -300,7 +299,6 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
       setError(data.error ?? "Rezervaci se nepodařilo odeslat. Zkuste to znovu.");
       if (response.status === 409) {
         setA(null);
-        setB(null);
         void loadRange(day, day);
       }
     }
@@ -320,7 +318,7 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
         ))}
       </div>
 
-      <form ref={formRef} className={styles.bookingForm} onSubmit={submit}>
+      <form className={styles.bookingForm} onSubmit={submit}>
         <div className={styles.bookingLeft}>
           <div style={{ display: "grid", gap: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
@@ -354,20 +352,11 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
 
           <div style={{ display: "grid", gap: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
-              <span className={styles.stepLabel}>02 · Čas od – do</span>
+              <span className={styles.stepLabel}>02 · Začátek</span>
               <span style={{ fontFamily: mono, fontSize: 11, letterSpacing: ".06em", opacity: 0.8 }}>{slotHint}</span>
             </div>
             {day && !dayOpen && <div className={styles.closedDay}>V tento den nejezdíme. Vyberte prosím jiný.</div>}
-            {dayOpen && (
-              <div
-                className={styles.slots}
-                onMouseLeave={() => {
-                  if (hov !== null) setHov(null);
-                }}
-              >
-                {slots}
-              </div>
-            )}
+            {dayOpen && <div className={styles.slots}>{slots}</div>}
             <div className={styles.summary}>
               <div style={{ display: "grid", gap: 2 }}>
                 <span className={styles.stepLabel} style={{ opacity: 0.75 }}>
@@ -376,18 +365,9 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
                 <strong style={{ fontSize: 17 }}>{summary}</strong>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <span style={{ fontFamily: mono, fontSize: 13, whiteSpace: "nowrap" }}>{n ? durationLabel(n) : ""}</span>
+                <span style={{ fontFamily: mono, fontSize: 13, whiteSpace: "nowrap" }}>{bookedSlots ? durationLabel(bookedSlots) : ""}</span>
                 {a !== null && (
-                  <button
-                    type="button"
-                    className={`${styles.iconButton} ${styles.iconButtonSmall}`}
-                    aria-label="Zrušit výběr"
-                    onClick={() => {
-                      setA(null);
-                      setB(null);
-                      setHov(null);
-                    }}
-                  >
+                  <button type="button" className={`${styles.iconButton} ${styles.iconButtonSmall}`} aria-label="Zrušit výběr" onClick={() => setA(null)}>
                     <Icon name="close" size={14} stroke={2} />
                   </button>
                 )}
@@ -397,16 +377,57 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
         </div>
 
         <div className={styles.bookingRight}>
-          <span className={styles.stepLabel}>03 · Služba a kontakt</span>
-          <ServiceDropdown
-            options={packages}
-            value={service}
-            onChange={(name) => {
-              setService(name);
-              setError("");
-            }}
-            placeholder="Vyberte službu"
-          />
+          <span className={styles.stepLabel}>03 · Služby a kontakt</span>
+          <ServiceChecklist options={packages} values={services} onChange={changeServices} />
+
+          <div className={styles.estimateRow}>
+            <div style={{ display: "grid", gap: 2 }}>
+              <span className={styles.stepLabel} style={{ opacity: 0.75 }}>
+                Odhadovaný čas
+              </span>
+              <strong style={{ fontSize: 17 }}>{estimate ? durationLabel(estimate) : "vyberte služby"}</strong>
+            </div>
+            {services.length > 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <button type="button" className={styles.iconButton} aria-label="Zkrátit o 15 minut" disabled={estimate <= 1} onClick={() => setAdjust((v) => v - 1)}>
+                  <Icon name="minus" size={14} stroke={2} />
+                </button>
+                <button type="button" className={styles.iconButton} aria-label="Prodloužit o 15 minut" onClick={() => setAdjust((v) => v + 1)}>
+                  <Icon name="plus" size={14} stroke={2} />
+                </button>
+                {adjust !== 0 && (
+                  <button type="button" className={styles.linkButton} onClick={() => setAdjust(0)}>
+                    vrátit odhad
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {shortfall && !nothingFits && a !== null && (
+            <Notice tone="on-blue" style={{ color: "#fff" }}>
+              Na vybrané služby je potřeba {durationLabel(estimate)}, od {slotLabel(a)} je ale volných jen {durationLabel(free)}.
+              <span className={styles.warnChips}>
+                {bestStart !== null && (
+                  <button type="button" className={styles.warnChip} onClick={() => setA(bestStart)}>
+                    Začít v {slotLabel(bestStart)}
+                  </button>
+                )}
+                {free > 0 && (
+                  <button type="button" className={styles.warnChip} onClick={() => setAdjust(free - baseEstimate)}>
+                    Zkrátit odhad na {durationLabel(free)}
+                  </button>
+                )}
+                <span style={{ opacity: 0.8 }}>nebo vyberte jiný den</span>
+              </span>
+            </Notice>
+          )}
+          {nothingFits && (
+            <Notice tone="on-blue" style={{ color: "#fff" }}>
+              Do tohoto dne se všechny služby ({durationLabel(estimate)}) nevejdou najednou. Rezervujte volný úsek, ozveme se a domluvíme, jak to rozdělit nebo posunout.
+            </Notice>
+          )}
+
           <div className={styles.twoCols}>
             <Input tone="on-blue" name="name" placeholder="Jméno a příjmení" pattern="\S+(?:\s+\S+)+" title="Zadejte jméno i příjmení." autoComplete="name" required />
             <Input tone="on-blue" type="tel" name="phone" placeholder="Telefon" minLength={9} autoComplete="tel" required />
@@ -419,7 +440,7 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
             <span className={styles.stepLabel} style={{ opacity: 0.75 }}>
               Cena
             </span>
-            <strong style={{ fontSize: 20 }}>{pkg ? priceLabel(pkg.price, pkg.showCurrency) : "—"}</strong>
+            <strong style={{ fontSize: 15, textAlign: "right" }}>{services.length ? priceList(services, packages) : "—"}</strong>
           </div>
           <Button type="submit" variant="light" fullWidth icon="arrow-up-right" disabled={sending}>
             {sending ? "Odesílám…" : "Odeslat rezervaci"}
@@ -440,8 +461,8 @@ export function BookingForm({ packages, onToast, onNextFree, onSentChange }: Boo
               setSent(false);
               setDay(null);
               setA(null);
-              setB(null);
-              setService("");
+              setServices([]);
+              setAdjust(0);
             }}
           >
             Rozumím

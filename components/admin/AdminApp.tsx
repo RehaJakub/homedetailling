@@ -3,15 +3,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Card, Dialog, Eyebrow, Field, Heading, Icon, Input, Select, Tabs } from "@homedetailing/ui";
-import { addDays, conflictsOf, dayLabel, defaultSettings, DOW_LONG, fromIso, isActive, slotLabel, STATUS_LABEL, toIso, type BookingStatus, type Settings } from "@/lib/booking";
+import { addDays, conflictsOf, dayLabel, defaultSettings, DOW_LONG, estimateSlots, fromIso, isActive, servicesLabel, slotLabel, STATUS_LABEL, toIso, type BookingStatus, type Settings } from "@/lib/booking";
 import { Wordmark } from "@/components/Wordmark";
 import styles from "@/app/admin/admin.module.css";
 import { api, ApiError, toDraft } from "./api";
 import { OrderModal } from "./OrderModal";
-import { Customers, CustomerModal, groupCustomers, lastOrder, Orders, Overview, PriceModal, PricingPanel, SettingsPanel, type PriceDraft } from "./panels";
+import { Customers, CustomerModal, groupCustomers, lastOrder, Orders, Overview, PriceModal, PricingPanel, SettingsPanel } from "./panels";
 import { ToastStack, useToasts } from "./Toasts";
 import { WeekCalendar } from "./WeekCalendar";
-import { ROLE_LABEL, type Booking, type Draft, type Modal, type Package, type Role, type User } from "./types";
+import { ROLE_LABEL, type Booking, type Draft, type Modal, type Package, type PriceDraft, type Role, type User } from "./types";
 
 type Tab = "overview" | "calendar" | "orders" | "customers" | "pricing" | "settings";
 
@@ -75,25 +75,29 @@ export function AdminApp({ user }: { user: User }) {
 
   /* ---- orders ---- */
 
-  const blankDraft = (date: string, a: number, overrides: Partial<Draft> = {}): Draft => ({
-    id: null,
-    name: "",
-    phone: "",
-    email: "",
-    address: "",
-    service: packages[0]?.name ?? "Interiér",
-    date,
-    a,
-    b: Math.min(settings.closeSlot, a + 8),
-    status: "confirmed",
-    note: "",
-    ...overrides,
-  });
+  const blankDraft = (date: string, a: number, overrides: Partial<Draft> = {}): Draft => {
+    const services = overrides.services ?? (packages[0] ? [packages[0].name] : []);
+    const length = estimateSlots(services, packages) || 8;
+    return {
+      id: null,
+      name: "",
+      phone: "",
+      email: "",
+      address: "",
+      date,
+      a,
+      b: Math.min(settings.closeSlot, a + length),
+      status: "confirmed",
+      note: "",
+      ...overrides,
+      services,
+    };
+  };
   const openEdit = (r: Booking | null, overrides?: Partial<Draft>) =>
     setModal({ type: "edit", orig: r ? JSON.stringify(toDraft(r)) : null, draft: r ? toDraft(r) : blankDraft(today, settings.openSlot + 8, overrides) });
   const patchDraft = (patch: Partial<Draft>) => setModal((m) => (m && m.type === "edit" ? { ...m, draft: { ...m.draft, ...patch } } : m));
 
-  const summary = (r: Booking) => `${r.name} · ${dayLabel(r.date)} ${slotLabel(r.slotStart)} – ${slotLabel(r.slotEnd)} · ${STATUS_LABEL[r.status]}`;
+  const summary = (r: Booking) => `${r.name} · ${dayLabel(r.date)} ${slotLabel(r.slotStart)} – ${slotLabel(r.slotEnd)} · ${servicesLabel(r.services)} · ${STATUS_LABEL[r.status]}`;
 
   async function saveDraft(draft: Draft, status?: BookingStatus) {
     const d = { ...draft, status: status ?? draft.status };
@@ -155,11 +159,16 @@ export function AdminApp({ user }: { user: User }) {
   /* ---- pricing ---- */
 
   const openPrice = (p: Package | null) =>
-    setModal({ type: "price", pd: p ? { id: p.id, name: p.name, price: p.price, items: p.items.join("\n"), featured: p.featured, showCurrency: p.showCurrency } : { id: null, name: "", price: "", items: "", featured: false, showCurrency: true } });
+    setModal({
+      type: "price",
+      pd: p
+        ? { id: p.id, name: p.name, price: p.price, items: p.items.join("\n"), featured: p.featured, showCurrency: p.showCurrency, durationMinutes: p.durationMinutes }
+        : { id: null, name: "", price: "", items: "", featured: false, showCurrency: true, durationMinutes: 120 },
+    });
   const patchPrice = (patch: Partial<PriceDraft>) => setModal((m) => (m && m.type === "price" ? { ...m, pd: { ...m.pd, ...patch } } : m));
 
   async function savePrice(pd: PriceDraft) {
-    const payload = { name: pd.name, price: pd.price, showCurrency: pd.showCurrency, featured: pd.featured, items: pd.items.split("\n").map((s) => s.trim()).filter(Boolean) };
+    const payload = { name: pd.name, price: pd.price, showCurrency: pd.showCurrency, featured: pd.featured, durationMinutes: pd.durationMinutes, items: pd.items.split("\n").map((s) => s.trim()).filter(Boolean) };
     try {
       const { package: saved } = pd.id === null ? await api.createPackage(payload) : await api.updatePackage(pd.id, payload);
       const { packages: fresh } = await api.packages();
@@ -186,7 +195,7 @@ export function AdminApp({ user }: { user: User }) {
         actionLabel: "Vrátit",
         action: async () => {
           try {
-            await api.createPackage({ name: p.name, price: p.price, showCurrency: p.showCurrency, featured: p.featured, items: p.items });
+            await api.createPackage({ name: p.name, price: p.price, showCurrency: p.showCurrency, featured: p.featured, durationMinutes: p.durationMinutes, items: p.items });
             setPackages((await api.packages()).packages);
           } catch (e) {
             fail(e);
@@ -283,7 +292,7 @@ export function AdminApp({ user }: { user: User }) {
     const c = customers.find((x) => x.email === email);
     if (!c) return;
     const last = lastOrder(c);
-    openEdit(null, { name: c.name, phone: c.phone, email: c.email, address: last.address, service: last.service });
+    openEdit(null, { name: c.name, phone: c.phone, email: c.email, address: last.address, services: last.services });
   };
 
   const todayDate = fromIso(today);
@@ -354,7 +363,7 @@ export function AdminApp({ user }: { user: User }) {
                   onWeekChange={setWeekStart}
                   onFocusDay={setFocusDay}
                   onOpen={openEdit}
-                  onCreateAt={(date, slot) => canEdit && openEdit(null, { date, a: slot, b: Math.min(settings.closeSlot, slot + 8) })}
+                  onCreateAt={(date, slot) => canEdit && openEdit(null, { date, a: slot })}
                 />
               )}
               {tab === "orders" && (
