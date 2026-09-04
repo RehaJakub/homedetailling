@@ -26,10 +26,10 @@ export function Overview({
   const todayList = bookings.filter((r) => r.date === today && isActive(r.status)).sort((x, y) => x.slotStart - y.slotStart);
   const conflictCount = bookings.filter((r) => isActive(r.status) && conflictsOf(r, bookings).length).length;
   const stats = [
-    { label: "Čeká na potvrzení", value: newList.length, sub: "nové rezervace z webu", go: () => onGo("orders", "new") },
-    { label: "Dnes", value: todayList.length, sub: "zakázky na dnešek", go: () => onGo("calendar") },
-    { label: "Tento týden", value: bookings.filter((r) => weekIso.includes(r.date) && r.status !== "cancelled").length, sub: `${dayLabel(weekIso[0])} – ${dayLabel(weekIso[6])}`, go: () => onGo("calendar") },
-    { label: "Překryvy", value: conflictCount, sub: conflictCount ? "vyžadují domluvu s klientem" : "kalendář je čistý", go: () => onGo("calendar") },
+    { label: "Čeká na potvrzení", value: newList.length, sub: "nové rezervace z webu", goLabel: "Zobrazit nové", go: () => onGo("orders", "new") },
+    { label: "Dnes", value: todayList.length, sub: "zakázky na dnešek", goLabel: "Otevřít kalendář", go: () => onGo("calendar") },
+    { label: "Tento týden", value: bookings.filter((r) => weekIso.includes(r.date) && r.status !== "cancelled").length, sub: `${dayLabel(weekIso[0])} – ${dayLabel(weekIso[6])}`, goLabel: "Otevřít kalendář", go: () => onGo("calendar") },
+    { label: "Překryvy", value: conflictCount, sub: conflictCount ? "vyžadují domluvu s klientem" : "kalendář je čistý", goLabel: "Zkontrolovat", go: () => onGo("calendar") },
   ];
   return (
     <>
@@ -47,6 +47,10 @@ export function Overview({
             <span className={styles.monoLabel}>{s.label}</span>
             <strong>{s.value}</strong>
             <span style={{ fontSize: 12, color: "#687080" }}>{s.sub}</span>
+            <span className={styles.statLink}>
+              {s.goLabel}
+              <Icon name="arrow-right" size={14} stroke={2} />
+            </span>
           </button>
         ))}
       </div>
