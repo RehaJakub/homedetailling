@@ -2,6 +2,25 @@
 import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
+import {
+  BeforeAfterSlider,
+  Button,
+  Container,
+  Dialog,
+  Eyebrow,
+  Footer,
+  Heading,
+  Input,
+  Notice,
+  PriceCard,
+  ServiceCard,
+  ServiceDropdown,
+  ServiceGrid,
+  SiteHeader,
+  Text,
+  Textarea,
+} from "@homedetailing/ui";
+
 const services = [
   {
     number: "01",
@@ -21,21 +40,9 @@ const services = [
 ];
 
 const gallery = [
-  {
-    title: "Sedadla",
-    description: "Fleky a zašlá látka → Hloubkově vyčištěno",
-    type: "seat",
-  },
-  {
-    title: "Karoserie",
-    description: "Silniční nečistoty → Lesk bez šmouh",
-    type: "body",
-  },
-  {
-    title: "Kufr",
-    description: "Prach a drobky → Čistý každý detail",
-    type: "trunk",
-  },
+  { title: "Sedadla", description: "Fleky a zašlá látka → Hloubkově vyčištěno" },
+  { title: "Karoserie", description: "Silniční nečistoty → Lesk bez šmouh" },
+  { title: "Kufr", description: "Prach a drobky → Čistý každý detail" },
 ];
 
 type PricePackage = {
@@ -52,64 +59,15 @@ const initialPricePackages: PricePackage[] = [
   { id: 3, name: "Tepování", price: "500", showCurrency: true, items: ["Tepování koberců po domluvě", "Tepování sedaček"] },
 ];
 
-function BeforeAfter({
-  title,
-  description,
-  type,
-  index,
-}: {
-  title: string;
-  description: string;
-  type: string;
-  index: number;
-}) {
-  const [position, setPosition] = useState(50);
-
-  return (
-    <article className="comparison">
-      <div className={`comparison-image ${type}`}>
-        <div className="after">
-          <span>PO</span>
-        </div>
-
-        <div
-          className="before"
-          style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
-        >
-          <span>PŘED</span>
-        </div>
-
-        <div className="comparison-line" style={{ left: `${position}%` }}>
-          <b>↔</b>
-        </div>
-
-        <input
-          type="range"
-          min="5"
-          max="95"
-          value={position}
-          aria-label={`Porovnání před a po – ${title}`}
-          onChange={(event) => setPosition(Number(event.target.value))}
-        />
-      </div>
-
-      <div className="comparison-text">
-        <h3>
-          <span>0{index + 1}</span> {title}
-        </h3>
-        <p>{description}</p>
-      </div>
-    </article>
-  );
-}
+const navLinks = [
+  { href: "#sluzby", label: "Služby" },
+  { href: "#galerie", label: "Galerie" },
+  { href: "#cenik", label: "Ceník" },
+];
 
 export default function Home() {
-  const [menu, setMenu] = useState(false);
-  const [reservationState, setReservationState] = useState<
-    "idle" | "saving" | "saved" | "error"
-  >("idle");
+  const [reservationState, setReservationState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [selectedService, setSelectedService] = useState("");
-  const [serviceMenuOpen, setServiceMenuOpen] = useState(false);
   const [pricePackages, setPricePackages] = useState(initialPricePackages);
 
   useEffect(() => {
@@ -126,7 +84,6 @@ export default function Home() {
     const form = event.currentTarget;
     if (!selectedService) {
       setReservationState("error");
-      setServiceMenuOpen(true);
       return;
     }
 
@@ -147,54 +104,35 @@ export default function Home() {
 
   return (
     <main>
-      <header className="header container">
-        <a href="#uvod" className="logo" aria-label="Home Detailing">
-  <Image
-    src="/home-detailing-logo.png"
-    alt="Home Detailing"
-    width={240}
-    height={90}
-    priority
-    className="logo-image"
-  />
-</a>
+      <SiteHeader
+        logo={
+          <Image src="/home-detailing-logo.png" alt="Home Detailing" width={240} height={90} priority />
+        }
+        links={navLinks}
+        cta={{ href: "#kontakt", label: "Objednat termín" }}
+      />
 
-        <button className="menu-button" onClick={() => setMenu(!menu)}>
-          ☰
-        </button>
+      <Container as="section" className="hero" id="uvod">
+        <div>
+          <Eyebrow>Mobilní detailing · Ostrava a okolí</Eyebrow>
 
-        <nav className={menu ? "navigation open" : "navigation"}>
-          <a href="#sluzby">Služby</a>
-          <a href="#galerie">Galerie</a>
-          <a href="#cenik">Ceník</a>
-          <a href="#kontakt" className="nav-button">
-            Objednat termín ↗
-          </a>
-        </nav>
-      </header>
-
-      <section className="hero container" id="uvod">
-        <div className="hero-content">
-          <span className="label">MOBILNÍ DETAILING · OSTRAVA A OKOLÍ</span>
-
-          <h1>
+          <Heading level={1} size="display">
             Čisté auto.
             <br />
             <em>Bez cesty</em> do myčky.
-          </h1>
+          </Heading>
 
-          <p>
-            Přijedeme za vámi domů nebo do práce a postaráme se o interiér
-            i exteriér vašeho auta v Ostravě a okolí.
-          </p>
+          <Text tone="muted" lead>
+            Přijedeme za vámi domů nebo do práce a postaráme se o interiér i exteriér vašeho auta v Ostravě a okolí.
+          </Text>
 
           <div className="buttons">
-            <a href="#kontakt" className="primary-button">
-              Chci čisté auto ↗
-            </a>
-            <a href="#cenik" className="price-link">
-              Zobrazit ceník ↓
-            </a>
+            <Button href="#kontakt" variant="primary" icon="arrow-up-right">
+              Chci čisté auto
+            </Button>
+            <Button href="#cenik" variant="dark" icon="arrow-down">
+              Zobrazit ceník
+            </Button>
           </div>
         </div>
 
@@ -213,69 +151,60 @@ export default function Home() {
             className="car-model"
           />
         </div>
-      </section>
+      </Container>
 
-      <section className="services container" id="sluzby">
+      <Container as="section" className="services" id="sluzby">
         <div className="section-heading">
-          <span className="label">CO UMÍME</span>
-          <h2>
+          <Eyebrow>Co umíme</Eyebrow>
+          <Heading level={2} size="section">
             Kompletní péče.
             <br />
             Přímo <em>u vás.</em>
-          </h2>
-          <p>
+          </Heading>
+          <Text tone="muted" lead>
             Profesionální výsledek bez čekání a bez ztraceného času.
-          </p>
+          </Text>
         </div>
 
-        <div className="service-grid">
+        <ServiceGrid>
           {services.map((service) => (
-            <article key={service.title}>
-              <span>{service.number}</span>
-              <div className="service-icon">✦</div>
-              <h3>{service.title}</h3>
-              <p>{service.text}</p>
-            </article>
+            <ServiceCard key={service.title} {...service} />
           ))}
-        </div>
-      </section>
+        </ServiceGrid>
+      </Container>
 
       <section className="gallery-section" id="galerie">
-        <div className="container">
-          <div className="gallery-heading">
-            <span className="label">VÝSLEDEK MLUVÍ ZA NÁS</span>
-
-            <h2>
+        <Container>
+          <div className="section-heading">
+            <Eyebrow>Výsledek mluví za nás</Eyebrow>
+            <Heading level={2} size="section">
               Rozdíl, který <em>uvidíte.</em>
-            </h2>
-
-            <p>
+            </Heading>
+            <Text tone="on-dark" lead>
               Posuňte jezdec a podívejte se, co dokáže poctivý detailing.
-            </p>
+            </Text>
           </div>
 
           <div className="gallery-grid">
             {gallery.map((item, index) => (
-              <BeforeAfter {...item} index={index} key={item.title} />
+              <BeforeAfterSlider key={item.title} number={`0${index + 1}`} {...item} />
             ))}
           </div>
 
-          <div className="slider-help">
-            ← POSUŇTE JEZDEC A POROVNEJTE →
-          </div>
-        </div>
+          <div className="slider-help">← POSUŇTE JEZDEC A POROVNEJTE →</div>
+        </Container>
       </section>
 
-      <section className="pricing container" id="cenik">
-  <div className="section-heading pricing-heading">
-    <h2>
-      Vyberte péči pro <em>vaše auto.</em>
-    </h2>
-  </div>
+      <Container as="section" className="pricing" id="cenik">
+        <div className="section-heading pricing-heading">
+          <Heading level={2} size="section">
+            Vyberte péči pro <em>vaše auto.</em>
+          </Heading>
+        </div>
 
         <div className="pricing-grid">
           {pricePackages.map((item, index) => (
-            <Price
+            <PriceCard
               key={item.id}
               featured={index === 1}
               name={item.name}
@@ -285,25 +214,26 @@ export default function Home() {
             />
           ))}
         </div>
-      </section>
+      </Container>
 
       <section className="contact" id="kontakt">
-        <div className="container contact-content">
+        <Container className="contact-content">
           <div>
-            <span className="label">AUTO, KTERÉ DĚLÁ RADOST</span>
-            <h2>
+            <Eyebrow tone="on-blue">Auto, které dělá radost</Eyebrow>
+            <Heading level={2} size="section">
               Vy si dejte kávu.
               <br />
               My přijedeme.
-            </h2>
+            </Heading>
           </div>
 
-          <div className="reservation-column">
-            <p>
+          <div>
+            <Text tone="on-blue" size="sm" className="reservation-intro">
               Vyplňte rezervaci. Ozveme se vám s potvrzením termínu a cenou.
-            </p>
+            </Text>
             <form className="reservation-form" onSubmit={createReservation}>
-              <input
+              <Input
+                tone="on-blue"
                 name="name"
                 placeholder="Jméno a příjmení"
                 pattern="\S+(?:\s+\S+)+"
@@ -311,153 +241,60 @@ export default function Home() {
                 autoComplete="name"
                 required
               />
-              <input
-                name="phone"
-                type="tel"
-                placeholder="Telefon"
-                minLength={9}
-                autoComplete="tel"
-                required
+              <Input tone="on-blue" name="phone" type="tel" placeholder="Telefon" minLength={9} autoComplete="tel" required />
+              <Input tone="on-blue" name="email" type="email" placeholder="E-mail" autoComplete="email" required />
+              <ServiceDropdown
+                options={pricePackages}
+                value={selectedService}
+                onChange={(name) => {
+                  setSelectedService(name);
+                  setReservationState("idle");
+                }}
               />
-              <input
-                name="email"
-                type="email"
-                placeholder="E-mail"
-                autoComplete="email"
-                required
-              />
-              <div className="service-dropdown">
-                <input type="hidden" name="service" value={selectedService} />
-                <button
-                  type="button"
-                  className="service-dropdown-trigger"
-                  aria-expanded={serviceMenuOpen}
-                  aria-controls="service-options"
-                  onClick={() => setServiceMenuOpen((open) => !open)}
-                >
-                  <span>
-                    {selectedService || "Vyberte službu"}
-                    {selectedService && (
-                      <small>
-                        {pricePackages.find((item) => item.name === selectedService)?.price}
-                      </small>
-                    )}
-                  </span>
-                  <b aria-hidden="true">⌄</b>
-                </button>
-
-                {serviceMenuOpen && (
-                  <div className="service-dropdown-menu" id="service-options" role="listbox">
-                    {pricePackages.map((service) => (
-                      <button
-                        type="button"
-                        role="option"
-                        aria-selected={selectedService === service.name}
-                        key={service.id}
-                        onClick={() => {
-                          setSelectedService(service.name);
-                          setServiceMenuOpen(false);
-                          setReservationState("idle");
-                        }}
-                      >
-                        <span>{service.name}</span>
-                        <strong>{service.price}{service.showCurrency ? " Kč" : ""}</strong>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <input
+              <Input
+                tone="on-blue"
                 className="full-width"
                 name="address"
                 placeholder="Přesná adresa (ulice, číslo, město)"
                 autoComplete="street-address"
                 required
               />
-              <textarea name="note" placeholder="Poznámka (nepovinná)" />
-              <button type="submit" disabled={reservationState === "saving"}>
-                {reservationState === "saving" ? "Ukládám…" : "Odeslat rezervaci ↗"}
-              </button>
+              <Textarea tone="on-blue" name="note" placeholder="Poznámka (nepovinná)" />
+              <Button type="submit" variant="light" fullWidth icon="arrow-up-right" disabled={reservationState === "saving"}>
+                {reservationState === "saving" ? "Ukládám…" : "Odeslat rezervaci"}
+              </Button>
               {reservationState === "error" && (
-                <span className="reservation-message error">Rezervaci se nepodařilo uložit. Zkuste to znovu.</span>
+                <Notice tone="on-blue">
+                  {selectedService ? "Rezervaci se nepodařilo uložit. Zkuste to znovu." : "Vyberte prosím službu."}
+                </Notice>
               )}
             </form>
           </div>
-        </div>
+        </Container>
       </section>
 
-      <footer className="footer container">
-        <a href="#uvod" className="footer-logo" aria-label="Home Detailing">
-  <Image
-    src="/home-detailing-logo.png"
-    alt="Home Detailing"
-    width={260}
-    height={100}
-    className="footer-logo-image"
-  />
-</a>
-
-        <p>Mobilní detailing · Ostrava a okolí</p>
-        <small>© 2026 Home Detailing</small>
-      </footer>
+      <Footer
+        logo={<Image src="/home-detailing-logo.png" alt="Home Detailing" width={260} height={100} />}
+        tagline="Mobilní detailing · Ostrava a okolí"
+        note="© 2026 Home Detailing"
+      />
 
       <Link href="/admin" className="admin-corner-link">
         Admin panel
       </Link>
 
-      {reservationState === "saved" && (
-        <div className="reservation-modal-backdrop" role="presentation">
-          <section
-            className="reservation-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="reservation-success-title"
-          >
-            <span className="label">REZERVACE ODESLÁNA</span>
-            <h2 id="reservation-success-title">Děkujeme za rezervaci.</h2>
-            <p>Budeme vás kontaktovat ohledně domluvy termínu.</p>
-            <button type="button" onClick={() => setReservationState("idle")}>
-              Rozumím
-            </button>
-          </section>
-        </div>
-      )}
+      <Dialog
+        open={reservationState === "saved"}
+        eyebrow="Rezervace odeslána"
+        title="Děkujeme za rezervaci."
+        actions={
+          <Button type="button" variant="primary" fullWidth onClick={() => setReservationState("idle")}>
+            Rozumím
+          </Button>
+        }
+      >
+        Budeme vás kontaktovat ohledně domluvy termínu.
+      </Dialog>
     </main>
-  );
-}
-
-function Price({
-  name,
-  price,
-  items,
-  featured = false,
-  from = false,
-  showCurrency = true,
-}: {
-  name: string;
-  price: string;
-  items: string[];
-  featured?: boolean;
-  from?: boolean;
-  showCurrency?: boolean;
-}) {
-  return (
-    <article className={featured ? "price-card featured" : "price-card"}>
-      {featured && <span className="popular">NEJOBLÍBENĚJŠÍ</span>}
-      <small>BALÍČEK</small>
-      <h3>{name}</h3>
-
-      <div className="price">
-        {from && "od "}<b>{price}</b>{showCurrency && " Kč"}
-      </div>
-
-      <ul>
-        {items.map((item) => (
-          <li key={item}>✓ {item}</li>
-        ))}
-      </ul>
-
-      <a href="#kontakt">Objednat ↗</a>
-    </article>
   );
 }

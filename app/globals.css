@@ -1,12 +1,8 @@
 @import "tailwindcss";
+@import "../design-system/src/styles.css";
 
-:root {
-  --blue: #1769ff;
-  --black: #080b12;
-  --gray: #687080;
-  --line: #e1e5eb;
-  --white: #ffffff;
-}
+/* Page-level layout for the public site. Component styles live in the
+   design system (design-system/src/styles.css). */
 
 * {
   box-sizing: border-box;
@@ -23,9 +19,9 @@ body {
   width: 100%;
   max-width: 100%;
   margin: 0;
-  color: var(--black);
-  background: var(--white);
-  font-family: var(--font-geist), Arial, sans-serif;
+  color: var(--hd-black);
+  background: var(--hd-white);
+  font-family: var(--hd-font-sans);
   overflow-x: hidden;
 }
 
@@ -46,142 +42,6 @@ main {
   overflow: hidden;
 }
 
-.container {
-  width: min(1180px, calc(100% - 40px));
-  margin-right: auto;
-  margin-left: auto;
-}
-
-/* NAVIGACE */
-
-.header {
-  position: relative;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 86px;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 900;
-}
-
-.logo b {
-  display: grid;
-  width: 38px;
-  height: 38px;
-  place-items: center;
-  color: var(--white);
-  background: var(--blue);
-  font-size: 19px;
-  font-style: italic;
-  transform: skew(-7deg);
-}
-
-.logo span {
-  color: var(--black);
-  font-size: 13px;
-  line-height: 1;
-}
-
-.logo small {
-  display: block;
-  margin-top: 4px;
-  color: var(--blue);
-  font-size: 9px;
-  letter-spacing: 3px;
-}
-
-.navigation {
-  display: flex;
-  align-items: center;
-  gap: 36px;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.navigation > a:not(.nav-button) {
-  transition:
-    color 200ms ease,
-    transform 200ms ease;
-}
-
-.navigation > a:not(.nav-button):hover {
-  color: var(--blue);
-  transform: translateY(-3px);
-}
-
-.menu-button {
-  display: none;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-}
-
-/* VŠECHNA HLAVNÍ TLAČÍTKA */
-
-.nav-button,
-.primary-button,
-.price-link,
-.price-card > a,
-.contact a {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  cursor: pointer;
-  transform: translateY(0);
-  transition:
-    color 220ms ease,
-    background-color 220ms ease,
-    border-color 220ms ease,
-    box-shadow 220ms ease,
-    transform 220ms ease;
-  will-change: transform;
-}
-
-.nav-button {
-  padding: 16px 20px;
-  color: var(--white);
-  background: var(--black);
-}
-
-.primary-button {
-  padding: 18px 22px;
-  color: var(--white);
-  background: var(--blue);
-  box-shadow: 0 14px 30px rgb(23 105 255 / 20%);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.price-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 190px;
-  padding: 18px 22px;
-  border: 0;
-  color: #ffffff;
-  background: #080b12;
-  font-size: 13px;
-  font-weight: 700;
-  box-shadow: 0 14px 30px rgb(8 11 18 / 15%);
-  transform: translateY(0);
-  transition:
-    color 220ms ease,
-    background-color 220ms ease,
-    box-shadow 220ms ease,
-    transform 220ms ease;
-}
-
-
-
 /* ÚVODNÍ SEKCE */
 
 .hero {
@@ -191,48 +51,12 @@ main {
   min-height: 650px;
 }
 
-.label {
-  color: var(--blue);
-  font-family: var(--font-mono), monospace;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 2px;
-}
-
-.hero h1,
-.section-heading h2,
-.gallery-heading h2,
-.contact h2 {
-  margin: 25px 0;
-  font-size: clamp(50px, 7vw, 92px);
-  font-weight: 800;
-  line-height: 0.9;
-  letter-spacing: -6px;
-}
-
-h1 em,
-h2 em {
-  color: var(--blue);
-  font-style: normal;
-}
-
-.hero-content > p,
-.section-heading > p,
-.gallery-heading > p {
-  max-width: 540px;
-  color: var(--gray);
-  font-size: 16px;
-  line-height: 1.7;
-}
-
 .buttons {
   display: flex;
   align-items: center;
   gap: 30px;
   margin-top: 35px;
 }
-
-/* AUTO V ÚVODU */
 
 .hero-visual {
   position: relative;
@@ -250,17 +74,7 @@ h2 em {
   filter: drop-shadow(0 25px 15px rgb(0 18 42 / 25%));
 }
 
-.car {
-  position: absolute;
-  z-index: 2;
-  top: 175px;
-  left: -30px;
-  font-size: 180px;
-  line-height: 1;
-  filter: drop-shadow(0 25px 15px rgb(0 18 42 / 25%));
-}
-
-/* SPOLEČNÉ NADPISY */
+/* SEKCE */
 
 .services,
 .pricing {
@@ -268,71 +82,12 @@ h2 em {
   padding-bottom: 120px;
 }
 
-.section-heading,
-.gallery-heading,
-.pricing-heading {
+.section-heading {
   margin-bottom: 65px;
 }
 
-.section-heading h2,
-.gallery-heading h2,
-.contact h2 {
-  font-size: clamp(44px, 5vw, 70px);
-}
-
-.pricing-heading h2 {
+.pricing-heading .hd-heading {
   margin-top: 0;
-}
-
-/* SLUŽBY */
-
-.service-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-}
-
-.service-grid article {
-  position: relative;
-  min-height: 300px;
-  padding: 35px;
-  border-right: 1px solid var(--line);
-  transition:
-    background-color 220ms ease,
-    box-shadow 220ms ease,
-    transform 220ms ease;
-}
-
-.service-grid article:last-child {
-  border-right: 0;
-}
-
-.service-grid article > span {
-  position: absolute;
-  top: 25px;
-  right: 25px;
-  color: #a9afb9;
-  font-family: var(--font-mono), monospace;
-  font-size: 10px;
-}
-
-.service-icon {
-  margin: 20px 0 45px;
-  color: var(--blue);
-  font-size: 36px;
-}
-
-.service-grid h3 {
-  margin: 0 0 15px;
-  font-size: 23px;
-}
-
-.service-grid p {
-  margin: 0;
-  color: var(--gray);
-  font-size: 14px;
-  line-height: 1.7;
 }
 
 /* GALERIE */
@@ -342,22 +97,9 @@ h2 em {
   width: 100%;
   padding-top: 110px;
   padding-bottom: 100px;
-  color: var(--white);
-  background: var(--black);
+  color: var(--hd-white);
+  background: var(--hd-black);
   overflow: hidden;
-}
-
-.gallery-section > .container {
-  display: block;
-}
-
-.gallery-heading {
-  display: block;
-  width: 100%;
-}
-
-.gallery-heading > p {
-  color: #9199a6;
 }
 
 .gallery-grid {
@@ -367,130 +109,10 @@ h2 em {
   width: 100%;
 }
 
-.comparison {
-  min-width: 0;
-  border: 1px solid #29303b;
-  background: #101620;
-  transition:
-    border-color 220ms ease,
-    box-shadow 220ms ease,
-    transform 220ms ease;
-}
-
-.comparison-image {
-  position: relative;
-  height: 290px;
-  overflow: hidden;
-  background: #152231;
-}
-
-.after,
-.before {
-  position: absolute;
-  inset: 0;
-  padding: 18px;
-  text-align: right;
-}
-
-.after {
-  background: linear-gradient(
-    145deg,
-    #8ec7f4 0%,
-    #315d86 42%,
-    #e8f4ff 43%,
-    #14304b 72%
-  );
-}
-
-.before {
-  background:
-    radial-gradient(
-      circle at 25% 30%,
-      rgb(167 153 130 / 45%) 0 6%,
-      transparent 7%
-    ),
-    radial-gradient(
-      circle at 75% 65%,
-      rgb(167 153 130 / 35%) 0 8%,
-      transparent 9%
-    ),
-    linear-gradient(145deg, #645e55, #292b2e);
-}
-
-.after span,
-.before span {
-  display: inline-block;
-  padding: 6px 8px;
-  color: var(--black);
-  background: var(--white);
-  font-family: var(--font-mono), monospace;
-  font-size: 9px;
-}
-
-.before span {
-  color: var(--white);
-  background: #111111;
-}
-
-.comparison-line {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  z-index: 3;
-  width: 2px;
-  background: var(--white);
-  transform: translateX(-1px);
-}
-
-.comparison-line b {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  display: grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  border-radius: 50%;
-  color: var(--white);
-  background: var(--blue);
-  box-shadow: 0 8px 20px rgb(0 0 0 / 30%);
-  transform: translate(-50%, -50%);
-}
-
-.comparison-image input {
-  position: absolute;
-  z-index: 4;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  cursor: ew-resize;
-  opacity: 0;
-}
-
-.comparison-text {
-  padding: 22px;
-}
-
-.comparison-text h3 {
-  margin: 0;
-  font-size: 18px;
-}
-
-.comparison-text h3 span {
-  margin-right: 10px;
-  color: var(--blue);
-}
-
-.comparison-text p {
-  margin: 10px 0 0;
-  color: #87909d;
-  font-size: 11px;
-}
-
 .slider-help {
   margin-top: 35px;
   color: #77808d;
-  font-family: var(--font-mono), monospace;
+  font-family: var(--hd-font-mono);
   font-size: 9px;
   text-align: center;
   letter-spacing: 1px;
@@ -511,109 +133,14 @@ h2 em {
   overflow: visible;
 }
 
-.price-card {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  min-width: 0;
-  min-height: 550px;
-  flex-direction: column;
-  padding: 38px;
-  color: var(--black);
-  border: 1px solid var(--line);
-  background: var(--white);
-  transform: translateY(0) scale(1);
-  transform-origin: center;
-  transition:
-    color 260ms ease,
-    background-color 260ms ease,
-    border-color 260ms ease,
-    box-shadow 260ms ease,
-    transform 260ms ease;
-  will-change: transform;
-}
-
-/* Prostřední karta je normálně bílá jako ostatní */
-
-.price-card.featured {
-  color: var(--black);
-  border: 1px solid var(--line);
-  background: var(--white);
-}
-
-.popular {
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 8px 10px;
-  color: var(--white);
-  background: var(--blue);
-  font-family: var(--font-mono), monospace;
-  font-size: 8px;
-  letter-spacing: 1px;
-}
-
-.price-card > small,
-.price-card.featured > small {
-  color: var(--blue);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  transition: color 220ms ease;
-}
-
-.price-card h3 {
-  margin: 15px 0;
-  font-size: 26px;
-}
-
-.price {
-  display: flex;
-  align-items: baseline;
-  gap: 7px;
-  margin: 25px 0;
-  padding-bottom: 25px;
-  border-bottom: 1px solid var(--line);
-  transition: border-color 220ms ease;
-}
-
-.price b {
-  font-size: 42px;
-  letter-spacing: -2px;
-}
-
-.price-card ul {
-  margin: 0 0 35px;
-  padding: 0;
-  list-style: none;
-  line-height: 2.2;
-}
-
-.price-card li {
-  font-size: 14px;
-}
-
-.price-card > a,
-.price-card.featured > a {
-  display: flex;
-  width: 100%;
-  margin-top: auto;
-  padding: 17px;
-  color: var(--white);
-  background: var(--black);
-  text-align: center;
-  font-size: 13px;
-  font-weight: 700;
-}
-
 /* KONTAKT */
 
 .contact {
   width: 100%;
   padding-top: 90px;
   padding-bottom: 90px;
-  color: var(--white);
-  background: var(--blue);
+  color: var(--hd-white);
+  background: var(--hd-blue);
 }
 
 .contact-content {
@@ -623,19 +150,12 @@ h2 em {
   gap: 60px;
 }
 
-.contact .label {
-  color: #cbdcff;
-}
-
-.contact h2 {
+.contact .hd-heading {
   margin-bottom: 0;
 }
 
-.contact p {
-  margin: 0 0 25px;
-  color: #dce8ff;
-  font-size: 14px;
-  line-height: 1.7;
+.reservation-intro {
+  margin-bottom: 25px;
 }
 
 .reservation-form {
@@ -644,319 +164,11 @@ h2 em {
   gap: 10px;
 }
 
-.reservation-form input,
-.reservation-form select,
-.reservation-form textarea {
-  min-width: 0;
-  padding: 14px;
-  border: 1px solid rgb(255 255 255 / 30%);
-  border-radius: 0;
-  color: var(--white);
-  background: rgb(255 255 255 / 10%);
-  font: inherit;
-  outline: none;
-}
-
-.reservation-form input::placeholder,
-.reservation-form textarea::placeholder {
-  color: rgb(255 255 255 / 70%);
-}
-
-.reservation-form select,
-.reservation-form input[type="date"] {
-  color-scheme: dark;
-}
-
-.service-dropdown {
-  position: relative;
-  z-index: 5;
-}
-
-.reservation-form .service-dropdown-trigger {
-  display: flex;
-  width: 100%;
-  min-height: 52px;
-  margin: 0;
-  padding: 10px 15px;
-  align-items: center;
-  justify-content: space-between;
-  border: 1px solid rgb(255 255 255 / 48%);
-  color: var(--white);
-  background: rgb(255 255 255 / 12%);
-  text-align: left;
-  box-shadow: none;
-}
-
-.service-dropdown-trigger span {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.service-dropdown-trigger small {
-  color: #dce8ff;
-  font-size: 9px;
-}
-
-.service-dropdown-trigger > b {
-  font-size: 20px;
-  transition: transform 180ms ease;
-}
-
-.service-dropdown-trigger[aria-expanded="true"] > b {
-  transform: rotate(180deg);
-}
-
-.service-dropdown-menu {
-  position: absolute;
-  top: calc(100% + 7px);
-  right: 0;
-  left: 0;
-  padding: 7px;
-  background: var(--white);
-  box-shadow: 0 18px 45px rgb(8 11 18 / 28%);
-}
-
-.reservation-form .service-dropdown-menu button {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 112px;
-  width: 100%;
-  min-height: 52px;
-  margin: 0;
-  padding: 10px 12px;
-  align-items: center;
-  border: 0;
-  color: var(--black);
-  background: var(--white);
-  text-align: left;
-  box-shadow: none;
-}
-
-.service-dropdown-menu button + button {
-  border-top: 1px solid var(--line);
-}
-
-.reservation-form .service-dropdown-menu button:hover,
-.reservation-form .service-dropdown-menu button[aria-selected="true"] {
-  color: var(--blue);
-  background: rgb(23 105 255 / 8%);
-}
-
-.service-dropdown-menu strong {
-  width: 100%;
-  padding-right: 6px;
-  color: var(--blue);
-  font-size: 11px;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.reservation-form textarea,
 .reservation-form .full-width,
-.reservation-form button,
-.reservation-message {
+.reservation-form .hd-textarea,
+.reservation-form .hd-button,
+.reservation-form .hd-notice {
   grid-column: 1 / -1;
-}
-
-.reservation-form textarea {
-  min-height: 78px;
-  resize: vertical;
-}
-
-.reservation-form button {
-  display: flex;
-  width: 100%;
-  padding: 18px;
-  border: 0;
-  color: var(--blue);
-  background: var(--white);
-  text-align: center;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.reservation-form button:disabled {
-  cursor: wait;
-  opacity: 0.7;
-}
-
-.reservation-message {
-  color: var(--white);
-  font-size: 12px;
-}
-
-.reservation-message.error {
-  color: #ffe0e0;
-}
-
-.reservation-modal-backdrop {
-  position: fixed;
-  z-index: 100;
-  inset: 0;
-  display: grid;
-  padding: 20px;
-  place-items: center;
-  background: rgb(8 11 18 / 72%);
-  backdrop-filter: blur(5px);
-}
-
-.reservation-modal {
-  width: min(480px, 100%);
-  padding: 42px;
-  background: var(--white);
-  box-shadow: 0 30px 90px rgb(0 0 0 / 45%);
-}
-
-.reservation-modal h2 {
-  margin: 16px 0 12px;
-  font-size: clamp(32px, 6vw, 46px);
-  line-height: 1;
-  letter-spacing: -2px;
-}
-
-.reservation-modal p {
-  margin: 0;
-  color: var(--gray);
-  line-height: 1.6;
-}
-
-.reservation-modal button {
-  width: 100%;
-  min-height: 52px;
-  margin-top: 28px;
-  border: 0;
-  color: var(--white);
-  background: var(--blue);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-/* PATIČKA */
-
-.footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 30px;
-  padding-top: 45px;
-  padding-bottom: 45px;
-  color: var(--gray);
-  font-size: 11px;
-}
-
-/* HOVER PRO POČÍTAČ S MYŠÍ */
-
-@media (hover: hover) and (pointer: fine) {
-  /* Vysunutí všech tlačítek */
-
-  .nav-button:hover,
-  .primary-button:hover,
-  .price-link:hover,
-  .price-card > a:hover,
-  .contact a:hover {
-    box-shadow: 0 16px 35px rgb(8 11 18 / 22%);
-    transform: translateY(-6px);
-  }
-
-  .nav-button:hover {
-    color: var(--white);
-    background: var(--blue);
-  }
-
-  .primary-button:hover {
-    color: var(--white);
-    background: var(--blue);
-    box-shadow: 0 20px 40px rgb(23 105 255 / 35%);
-  }
-
-  .price-link:hover {
-    color: var(--blue);
-    border-color: var(--blue);
-  }
-
-  .contact a:hover {
-    color: var(--white);
-    background: var(--black);
-  }
-
-  /* Služby */
-
-  .service-grid article:hover {
-    z-index: 2;
-    background: #ffffff;
-    box-shadow: 0 22px 50px rgb(8 11 18 / 12%);
-    transform: translateY(-8px);
-  }
-
-  /* Galerie */
-
-  .comparison:hover {
-    z-index: 2;
-    border-color: var(--blue);
-    box-shadow: 0 22px 50px rgb(0 0 0 / 35%);
-    transform: translateY(-8px);
-  }
-
-  /* Ceník */
-
-  .price-card:hover,
-  .price-card.featured:hover {
-    z-index: 10;
-    color: var(--white);
-    border-color: var(--blue);
-    background: var(--blue);
-    box-shadow: 0 30px 70px rgb(23 105 255 / 40%);
-    transform: translateY(-14px) scale(1.045);
-  }
-
-  .price-card:hover > small,
-  .price-card.featured:hover > small {
-    color: #d7e5ff;
-  }
-
-  .price-card:hover .price,
-  .price-card.featured:hover .price {
-    border-color: rgb(255 255 255 / 30%);
-  }
-
-  .price-card:hover > a,
-  .price-card.featured:hover > a {
-    color: var(--white);
-    background: var(--black);
-  }
-
-  .price-card:hover > a:hover,
-  .price-card.featured:hover > a:hover {
-    color: var(--blue);
-    background: var(--white);
-    box-shadow: 0 14px 30px rgb(0 0 0 / 20%);
-    transform: translateY(-6px);
-  }
-
-  /* Stisknutí tlačítka */
-
-  .nav-button:active,
-  .primary-button:active,
-  .price-link:active,
-  .price-card > a:active,
-  .contact a:active {
-    box-shadow: 0 5px 12px rgb(8 11 18 / 15%);
-    transform: translateY(-2px);
-  }
-}
-
-/* OVLÁDÁNÍ KLÁVESNICÍ */
-
-.nav-button:focus-visible,
-.primary-button:focus-visible,
-.price-link:focus-visible,
-.price-card > a:focus-visible,
-.contact a:focus-visible {
-  outline: 3px solid rgb(23 105 255 / 35%);
-  outline-offset: 4px;
 }
 
 .admin-corner-link {
@@ -970,12 +182,14 @@ h2 em {
   font-size: 9px;
   line-height: 1;
   opacity: 0.55;
-  transition: opacity 180ms ease, color 180ms ease;
+  transition:
+    opacity 180ms ease,
+    color 180ms ease;
 }
 
 .admin-corner-link:hover,
 .admin-corner-link:focus-visible {
-  color: var(--black);
+  color: var(--hd-black);
   opacity: 1;
 }
 
@@ -993,29 +207,15 @@ h2 em {
     display: none;
   }
 
-  .service-grid,
   .gallery-grid,
   .pricing-grid {
     grid-template-columns: 1fr;
-  }
-
-  .service-grid article {
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .service-grid article:last-child {
-    border-bottom: 0;
   }
 
   .gallery-grid {
     max-width: 600px;
     margin-right: auto;
     margin-left: auto;
-  }
-
-  .price-card {
-    min-height: auto;
   }
 
   .contact-content {
@@ -1026,57 +226,10 @@ h2 em {
 /* MOBIL */
 
 @media (max-width: 650px) {
-  .container {
-    width: calc(100% - 30px);
-  }
-
-
-  .header {
-    height: 72px;
-  }
-
-  .navigation {
-    position: absolute;
-    z-index: 10;
-    top: 70px;
-    right: 0;
-    left: 0;
-    display: none;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 20px;
-    padding: 25px;
-    background: var(--white);
-    box-shadow: 0 20px 30px rgb(0 0 0 / 15%);
-  }
-
-  .navigation.open {
-    display: flex;
-  }
-
-  .menu-button {
-    display: block;
-    padding: 10px;
-    font-size: 25px;
-  }
-
-  .nav-button {
-    width: 100%;
-  }
-
   .hero {
     min-height: 590px;
     padding-top: 65px;
     padding-bottom: 65px;
-  }
-
-  .hero h1 {
-    font-size: 51px;
-    letter-spacing: -4px;
-  }
-
-  .hero-content > p {
-    font-size: 15px;
   }
 
   .buttons {
@@ -1091,72 +244,18 @@ h2 em {
     padding-bottom: 80px;
   }
 
-  .section-heading,
-  .gallery-heading,
-  .pricing-heading {
+  .section-heading {
     margin-bottom: 45px;
-  }
-
-  .section-heading h2,
-  .gallery-heading h2,
-  .contact h2 {
-    font-size: 43px;
-    letter-spacing: -3px;
-  }
-
-  .service-grid article {
-    min-height: 270px;
-    padding: 30px;
-  }
-
-  .comparison-image {
-    height: 250px;
-  }
-
-  .price-card {
-    padding: 30px;
   }
 
   .contact {
     padding-top: 70px;
     padding-bottom: 70px;
   }
-
-  .footer {
-    flex-direction: column;
-    gap: 25px;
-    text-align: center;
-  }
 }
-
-/* VYPNUTÍ HOVERU NA TELEFONU */
-
-@media (hover: none) {
-  .nav-button,
-  .primary-button,
-  .price-link,
-  .price-card,
-  .price-card > a,
-  .contact a {
-    transform: none;
-  }
-}
-
-/* OMEZENÍ ANIMACÍ */
 
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
-  }
-
-  .nav-button,
-  .primary-button,
-  .price-link,
-  .price-card,
-  .price-card > a,
-  .contact a,
-  .comparison,
-  .service-grid article {
-    transition: none;
   }
 }
