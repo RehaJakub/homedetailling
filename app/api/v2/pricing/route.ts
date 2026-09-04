@@ -1,4 +1,4 @@
-import { asc, max } from "drizzle-orm";
+import { asc, max, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { pricePackages } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth";
@@ -15,5 +15,7 @@ export async function POST(request: Request) {
   if (!parsed) return Response.json({ error: "Vyplňte název, cenu a alespoň jeden popisek." }, { status: 400 });
   const [row] = await db.select({ value: max(pricePackages.sortOrder) }).from(pricePackages);
   const [created] = await db.insert(pricePackages).values({ ...parsed, sortOrder: (row.value ?? 0) + 1 }).returning();
+  // Only one package carries the "Nejoblíbenější" badge.
+  if (created.featured) await db.update(pricePackages).set({ featured: false }).where(ne(pricePackages.id, created.id));
   return Response.json({ package: created }, { status: 201 });
 }

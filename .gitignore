@@ -66,3 +66,8 @@ data/*.sqlite-wal
 
 # Playwright MCP scratch
 /.playwright-mcp/
+
+# screenshots dropped into the repo root by browser tooling
+/*.jpeg
+/*.jpg
+/*.png

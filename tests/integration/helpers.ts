@@ -1,4 +1,6 @@
 import { createSessionToken, hashPassword, sessionCookieName, type Role } from "@/lib/auth";
+import { addDays, weekdayIndex } from "@/lib/booking";
+import { businessNow } from "@/lib/settings";
 import { getDb } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 
@@ -51,4 +53,11 @@ export async function loginAs(role: Role, overrides: Omit<UserInput, "role"> = {
 
 export async function json<T = Record<string, unknown>>(response: Response) {
   return (await response.json()) as T;
+}
+
+/** A working day (Mon–Sat) at least `offset` days ahead, so public booking checks never hit "past" or "closed". */
+export function futureWorkday(offset = 7) {
+  let iso = addDays(businessNow().iso, offset);
+  while (weekdayIndex(iso) === 6) iso = addDays(iso, 1);
+  return iso;
 }

@@ -27,6 +27,8 @@ export { PriceCard } from "./content/PriceCard";
 export type { PriceCardProps } from "./content/PriceCard";
 export { Badge } from "./content/Badge";
 export type { BadgeProps } from "./content/Badge";
+export { Icon, iconNames } from "./content/Icon";
+export type { IconProps, IconName } from "./content/Icon";
 export { Notice } from "./content/Notice";
 export type { NoticeProps } from "./content/Notice";
 

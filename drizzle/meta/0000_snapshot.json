@@ -1,5 +1,5 @@
 {
-  "id": "629e7226-c625-4c55-a8e1-23f9a8d537d8",
+  "id": "b4be797b-b2fe-45a7-9332-e0428f2aa295",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -32,6 +32,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": true
+        },
+        "featured": {
+          "name": "featured",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "items": {
           "name": "items",
@@ -133,13 +140,31 @@
           "notNull": true,
           "default": "''"
         },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot_start": {
+          "name": "slot_start",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot_end": {
+          "name": "slot_end",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
         "status": {
           "name": "status",
-          "type": "reservation_status",
+          "type": "booking_status",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'active'"
+          "default": "'new'"
         },
         "created_at": {
           "name": "created_at",
@@ -147,14 +172,36 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {
-        "reservations_created_at_idx": {
-          "name": "reservations_created_at_idx",
+        "reservations_date_idx": {
+          "name": "reservations_date_idx",
           "columns": [
             {
-              "expression": "created_at",
+              "expression": "date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "reservations_email_idx": {
+          "name": "reservations_email_idx",
+          "columns": [
+            {
+              "expression": "email",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -166,6 +213,67 @@
           "with": {}
         }
       },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.settings": {
+      "name": "settings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "open_slot": {
+          "name": "open_slot",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 28
+        },
+        "close_slot": {
+          "name": "close_slot",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 76
+        },
+        "work_days": {
+          "name": "work_days",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[1,1,1,1,1,1,0]'::jsonb"
+        },
+        "step_minutes": {
+          "name": "step_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 15
+        },
+        "buffer_minutes": {
+          "name": "buffer_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 30
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -257,12 +365,14 @@
     }
   },
   "enums": {
-    "public.reservation_status": {
-      "name": "reservation_status",
+    "public.booking_status": {
+      "name": "booking_status",
       "schema": "public",
       "values": [
-        "active",
-        "completed"
+        "new",
+        "confirmed",
+        "done",
+        "cancelled"
       ]
     },
     "public.user_role": {

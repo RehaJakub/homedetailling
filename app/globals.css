@@ -1,8 +1,9 @@
 @import "tailwindcss";
 @import "../design-system/src/styles.css";
 
-/* Page-level layout for the public site. Component styles live in the
-   design system (design-system/src/styles.css). */
+/* Global base styles. Component styles live in the design system
+   (design-system/src/styles.css); page layout in the CSS modules next to
+   each page. Keyframes are global because both pages share them. */
 
 * {
   box-sizing: border-box;
@@ -42,135 +43,6 @@ main {
   overflow: hidden;
 }
 
-/* ÚVODNÍ SEKCE */
-
-.hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(340px, 0.7fr);
-  align-items: center;
-  min-height: 650px;
-}
-
-.buttons {
-  display: flex;
-  align-items: center;
-  gap: 30px;
-  margin-top: 35px;
-}
-
-.hero-visual {
-  position: relative;
-  height: 460px;
-}
-
-.car-model {
-  position: absolute;
-  z-index: 2;
-  top: 50%;
-  left: 50%;
-  width: 136%;
-  height: 110%;
-  transform: translate(-50%, -60%);
-  filter: drop-shadow(0 25px 15px rgb(0 18 42 / 25%));
-}
-
-/* SEKCE */
-
-.services,
-.pricing {
-  padding-top: 120px;
-  padding-bottom: 120px;
-}
-
-.section-heading {
-  margin-bottom: 65px;
-}
-
-.pricing-heading .hd-heading {
-  margin-top: 0;
-}
-
-/* GALERIE */
-
-.gallery-section {
-  display: block;
-  width: 100%;
-  padding-top: 110px;
-  padding-bottom: 100px;
-  color: var(--hd-white);
-  background: var(--hd-black);
-  overflow: hidden;
-}
-
-.gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
-  width: 100%;
-}
-
-.slider-help {
-  margin-top: 35px;
-  color: #77808d;
-  font-family: var(--hd-font-mono);
-  font-size: 9px;
-  text-align: center;
-  letter-spacing: 1px;
-}
-
-/* CENÍK */
-
-.pricing {
-  overflow: visible;
-}
-
-.pricing-grid {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: stretch;
-  gap: 20px;
-  overflow: visible;
-}
-
-/* KONTAKT */
-
-.contact {
-  width: 100%;
-  padding-top: 90px;
-  padding-bottom: 90px;
-  color: var(--hd-white);
-  background: var(--hd-blue);
-}
-
-.contact-content {
-  display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(260px, 0.7fr);
-  align-items: end;
-  gap: 60px;
-}
-
-.contact .hd-heading {
-  margin-bottom: 0;
-}
-
-.reservation-intro {
-  margin-bottom: 25px;
-}
-
-.reservation-form {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.reservation-form .full-width,
-.reservation-form .hd-textarea,
-.reservation-form .hd-button,
-.reservation-form .hd-notice {
-  grid-column: 1 / -1;
-}
-
 .admin-corner-link {
   position: fixed;
   right: 8px;
@@ -193,69 +65,136 @@ main {
   opacity: 1;
 }
 
-/* TABLET */
+/* MOTION */
 
-@media (max-width: 850px) {
-  .hero {
-    grid-template-columns: 1fr;
-    min-height: 620px;
-    padding-top: 70px;
-    padding-bottom: 70px;
+@keyframes hdUp {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
   }
 
-  .hero-visual {
-    display: none;
-  }
-
-  .gallery-grid,
-  .pricing-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .gallery-grid {
-    max-width: 600px;
-    margin-right: auto;
-    margin-left: auto;
-  }
-
-  .contact-content {
-    grid-template-columns: 1fr;
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 
-/* MOBIL */
-
-@media (max-width: 650px) {
-  .hero {
-    min-height: 590px;
-    padding-top: 65px;
-    padding-bottom: 65px;
+@keyframes hdReveal {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
   }
 
-  .buttons {
-    flex-direction: column;
-    align-items: flex-start;
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hdFade {
+  from {
+    opacity: 0;
   }
 
-  .services,
-  .pricing,
-  .gallery-section {
-    padding-top: 80px;
-    padding-bottom: 80px;
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hdMarquee {
+  from {
+    transform: translateX(0);
   }
 
-  .section-heading {
-    margin-bottom: 45px;
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes hdFloat {
+  0%,
+  100% {
+    transform: translateY(0);
   }
 
-  .contact {
-    padding-top: 70px;
-    padding-bottom: 70px;
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes hdSweep {
+  0% {
+    transform: translateX(-120%) skewX(-12deg);
+  }
+
+  100% {
+    transform: translateX(320%) skewX(-12deg);
+  }
+}
+
+@keyframes hdToast {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hdToastSide {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hdModal {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hdShrink {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes hdPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(23 105 255 / 50%);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgb(23 105 255 / 0%);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  * {
+    animation: none !important;
   }
 }

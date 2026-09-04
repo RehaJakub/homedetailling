@@ -1,6 +1,6 @@
 import { Badge } from "./Badge";
 import { Button } from "../actions/Button";
-import { CheckIcon } from "../internal/icons";
+import { Icon } from "./Icon";
 
 export type PriceCardProps = {
   /** Package name, e.g. "Interiér". */
@@ -54,7 +54,7 @@ export function PriceCard({
       <ul className="hd-price-card__items">
         {items.map((item) => (
           <li key={item} className="hd-price-card__item">
-            <CheckIcon />
+            <Icon name="check" size={14} stroke={2} />
             {item}
           </li>
         ))}

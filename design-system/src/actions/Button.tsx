@@ -1,5 +1,5 @@
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
-import { ArrowDownIcon, ArrowUpRightIcon } from "../internal/icons";
+import { Icon } from "../content/Icon";
 
 export type ButtonVariant =
   | "primary"
@@ -39,8 +39,8 @@ type NativeButtonProps = SharedProps &
 export type ButtonProps = AnchorProps | NativeButtonProps;
 
 const icons = {
-  "arrow-up-right": <ArrowUpRightIcon />,
-  "arrow-down": <ArrowDownIcon />,
+  "arrow-up-right": <Icon name="arrow-up-right" size={14} stroke={2} />,
+  "arrow-down": <Icon name="arrow-down" size={14} stroke={2} />,
   none: null,
 };
 

@@ -27,12 +27,7 @@ export default function RootLayout({
   return (
     <html lang="cs">
       <body className={`${geist.variable} ${mono.variable}`}>
-        <Script
-          type="module"
-          src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.1.0/model-viewer.min.js"
-          strategy="afterInteractive"
-        />
-
+        <Script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.1.0/model-viewer.min.js" strategy="afterInteractive" />
         {children}
       </body>
     </html>

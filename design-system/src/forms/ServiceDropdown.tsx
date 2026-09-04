@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ChevronDownIcon } from "../internal/icons";
+import { Icon } from "../content/Icon";
 
 export type ServiceOption = {
   id: number | string;
@@ -57,7 +57,7 @@ export function ServiceDropdown({
           {selected && <small className="hd-dropdown__hint">{priceOf(selected)}</small>}
         </span>
         <span className="hd-dropdown__chevron">
-          <ChevronDownIcon />
+          <Icon name="chevron-down" size={18} stroke={2} />
         </span>
       </button>
 

@@ -1,7 +1,7 @@
 "use client";
 import { useState, type ReactNode } from "react";
 import { Button } from "../actions/Button";
-import { CloseIcon, MenuIcon } from "../internal/icons";
+import { Icon } from "../content/Icon";
 
 export type SiteHeaderLink = {
   href: string;
@@ -47,7 +47,7 @@ export function SiteHeader({
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
-        {open ? <CloseIcon /> : <MenuIcon />}
+        {open ? <Icon name="close" size={26} /> : <Icon name="menu" size={26} />}
       </button>
 
       <nav className={open ? "hd-header__nav hd-header__nav--open" : "hd-header__nav"}>

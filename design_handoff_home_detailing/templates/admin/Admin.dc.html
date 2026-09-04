@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Administrace" description="Admin s přehledem, týdenním kalendářem (15 min, překryvy klientů, úprava času), objednávkami, zákazníky, ceníkem a nastavením. Modaly pro úpravy." -->
+<helmet><script src="./ds-base.js"></script><script src="../_shared/icons.js"></script><style>@keyframes hdToast{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}@keyframes hdModal{from{opacity:0;transform:translateY(18px) scale(.985)}to{opacity:1;transform:none}}@keyframes hdShrink{from{transform:scaleX(1)}to{transform:scaleX(0)}}body{margin:0;background:#080b12;font-family:var(--hd-font-sans);color:#080b12}a{color:#1769ff}a:hover{color:#080b12}@keyframes hdUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}@keyframes hdFade{from{opacity:0}to{opacity:1}}</style></helmet>
+<div style="min-height:100vh;padding:24px 20px 60px;box-sizing:border-box">
+<div style="max-width:1280px;margin:0 auto;display:grid;gap:18px">
+<div style="display:flex;justify-content:space-between;align-items:center;color:#fff;padding:6px 4px">
+<span style="display:inline-flex;flex-direction:column;line-height:1"><strong style="font-size:18px;letter-spacing:-.02em">HOME</strong><span style="font-family:var(--hd-font-mono);font-size:10px;letter-spacing:.3em;color:#1769ff;font-weight:700">DETAILING</span></span>
+<div style="display:flex;align-items:center;gap:22px;font-size:13px"><span style="font-family:var(--hd-font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#87909d">{{ todayLabel }}</span><a href="../landing/Landing.dc.html" style="color:#fff;text-decoration:none;display:flex;align-items:center;gap:6px" style-hover="color:#1769ff"><hd-icon name="external" size="14"></hd-icon>Web</a><a href="../admin-login/AdminLogin.dc.html" style="color:#fff;text-decoration:none;display:flex;align-items:center;gap:6px" style-hover="color:#1769ff"><hd-icon name="logout" size="14"></hd-icon>Odhlásit</a></div>
+</div>
+<x-import component-from-global-scope="HomeDetailingUI.Card" variant="panel" hint-size="100%,800px">
+<div style="display:grid;grid-template-columns:224px minmax(0,1fr);gap:40px;align-items:start">
+<div style="display:grid;gap:22px;position:sticky;top:24px">
+<div style="display:grid;gap:8px"><x-import component-from-global-scope="HomeDetailingUI.Eyebrow" hint-size="120px,16px">Administrace</x-import><x-import component-from-global-scope="HomeDetailingUI.Heading" size="card" hint-size="100%,32px">Home Detailing</x-import></div>
+<x-import component-from-global-scope="HomeDetailingUI.Tabs" items="{{ tabs }}" value="{{ tab }}" onChange="{{ setTab }}" hint-size="100%,300px"></x-import>
+<x-import component-from-global-scope="HomeDetailingUI.Button" variant="primary" full-width="{{ true }}" onClick="{{ newOrder }}" hint-size="100%,52px">Nová objednávka</x-import>
+<span style="font-size:12px;color:#687080;line-height:1.6;display:flex;gap:8px;align-items:flex-start"><hd-icon name="info" size="14" style="margin-top:2px"></hd-icon>Tip: v kalendáři klikněte do volného místa a rovnou založíte zakázku na ten čas.</span>
+</div>
+<div style="min-width:0;display:grid;gap:28px;animation:hdUp .35s ease both">
+
+<sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+<div style="display:grid;gap:8px"><x-import component-from-global-scope="HomeDetailingUI.Heading" size="title" hint-size="100%,40px">Přehled</x-import><x-import component-from-global-scope="HomeDetailingUI.Text" tone="muted" size="sm" hint-size="100%,20px">Co se děje dnes a co čeká na vaši reakci.</x-import></div>
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px">
+<sc-for list="{{ stats }}" as="s" hint-placeholder-count="4"><button type="button" onClick="{{ s.go }}" style="display:grid;gap:10px;padding:20px;border:1px solid #e1e5eb;background:#fff;text-align:left;cursor:pointer;font:inherit;color:inherit" style-hover="border-color:#1769ff"><span style="font-family:var(--hd-font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#687080">{{ s.label }}</span><strong style="font-size:32px;letter-spacing:-.03em;line-height:1">{{ s.value }}</strong><span style="font-size:12px;color:#687080">{{ s.sub }}</span></button></sc-for>
+</div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px">
+<div style="border:1px solid #e1e5eb"><div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #e1e5eb"><strong>Dnes</strong><span style="font-family:var(--hd-font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#687080">{{ todayShort }}</span></div>
+<sc-if value="{{ todayEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:28px 20px;color:#687080;font-size:14px">Dnes nejsou žádné zakázky.</div></sc-if>
+<sc-for list="{{ todayList }}" as="r" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:96px 1fr auto;gap:14px;align-items:center;padding:14px 20px;border-bottom:1px solid #edf0f4"><span style="font-family:var(--hd-font-mono);font-size:12px">{{ r.time }}</span><div style="display:grid;gap:2px;min-width:0"><strong style="font-size:14px">{{ r.name }}</strong><span style="font-size:12px;color:#687080">{{ r.service }} · {{ r.address }}</span></div><x-import component-from-global-scope="HomeDetailingUI.Button" variant="ghost" size="sm" onClick="{{ r.open }}" hint-size="80px,34px">Otevřít</x-import></div></sc-for></div>
+<div style="border:1px solid #e1e5eb"><div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #e1e5eb"><strong>Čeká na potvrzení</strong><x-import component-from-global-scope="HomeDetailingUI.Badge" tone="count" hint-size="28px,22px">{{ newCount }}</x-import></div>
+<sc-if value="{{ pendingEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:28px 20px;color:#687080;font-size:14px">Vše je potvrzené.</div></sc-if>
+<sc-for list="{{ pendingList }}" as="r" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:14px 20px;border-bottom:1px solid #edf0f4"><div style="display:grid;gap:2px;min-width:0"><strong style="font-size:14px">{{ r.name }}</strong><span style="font-size:12px;color:#687080">{{ r.when }} · {{ r.service }}</span><sc-if value="{{ r.conflict }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:#b42318;display:flex;align-items:center;gap:5px"><hd-icon name="alert" size="12" stroke="2"></hd-icon>Překrývá se s jinou zakázkou</span></sc-if></div><x-import component-from-global-scope="HomeDetailingUI.Button" variant="ghost" size="sm" onClick="{{ r.open }}" hint-size="80px,34px">Upravit</x-import><x-import component-from-global-scope="HomeDetailingUI.Button" variant="primary" size="sm" onClick="{{ r.confirm }}" hint-size="80px,34px">Potvrdit</x-import></div></sc-for></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isCalendar }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap">
+<div style="display:grid;gap:8px"><x-import component-from-global-scope="HomeDetailingUI.Heading" size="title" hint-size="240px,40px">Kalendář</x-import><x-import component-from-global-scope="HomeDetailingUI.Text" tone="muted" size="sm" hint-size="100%,20px">Kliknutím na zakázku upravíte čas podle domluvy s klientem. Překrývající se zakázky stojí vedle sebe.</x-import></div>
+<div style="display:flex;align-items:center;gap:8px">
+<x-import component-from-global-scope="HomeDetailingUI.Button" variant="ghost" size="sm" onClick="{{ prevWeek }}" aria-label="Předchozí týden" hint-size="40px,34px"><hd-icon name="chevron-left" size="16" stroke="2"></hd-icon></x-import>
+<x-import component-from-global-scope="HomeDetailingUI.Button" variant="ghost" size="sm" onClick="{{ thisWeek }}" hint-size="60px,34px">Dnes</x-import>
+<x-import component-from-global-scope="HomeDetailingUI.Button" variant="ghost" size="sm" onClick="{{ nextWeek }}" aria-label="Další týden" hint-size="40px,34px"><hd-icon name="chevron-right" size="16" stroke="2"></hd-icon></x-import>
+<strong style="margin-left:8px;font-size:15px;white-space:nowrap">{{ weekLabel }}</strong>
+</div>
+</div>
+<div style="display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:#687080">
+<span style="display:flex;align-items:center;gap:6px"><i style="width:12px;height:12px;background:#1769ff"></i>Potvrzeno</span>
+<span style="display:flex;align-items:center;gap:6px"><i style="width:12px;height:12px;border:1px dashed #1769ff;box-sizing:border-box;background:#dce8ff"></i>Čeká na potvrzení</span>
+<span style="display:flex;align-items:center;gap:6px"><i style="width:12px;height:12px;background:#e1e5eb"></i>Hotovo</span>
+<span style="display:flex;align-items:center;gap:6px"><i style="width:12px;height:12px;background:#fff;box-shadow:inset 3px 0 0 #b42318;border:1px solid #e1e5eb;box-sizing:border-box"></i>Překryv</span>
+</div>
+<div style="border:1px solid #e1e5eb;overflow:hidden">
+<div style="display:grid;grid-template-columns:56px repeat(7,minmax(0,1fr));border-bottom:1px solid #e1e5eb;background:#f5f7fa">
+<div></div>
+<sc-for list="{{ weekCols }}" as="c" hint-placeholder-count="7"><div style="{{ c.headStyle }}"><span style="font-family:var(--hd-font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase">{{ c.dow }}</span><strong style="font-size:18px;letter-spacing:-.02em">{{ c.num }}</strong><span style="font-size:11px;opacity:.7">{{ c.count }}</span></div></sc-for>
+</div>
+<div style="display:grid;grid-template-columns:56px repeat(7,minmax(0,1fr))">
+<div style="position:relative"><sc-for list="{{ hours }}" as="h" hint-placeholder-count="12"><span style="{{ h.style }}">{{ h.label }}</span></sc-for></div>
+<sc-for list="{{ weekCols }}" as="c" hint-placeholder-count="7"><div style="{{ c.style }}" onClick="{{ c.add }}">
+<sc-if value="{{ c.isToday }}" hint-placeholder-val="{{ false }}"><div style="{{ nowLineStyle }}"></div></sc-if>
+<sc-for list="{{ c.events }}" as="e" hint-placeholder-count="2"><button type="button" onClick="{{ e.open }}" style="{{ e.style }}" title="{{ e.title }}"><strong style="font-size:12px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block">{{ e.name }}</strong><span style="font-family:var(--hd-font-mono);font-size:10px;letter-spacing:.04em;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.time }}</span><span style="font-size:11px;opacity:.8;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.service }}</span></button></sc-for>
+</div></sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isOrders }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;gap:8px"><x-import component-from-global-scope="HomeDetailingUI.Heading" size="title" hint-size="240px,40px">Objednávky</x-import><x-import component-from-global-scope="HomeDetailingUI.Text" tone="muted" size="sm" hint-size="100%,20px">Všechny rezervace z webu i objednávky založené po telefonu.</x-import></div>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
+<x-import component-from-global-scope="HomeDetailingUI.Tabs" orientation="horizontal" items="{{ orderTabs }}" value="{{ orderFilter }}" onChange="{{ setOrderFilter }}" hint-size="480px,46px"></x-import>
+<div style="width:260px"><x-import component-from-global-scope="HomeDetailingUI.Input" type="search" placeholder="Hledat klienta…" value="{{ query }}" onChange="{{ setQuery }}" hint-size="100%,46px"></x-import></div>
+</div>
+<x-import component-from-global-scope="HomeDetailingUI.DataTable" columns="{{ orderColumns }}" rows="{{ orderRows }}" empty-text="Žádné objednávky v tomto filtru." hint-size="100%,300px"></x-import>
+</sc-if>
+
+<sc-if value="{{ isCustomers }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;gap:8px"><x-import component-from-global-scope="HomeDetailingUI.Heading" size="title" hint-size="240px,40px">Zákazníci</x-import><x-import component-from-global-scope="HomeDetailingUI.Text" tone="muted" size="sm" hint-size="100%,20px">Seskupeno podle e-mailu. Historii zakázek otevřete tlačítkem Detail.</x-import></div>
+<x-import component-from-global-scope="HomeDetailingUI.DataTable" columns="{{ customerColumns }}" rows="{{ customerRows }}" hint-size="100%,300px"></x-import>
+</sc-if>
+
+<sc-if value="{{ isPricing }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;gap:8px"><x-import component-from-global-scope="HomeDetailingUI.Heading" size="title" hint-size="240px,40px">Ceník</x-import><x-import component-from-global-scope="HomeDetailingUI.Text" tone="muted" size="sm" hint-size="100%,20px">Balíčky se zobrazují na webu i v rezervačním formuláři.</x-import></div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px">
+<sc-for list="{{ priceList }}" as="p" hint-placeholder-count="3"><div style="position:relative;border:1px solid #e1e5eb;padding:24px;display:grid;gap:14px;background:#fff">
+<sc-if value="{{ p.featured }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="HomeDetailingUI.Badge" corner="{{ true }}" hint-size="120px,24px">Nejoblíbenější</x-import></sc-if>
+<span style="font-family:var(--hd-font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#687080">Balíček</span>
+<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px"><strong style="font-size:22px;letter-spacing:-.02em">{{ p.name }}</strong><strong style="font-size:22px;letter-spacing:-.02em;color:#1769ff">{{ p.priceLabel }}</strong></div>
+<span style="font-size:13px;color:#687080;line-height:1.7">{{ p.itemsLabel }}</span>
+<div style="display:flex;gap:8px;justify-content:flex-end"><x-import component-from-global-scope="HomeDetailingUI.Button" variant="ghost" size="sm" onClick="{{ p.edit }}" hint-size="80px,34px">Upravit</x-import></div>
+</div></sc-for>
+<button type="button" onClick="{{ addPrice }}" style="border:1px dashed #a9afb9;background:#f5f7fa;min-height:180px;display:grid;place-items:center;cursor:pointer;font:inherit;color:#687080;font-size:14px" style-hover="border-color:#1769ff;color:#1769ff"><span style="display:flex;align-items:center;gap:8px"><hd-icon name="plus" size="18"></hd-icon>Přidat balíček</span></button>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;gap:8px"><x-import component-from-global-scope="HomeDetailingUI.Heading" size="title" hint-size="240px,40px">Nastavení</x-import><x-import component-from-global-scope="HomeDetailingUI.Text" tone="muted" size="sm" hint-size="100%,20px">Provozní doba určuje, jaké časy si klienti mohou na webu vybrat.</x-import></div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start">
+<x-import component-from-global-scope="HomeDetailingUI.Card" title="Provozní doba" as="form" onSubmit="{{ saveSettings }}" hint-size="100%,300px">
+<div style="display:grid;gap:16px">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="Otevřeno od" hint-size="100%,72px"><x-import component-from-global-scope="HomeDetailingUI.Select" options="{{ hourOptions }}" value="{{ openVal }}" onChange="{{ setOpen }}" hint-size="100%,46px"></x-import></x-import>
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="Otevřeno do" hint-size="100%,72px"><x-import component-from-global-scope="HomeDetailingUI.Select" options="{{ hourOptions }}" value="{{ closeVal }}" onChange="{{ setClose }}" hint-size="100%,46px"></x-import></x-import>
+</div>
+<div style="display:grid;gap:8px"><span style="font-family:var(--hd-font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#687080">Pracovní dny</span>
+<div style="display:flex;gap:6px"><sc-for list="{{ dayToggles }}" as="d" hint-placeholder-count="7"><button type="button" onClick="{{ d.toggle }}" style="{{ d.style }}">{{ d.label }}</button></sc-for></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="Krok rezervace" hint-size="100%,72px"><x-import component-from-global-scope="HomeDetailingUI.Select" options="{{ stepOptions }}" default-value="15" hint-size="100%,46px"></x-import></x-import>
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="Přejezd mezi zakázkami" hint-size="100%,72px"><x-import component-from-global-scope="HomeDetailingUI.Select" options="{{ bufferOptions }}" default-value="30" hint-size="100%,46px"></x-import></x-import>
+</div>
+<x-import component-from-global-scope="HomeDetailingUI.Button" type="submit" variant="primary" hint-size="120px,46px">Uložit</x-import>
+</div>
+</x-import>
+<div style="display:grid;gap:20px">
+<x-import component-from-global-scope="HomeDetailingUI.Card" title="Uživatelé" hint-size="100%,240px">
+<div style="display:grid;gap:14px">
+<sc-for list="{{ userList }}" as="u" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #edf0f4"><div style="display:grid;gap:2px;min-width:0"><strong style="font-size:14px">{{ u.name }}</strong><span style="font-size:12px;color:#687080">{{ u.email }}</span></div><x-import component-from-global-scope="HomeDetailingUI.Badge" tone="soft" hint-size="60px,22px">{{ u.role }}</x-import><x-import component-from-global-scope="HomeDetailingUI.Button" variant="outline-danger" size="sm" onClick="{{ u.remove }}" hint-size="80px,34px">Odebrat</x-import></div></sc-for>
+<x-import component-from-global-scope="HomeDetailingUI.Button" variant="dark" onClick="{{ addUser }}" hint-size="160px,46px">Přidat uživatele</x-import>
+</div>
+</x-import>
+<x-import component-from-global-scope="HomeDetailingUI.Card" title="Změna hesla" as="form" onSubmit="{{ savePassword }}" hint-size="100%,260px">
+<div style="display:grid;gap:14px">
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="Současné heslo" hint-size="100%,72px"><x-import component-from-global-scope="HomeDetailingUI.Input" type="password" name="current" required="{{ true }}" hint-size="100%,46px"></x-import></x-import>
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="Nové heslo" hint-size="100%,72px"><x-import component-from-global-scope="HomeDetailingUI.Input" type="password" name="next" min-length="{{ 8 }}" required="{{ true }}" hint-size="100%,46px"></x-import></x-import>
+<x-import component-from-global-scope="HomeDetailingUI.Button" type="submit" variant="dark" hint-size="140px,46px">Změnit heslo</x-import>
+</div>
+</x-import>
+</div>
+</div>
+</sc-if>
+
+</div>
+</div>
+</x-import>
+</div>
+</div>
+
+<sc-if value="{{ editOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;background:rgba(8,11,18,.62);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:24px;z-index:50;animation:hdFade .2s ease both" onClick="{{ closeModal }}">
+<div role="dialog" aria-modal="true" style="width:min(860px,100%);max-height:calc(100vh - 48px);display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:#fff;box-shadow:var(--hd-shadow-panel);animation:hdModal .28s cubic-bezier(.2,.7,.2,1) both" onClick="{{ stop }}">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:22px 32px;border-bottom:1px solid #e1e5eb">
+<div style="display:flex;align-items:center;gap:16px;min-width:0">
+<span style="{{ draftAvatarStyle }}">{{ draftInitials }}</span>
+<div style="display:grid;gap:4px;min-width:0"><x-import component-from-global-scope="HomeDetailingUI.Heading" size="dialog" hint-size="100%,32px">{{ draftTitle }}</x-import><span style="font-family:var(--hd-font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#687080">{{ draftEyebrow }}</span></div>
+</div>
+<div style="display:flex;align-items:center;gap:10px">
+<sc-if value="{{ draftExists }}" hint-placeholder-val="{{ false }}"><a href="{{ draftTel }}" style="width:36px;height:36px;border:1px solid #e1e5eb;display:grid;place-items:center;color:#080b12" title="Zavolat klientovi" style-hover="border-color:#1769ff;color:#1769ff"><hd-icon name="phone" size="16"></hd-icon></a></sc-if>
+<button type="button" onClick="{{ closeModal }}" aria-label="Zavřít (Esc)" style="width:36px;height:36px;border:1px solid #e1e5eb;background:#fff;cursor:pointer;display:grid;place-items:center" style-hover="border-color:#080b12"><hd-icon name="close" size="16"></hd-icon></button>
+</div>
+</div>
+<div style="overflow:auto;display:grid;grid-template-columns:minmax(0,1fr) 260px">
+<div style="padding:24px 32px 28px;display:grid;gap:26px;border-right:1px solid #e1e5eb">
+<div style="display:grid;gap:14px">
+<span style="display:flex;align-items:center;gap:8px;font-family:var(--hd-font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#687080"><hd-icon name="user" size="14"></hd-icon>Klient</span>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="Jméno" hint-size="100%,72px"><x-import component-from-global-scope="HomeDetailingUI.Input" value="{{ draft.name }}" onChange="{{ setName }}" placeholder="Jméno a příjmení" hint-size="100%,46px"></x-import></x-import>
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="Telefon" hint-size="100%,72px"><x-import component-from-global-scope="HomeDetailingUI.Input" type="tel" value="{{ draft.phone }}" onChange="{{ setPhone }}" placeholder="+420" hint-size="100%,46px"></x-import></x-import>
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="E-mail" hint-size="100%,72px"><x-import component-from-global-scope="HomeDetailingUI.Input" type="email" value="{{ draft.email }}" onChange="{{ setEmail }}" hint-size="100%,46px"></x-import></x-import>
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="Adresa" hint-size="100%,72px"><x-import component-from-global-scope="HomeDetailingUI.Input" value="{{ draft.address }}" onChange="{{ setAddress }}" placeholder="Ulice, město" hint-size="100%,46px"></x-import></x-import>
+</div>
+<sc-if value="{{ hasKnown }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span style="font-size:12px;color:#687080">Stálý zákazník?</span><sc-for list="{{ knownCustomers }}" as="k" hint-placeholder-count="3"><button type="button" onClick="{{ k.apply }}" style="padding:5px 10px;border:1px solid #e1e5eb;background:#fff;font-size:12px;cursor:pointer" style-hover="border-color:#1769ff;color:#1769ff">{{ k.name }}</button></sc-for></div></sc-if>
+</div>
+<div style="display:grid;gap:14px">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="display:flex;align-items:center;gap:8px;font-family:var(--hd-font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#687080"><hd-icon name="calendar" size="14"></hd-icon>Termín</span><span style="font-family:var(--hd-font-mono);font-size:12px;color:#1769ff">{{ draftDuration }}</span></div>
+<div style="display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px">
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="Datum" hint-size="100%,72px"><x-import component-from-global-scope="HomeDetailingUI.Input" type="date" value="{{ draft.date }}" onChange="{{ setDate }}" hint-size="100%,46px"></x-import></x-import>
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="Od" hint-size="100%,72px"><x-import component-from-global-scope="HomeDetailingUI.Select" options="{{ timeOptions }}" value="{{ draftA }}" onChange="{{ setA }}" hint-size="100%,46px"></x-import></x-import>
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="Do" hint-size="100%,72px"><x-import component-from-global-scope="HomeDetailingUI.Select" options="{{ timeOptionsEnd }}" value="{{ draftB }}" onChange="{{ setB }}" hint-size="100%,46px"></x-import></x-import>
+</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span style="font-size:12px;color:#687080;margin-right:4px">Posunout</span><sc-for list="{{ quickShifts }}" as="q" hint-placeholder-count="5"><button type="button" onClick="{{ q.apply }}" style="padding:6px 10px;border:1px solid #e1e5eb;background:#f5f7fa;font-family:var(--hd-font-mono);font-size:11px;cursor:pointer" style-hover="border-color:#1769ff;color:#1769ff">{{ q.label }}</button></sc-for><sc-if value="{{ hasConflict }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ autoFix }}" style="display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #1769ff;background:#1769ff;color:#fff;font-family:var(--hd-font-mono);font-size:11px;cursor:pointer;margin-left:auto"><hd-icon name="sparkle" size="12" stroke="2"></hd-icon>Najít nejbližší volný</button></sc-if></div>
+<sc-if value="{{ hasConflict }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="HomeDetailingUI.Notice" tone="error" hint-size="100%,48px">Překrývá se s: {{ conflictNames }}. Upravte čas podle domluvy s klientem, nebo posuňte druhou zakázku.</x-import></sc-if>
+<sc-if value="{{ noConflict }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="HomeDetailingUI.Notice" tone="info" hint-size="100%,48px">Termín je volný, s ničím se nepřekrývá.</x-import></sc-if>
+</div>
+<div style="display:grid;gap:14px">
+<span style="display:flex;align-items:center;gap:8px;font-family:var(--hd-font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#687080"><hd-icon name="car" size="14"></hd-icon>Služba a stav</span>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+<sc-for list="{{ serviceCards }}" as="s" hint-placeholder-count="3"><button type="button" onClick="{{ s.pick }}" style="{{ s.style }}"><span style="display:flex;justify-content:space-between;align-items:center"><strong style="font-size:14px">{{ s.name }}</strong><sc-if value="{{ s.on }}" hint-placeholder-val="{{ false }}"><hd-icon name="check" size="14" stroke="2.5"></hd-icon></sc-if></span><span style="font-family:var(--hd-font-mono);font-size:11px;opacity:.75">{{ s.price }}</span></button></sc-for>
+</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ statusChips }}" as="s" hint-placeholder-count="4"><button type="button" onClick="{{ s.pick }}" style="{{ s.style }}">{{ s.label }}</button></sc-for></div>
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="Poznámka pro technika" hint-size="100%,72px"><x-import component-from-global-scope="HomeDetailingUI.Textarea" value="{{ draft.note }}" onChange="{{ setNote }}" rows="{{ 2 }}" placeholder="Typ auta, vchod, domluvené detaily…" hint-size="100%,46px"></x-import></x-import>
+</div>
+</div>
+<div style="padding:24px 22px;background:#f5f7fa;display:grid;gap:14px;align-content:start">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:var(--hd-font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#687080">{{ draftDayLabel }}</span><span style="font-size:11px;color:#687080">{{ draftDayCount }}</span></div>
+<div style="position:relative;height:440px;border:1px solid #e1e5eb;background:#fff;overflow:hidden">
+<sc-for list="{{ miniHours }}" as="h" hint-placeholder-count="12"><span style="{{ h.style }}">{{ h.label }}</span></sc-for>
+<sc-for list="{{ miniEvents }}" as="e" hint-placeholder-count="2"><div style="{{ e.style }}" title="{{ e.title }}"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ e.name }}</span></div></sc-for>
+<div style="{{ miniDraftStyle }}"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ miniDraftLabel }}</span></div>
+</div>
+<span style="font-size:11px;color:#687080;line-height:1.6">Modrý blok je tato objednávka, šedé jsou ostatní zakázky v ten den. Červený okraj značí překryv.</span>
+</div>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 32px;border-top:1px solid #e1e5eb;background:#fff">
+<div style="display:flex;align-items:center;gap:10px"><sc-if value="{{ draftExists }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="HomeDetailingUI.Button" variant="outline-danger" size="sm" onClick="{{ askDelete }}" hint-size="80px,34px">Smazat</x-import></sc-if><span style="font-size:12px;color:#687080">{{ draftDirtyLabel }}</span></div>
+<div style="display:flex;gap:10px">
+<x-import component-from-global-scope="HomeDetailingUI.Button" variant="ghost" onClick="{{ closeModal }}" hint-size="90px,46px">Zavřít</x-import>
+<sc-if value="{{ draftIsNew }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="HomeDetailingUI.Button" variant="dark" onClick="{{ confirmDraft }}" hint-size="160px,46px">Potvrdit termín</x-import></sc-if>
+<x-import component-from-global-scope="HomeDetailingUI.Button" variant="primary" onClick="{{ saveDraft }}" hint-size="120px,46px">{{ saveLabel }}</x-import>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ priceOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;background:rgba(8,11,18,.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px;z-index:50;animation:hdFade .2s ease both" onClick="{{ closeModal }}">
+<div role="dialog" aria-modal="true" style="width:min(560px,100%);background:#fff;box-shadow:var(--hd-shadow-panel);animation:hdModal .28s cubic-bezier(.2,.7,.2,1) both;padding:32px 36px 28px;display:grid;gap:20px" onClick="{{ stop }}">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px"><div style="display:grid;gap:8px"><x-import component-from-global-scope="HomeDetailingUI.Eyebrow" hint-size="120px,16px">Ceník</x-import><x-import component-from-global-scope="HomeDetailingUI.Heading" size="dialog" hint-size="100%,32px">{{ priceTitle }}</x-import></div><button type="button" onClick="{{ closeModal }}" aria-label="Zavřít" style="width:36px;height:36px;border:1px solid #e1e5eb;background:#fff;cursor:pointer;display:grid;place-items:center;flex-shrink:0" style-hover="border-color:#080b12"><hd-icon name="close" size="16"></hd-icon></button></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="Název" hint-size="100%,72px"><x-import component-from-global-scope="HomeDetailingUI.Input" value="{{ pd.name }}" onChange="{{ setPName }}" hint-size="100%,46px"></x-import></x-import>
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="Cena (Kč nebo text)" hint-size="100%,72px"><x-import component-from-global-scope="HomeDetailingUI.Input" value="{{ pd.price }}" onChange="{{ setPPrice }}" hint-size="100%,46px"></x-import></x-import>
+</div>
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="Co balíček obsahuje (jeden řádek = jedna položka)" hint-size="100%,120px"><x-import component-from-global-scope="HomeDetailingUI.Textarea" value="{{ pd.items }}" onChange="{{ setPItems }}" rows="{{ 4 }}" hint-size="100%,100px"></x-import></x-import>
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="Označit jako nejoblíbenější" layout="inline" hint-size="200px,24px"><x-import component-from-global-scope="HomeDetailingUI.Input" type="checkbox" checked="{{ pd.featured }}" onChange="{{ setPFeatured }}" hint-size="18px,18px"></x-import></x-import>
+<div style="border:1px solid #e1e5eb;padding:16px 18px;display:grid;gap:8px;background:#f5f7fa"><span style="font-family:var(--hd-font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#687080">Náhled na webu</span><div style="display:flex;justify-content:space-between;align-items:baseline"><strong style="font-size:18px">{{ pdPreviewName }}</strong><strong style="font-size:18px;color:#1769ff">{{ pdPreviewPrice }}</strong></div><span style="font-size:12px;color:#687080">{{ pdPreviewItems }}</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:8px">
+<div><sc-if value="{{ pdExists }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="HomeDetailingUI.Button" variant="outline-danger" size="sm" onClick="{{ deletePrice }}" hint-size="80px,34px">Smazat</x-import></sc-if></div>
+<div style="display:flex;gap:10px"><x-import component-from-global-scope="HomeDetailingUI.Button" variant="ghost" onClick="{{ closeModal }}" hint-size="90px,46px">Zavřít</x-import><x-import component-from-global-scope="HomeDetailingUI.Button" variant="primary" onClick="{{ savePrice }}" hint-size="120px,46px">Uložit balíček</x-import></div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ customerOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;background:rgba(8,11,18,.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px;z-index:50;animation:hdFade .2s ease both" onClick="{{ closeModal }}">
+<div style="width:min(560px,100%);background:#fff;box-shadow:var(--hd-shadow-panel);animation:hdModal .28s cubic-bezier(.2,.7,.2,1) both;padding:32px 36px 28px;display:grid;gap:20px" onClick="{{ stop }}">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px"><div style="display:grid;gap:8px"><x-import component-from-global-scope="HomeDetailingUI.Eyebrow" hint-size="120px,16px">Zákazník</x-import><x-import component-from-global-scope="HomeDetailingUI.Heading" size="dialog" hint-size="100%,32px">{{ cust.name }}</x-import><span style="font-size:13px;color:#687080;display:flex;gap:14px;flex-wrap:wrap"><a href="{{ cust.tel }}" style="display:flex;align-items:center;gap:5px;text-decoration:none"><hd-icon name="phone" size="13"></hd-icon>{{ cust.phone }}</a><a href="{{ cust.mailto }}" style="display:flex;align-items:center;gap:5px;text-decoration:none"><hd-icon name="mail" size="13"></hd-icon>{{ cust.email }}</a></span></div><button type="button" onClick="{{ closeModal }}" aria-label="Zavřít" style="width:36px;height:36px;border:1px solid #e1e5eb;background:#fff;cursor:pointer;display:grid;place-items:center;flex-shrink:0" style-hover="border-color:#080b12"><hd-icon name="close" size="16"></hd-icon></button></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px"><sc-for list="{{ cust.stats }}" as="s" hint-placeholder-count="3"><div style="padding:12px 14px;border:1px solid #e1e5eb;display:grid;gap:4px"><span style="font-family:var(--hd-font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#687080">{{ s.label }}</span><strong style="font-size:16px">{{ s.value }}</strong></div></sc-for></div>
+<div style="border-top:1px solid #e1e5eb;max-height:280px;overflow:auto"><sc-for list="{{ cust.orders }}" as="o" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #edf0f4"><div style="display:grid;gap:2px"><strong style="font-size:14px">{{ o.when }}</strong><span style="font-size:12px;color:#687080">{{ o.service }}</span></div><x-import component-from-global-scope="HomeDetailingUI.Badge" tone="soft" hint-size="60px,22px">{{ o.statusLabel }}</x-import><x-import component-from-global-scope="HomeDetailingUI.Button" variant="ghost" size="sm" onClick="{{ o.open }}" hint-size="80px,34px">Otevřít</x-import></div></sc-for></div>
+<div style="display:flex;justify-content:flex-end;gap:10px"><x-import component-from-global-scope="HomeDetailingUI.Button" variant="ghost" onClick="{{ closeModal }}" hint-size="90px,46px">Zavřít</x-import><x-import component-from-global-scope="HomeDetailingUI.Button" variant="primary" onClick="{{ cust.newOrder }}" hint-size="140px,46px">Nová zakázka</x-import></div>
+</div>
+</div>
+</sc-if>
+
+<x-import component-from-global-scope="HomeDetailingUI.Dialog" open="{{ userOpen }}" eyebrow="Uživatelé" title="Přidat uživatele" hint-size="0,0">
+<div style="display:grid;gap:14px;text-align:left">
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="Jméno" hint-size="100%,72px"><x-import component-from-global-scope="HomeDetailingUI.Input" value="{{ ud.name }}" onChange="{{ setUName }}" hint-size="100%,46px"></x-import></x-import>
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="E-mail" hint-size="100%,72px"><x-import component-from-global-scope="HomeDetailingUI.Input" type="email" value="{{ ud.email }}" onChange="{{ setUEmail }}" hint-size="100%,46px"></x-import></x-import>
+<x-import component-from-global-scope="HomeDetailingUI.Field" label="Role" hint-size="100%,72px"><x-import component-from-global-scope="HomeDetailingUI.Select" options="{{ roleOptions }}" value="{{ ud.role }}" onChange="{{ setURole }}" hint-size="100%,46px"></x-import></x-import>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:6px"><x-import component-from-global-scope="HomeDetailingUI.Button" variant="ghost" onClick="{{ closeModal }}" hint-size="100%,46px">Zavřít</x-import><x-import component-from-global-scope="HomeDetailingUI.Button" variant="primary" onClick="{{ saveUser }}" hint-size="100%,46px">Přidat</x-import></div>
+</div>
+</x-import>
+
+<x-import component-from-global-scope="HomeDetailingUI.Dialog" open="{{ delOpen }}" title="Smazat objednávku?" hint-size="0,0">
+<div style="display:grid;gap:18px"><span style="color:#687080;line-height:1.7">Objednávka klienta <strong style="color:#080b12">{{ delName }}</strong> bude trvale odstraněna z kalendáře.</span>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><x-import component-from-global-scope="HomeDetailingUI.Button" variant="ghost" onClick="{{ cancelDelete }}" hint-size="100%,46px">Vrátit</x-import><x-import component-from-global-scope="HomeDetailingUI.Button" variant="danger" onClick="{{ doDelete }}" hint-size="100%,46px">Smazat</x-import></div></div>
+</x-import>
+
+<div aria-live="polite" style="position:fixed;right:24px;bottom:24px;z-index:70;display:grid;gap:10px;width:360px;max-width:calc(100vw - 48px);pointer-events:none">
+<sc-for list="{{ toasts }}" as="n" hint-placeholder-count="0"><div style="{{ n.style }}"><hd-icon name="{{ n.icon }}" size="18" stroke="2" style="{{ n.iconStyle }}"></hd-icon><div style="display:grid;gap:2px;min-width:0;flex:1"><strong style="font-size:13px">{{ n.title }}</strong><sc-if value="{{ n.hasText }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:#87909d;line-height:1.5">{{ n.text }}</span></sc-if></div><sc-if value="{{ n.hasAction }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ n.act }}" style="display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #29303b;background:transparent;color:#fff;font:inherit;font-size:12px;cursor:pointer;flex-shrink:0" style-hover="border-color:#1769ff;color:#1769ff"><hd-icon name="undo" size="12" stroke="2"></hd-icon>{{ n.actionLabel }}</button></sc-if><button type="button" onClick="{{ n.dismiss }}" aria-label="Zavřít" style="width:24px;height:24px;border:none;background:transparent;color:#87909d;cursor:pointer;display:grid;place-items:center;flex-shrink:0" style-hover="color:#fff"><hd-icon name="close" size="12" stroke="2"></hd-icon></button><i style="{{ n.barStyle }}"></i></div></sc-for>
+</div></div>
+</x-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = (() => {
+    const t = new Date(); t.setHours(0, 0, 0, 0);
+    const ws = new Date(t); ws.setDate(t.getDate() - ((t.getDay() + 6) % 7));
+    const iso = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const day = (o) => { const d = new Date(ws); d.setDate(ws.getDate() + o); return iso(d); };
+    let id = 1040;
+    const R = (o, a, b, name, phone, email, service, address, status, note) => ({ id: id++, date: day(o), a, b, name, phone, email, service, address, status, note: note || '' });
+    return {
+      today: t, weekStart: ws, tab: 'overview', orderFilter: 'new', query: '', modal: null, toasts: [], deleted: null, open: 28, close: 76, workDays: [1, 1, 1, 1, 1, 1, 0],
+      reservations: [
+        R(0, 32, 44, 'Petr Dvořák', '+420 602 987 654', 'petr@priklad.cz', 'Interiér', 'Hlavní třída 8, Ostrava-Poruba', 'done'),
+        R(0, 52, 60, 'Lucie Malá', '+420 731 555 210', 'lucie.mala@priklad.cz', 'Tepování', 'Sokolská 21, Ostrava', 'done'),
+        R(1, 36, 52, 'Jan Kovář', '+420 605 112 334', 'kovar.jan@priklad.cz', 'Exteriér', 'Výškovická 90, Ostrava-Zábřeh', 'done'),
+        R(2, 36, 48, 'Jana Nováková', '+420 777 123 456', 'jana@priklad.cz', 'Interiér', 'Nádražní 12, Ostrava', 'confirmed', 'Vchod ze dvora'),
+        R(2, 44, 52, 'Tomáš Horák', '+420 608 442 118', 'horak.t@priklad.cz', 'Tepování', 'Opavská 6, Ostrava-Poruba', 'new', 'Jen zadní sedačky'),
+        R(3, 40, 56, 'Martin Sýkora', '+420 724 900 311', 'sykora@priklad.cz', 'Exteriér', 'Frýdecká 118, Ostrava-Kunčice', 'confirmed'),
+        R(4, 32, 44, 'Eva Černá', '+420 603 210 987', 'eva.cerna@priklad.cz', 'Interiér', 'Dr. Martínka 4, Ostrava-Hrabůvka', 'confirmed'),
+        R(4, 40, 46, 'Karel Novotný', '+420 776 334 556', 'novotny.k@priklad.cz', 'Tepování', '28. října 150, Ostrava', 'new', 'Dodávka, 3 řady sedadel'),
+        R(4, 56, 70, 'Alena Procházková', '+420 605 778 990', 'alena.p@priklad.cz', 'Exteriér', 'Horní 55, Ostrava-Dubina', 'confirmed'),
+        R(5, 36, 48, 'Radek Beneš', '+420 737 121 212', 'benes@priklad.cz', 'Interiér', 'Mírová 3, Havířov', 'new'),
+        R(7, 36, 42, 'Michal Urban', '+420 602 445 667', 'urban.m@priklad.cz', 'Tepování', 'Beskydská 14, Frýdek-Místek', 'new'),
+        R(8, 48, 60, 'Petra Nová', '+420 731 888 001', 'petra.nova@priklad.cz', 'Interiér', 'Hlučínská 7, Ostrava-Přívoz', 'new'),
+        R(9, 32, 48, 'Ondřej Kolář', '+420 604 556 778', 'kolar@priklad.cz', 'Exteriér', 'Porubská 40, Ostrava-Poruba', 'confirmed'),
+        R(-5, 36, 48, 'Jana Nováková', '+420 777 123 456', 'jana@priklad.cz', 'Tepování', 'Nádražní 12, Ostrava', 'done')
+      ],
+      prices: [
+        { id: 1, name: 'Exteriér', price: 'Domluvou', items: ['Ruční mytí karoserie', 'Dekontaminace laku', 'Čištění kol a pneu', 'Ochranný vosk'], featured: false },
+        { id: 2, name: 'Interiér', price: '1 500', items: ['Hloubkové vysátí', 'Čištění plastů a kůže', 'Vnitřní okna', 'Odstranění zápachu'], featured: true },
+        { id: 3, name: 'Tepování', price: 'od 500', items: ['Tepování sedaček', 'Tepování koberců', 'Cena za kus'], featured: false }
+      ],
+      users: [{ id: 1, name: 'David Král', email: 'david@homedetailing.cz', role: 'Správce' }, { id: 2, name: 'Marek Vlk', email: 'marek@homedetailing.cz', role: 'Technik' }]
+    };
+  })();
+  componentDidMount() { this._kd = (e) => { if (e.key === 'Escape' && this.state.modal) this.setState({ modal: null }); if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && this.state.modal && this.state.modal.type === 'edit') this.save(this.state.modal.draft); }; window.addEventListener('keydown', this._kd); }
+  componentWillUnmount() { window.removeEventListener('keydown', this._kd); }
+  toast(o) { const id = Date.now() + Math.random(); const n = { id, tone: 'ok', ttl: 4200, ...o }; this.setState(s => ({ toasts: s.toasts.concat([n]).slice(-4) })); setTimeout(() => this.dismiss(id), n.ttl); }
+  dismiss(id) { this.setState(s => ({ toasts: s.toasts.filter(x => x.id !== id) })); }
+  STATUS = { new: 'Čeká na potvrzení', confirmed: 'Potvrzeno', done: 'Hotovo', cancelled: 'Zrušeno' };
+  DOW = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
+  iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  t(q) { return Math.floor(q / 4) + ':' + ['00', '15', '30', '45'][q % 4]; }
+  dl(iso) { const d = new Date(iso + 'T00:00:00'); return this.DOW[d.getDay()] + ' ' + d.getDate() + '. ' + (d.getMonth() + 1) + '.'; }
+  dur(n) { const h = Math.floor(n / 4), m = (n % 4) * 15; return (h ? h + ' h' : '') + (h && m ? ' ' : '') + (m ? m + ' min' : ''); }
+  active(r) { return r.status === 'new' || r.status === 'confirmed'; }
+  conflicts(r) { return this.state.reservations.filter(o => o.id !== r.id && o.date === r.date && this.active(o) && o.a < r.b && o.b > r.a); }
+  openEdit(r) { this.setState({ modal: { type: 'edit', orig: r ? JSON.stringify(r) : null, draft: r ? { ...r } : { id: null, name: '', phone: '', email: '', address: '', service: 'Interiér', date: this.iso(this.state.today), a: this.state.open + 8, b: this.state.open + 16, status: 'confirmed', note: '' } } }); }
+  softDelete(id) { const r = this.state.reservations.find(x => x.id === id); if (!r) return; this.setState({ reservations: this.state.reservations.filter(x => x.id !== id), modal: null }); this.toast({ tone: 'danger', icon: 'trash', title: 'Objednávka smazána', text: r.name + ' · ' + this.dl(r.date) + ' ' + this.t(r.a), ttl: 7000, actionLabel: 'Vrátit', action: () => { this.setState(s => ({ reservations: s.reservations.concat([r]) })); this.toast({ icon: 'undo', title: 'Objednávka obnovena', text: r.name }); } }); }
+  save(draft, status) { const d = { ...draft, status: status || draft.status }; if (d.b <= d.a) d.b = d.a + 1; let list = this.state.reservations; if (d.id === null) { d.id = Math.max(...list.map(r => r.id)) + 1; list = list.concat([d]); } else list = list.map(r => r.id === d.id ? d : r); const conf = this.conflicts(d).length; this.setState({ reservations: list, modal: null }); this.toast({ tone: conf ? 'warn' : 'ok', icon: conf ? 'alert' : 'check-circle', title: (draft.id ? 'Objednávka uložena' : 'Objednávka založena') + (conf ? ' s překryvem' : ''), text: d.name + ' · ' + this.dl(d.date) + ' ' + this.t(d.a) + ' – ' + this.t(d.b) + ' · ' + this.STATUS[d.status] }); }
+  layout(events) {
+    const sorted = [...events].sort((x, y) => x.a - y.a || y.b - x.b); const cols = []; let cluster = [], clusterEnd = -1; const out = [];
+    const flush = () => { const n = cols.length; cluster.forEach(e => { e.cols = n; }); cluster = []; cols.length = 0; };
+    sorted.forEach(e => { if (cluster.length && e.a >= clusterEnd) flush(); let c = 0; while (cols[c] > e.a) c++; cols[c] = e.b; e.col = c; cluster.push(e); clusterEnd = Math.max(clusterEnd, e.b); out.push(e); });
+    flush(); return out;
+  }
+  renderVals() {
+    const S = this.state, R = React, C = window.HomeDetailingUI || {}, M = S.modal || {};
+    const mono = 'var(--hd-font-mono)', todayIso = this.iso(S.today), rows = S.close - S.open, PX = 13;
+    const set = (patch) => this.setState({ modal: { ...S.modal, draft: { ...M.draft, ...patch } } });
+    const rs = S.reservations;
+    const newList = rs.filter(r => r.status === 'new').sort((x, y) => x.date.localeCompare(y.date) || x.a - y.a);
+    const weekIso = []; for (let i = 0; i < 7; i++) { const d = new Date(S.weekStart); d.setDate(d.getDate() + i); weekIso.push(this.iso(d)); }
+    const conflictCount = rs.filter(r => this.active(r) && this.conflicts(r).length).length;
+    const row = (r) => ({ id: r.id, name: r.name, service: r.service, address: r.address, time: this.t(r.a) + ' – ' + this.t(r.b), when: this.dl(r.date) + ' · ' + this.t(r.a) + ' – ' + this.t(r.b), conflict: this.conflicts(r).length > 0, open: () => this.openEdit(r), confirm: () => this.save(r, 'confirmed') });
+    const weekCols = weekIso.map((iso, i) => {
+      const d = new Date(iso + 'T00:00:00'), isToday = iso === todayIso, off = !S.workDays[i];
+      const evs = this.layout(rs.filter(r => r.date === iso && r.status !== 'cancelled').map(r => ({ ...r })));
+      return {
+        dow: this.DOW[d.getDay()], num: String(d.getDate()), count: evs.length ? evs.length + (evs.length === 1 ? ' zakázka' : evs.length < 5 ? ' zakázky' : ' zakázek') : '', isToday,
+        headStyle: { display: 'grid', gap: 2, padding: '12px 10px', borderLeft: '1px solid #e1e5eb', color: isToday ? '#1769ff' : off ? '#a9afb9' : '#080b12', background: isToday ? '#dce8ff' : 'transparent' },
+        style: { position: 'relative', height: rows * PX, borderLeft: '1px solid #e1e5eb', background: (off ? 'repeating-linear-gradient(135deg,#f5f7fa 0 8px,#fff 8px 16px),' : '') + 'repeating-linear-gradient(to bottom,#edf0f4 0 1px,transparent 1px ' + (PX * 4) + 'px)', backgroundBlendMode: 'multiply', cursor: 'copy' },
+        add: (ev) => { if (ev.target !== ev.currentTarget) return; const q = S.open + Math.floor((ev.nativeEvent.offsetY) / (PX * 4)) * 4; this.setState({ modal: { type: 'edit', orig: null, draft: { id: null, name: '', phone: '', email: '', address: '', service: 'Interiér', date: iso, a: q, b: Math.min(S.close, q + 8), status: 'confirmed', note: '' } } }); },
+        events: evs.map(e => {
+          const w = 100 / e.cols, conf = this.conflicts(e).length > 0, st = e.status;
+          const bg = st === 'confirmed' ? '#1769ff' : st === 'done' ? '#e1e5eb' : '#dce8ff', fg = st === 'confirmed' ? '#fff' : st === 'done' ? '#687080' : '#1769ff';
+          return { id: e.id, name: e.name, service: e.service, time: this.t(e.a) + ' – ' + this.t(e.b), title: e.name + ' · ' + this.t(e.a) + ' – ' + this.t(e.b) + ' · ' + this.STATUS[st], open: (ev) => { ev.stopPropagation(); this.openEdit(rs.find(r => r.id === e.id)); },
+            style: { position: 'absolute', top: (e.a - S.open) * PX, height: (e.b - e.a) * PX - 2, left: 'calc(' + (e.col * w) + '% + 2px)', width: 'calc(' + w + '% - 4px)', boxSizing: 'border-box', padding: '6px 8px', border: st === 'new' ? '1px dashed #1769ff' : '1px solid ' + bg, background: bg, color: fg, textAlign: 'left', cursor: 'pointer', overflow: 'hidden', font: 'inherit', boxShadow: conf ? 'inset 3px 0 0 #b42318' : 'none', transition: 'transform 120ms, box-shadow 120ms', zIndex: 1 } };
+        })
+      };
+    });
+    const nowQ = (new Date().getHours() * 4) + Math.floor(new Date().getMinutes() / 15);
+    const hours = []; for (let q = S.open; q < S.close; q += 4) hours.push({ label: this.t(q), style: { position: 'absolute', right: 8, top: (q - S.open) * PX, fontFamily: mono, fontSize: 11, color: '#687080', transform: 'translateY(-6px)' } });
+    const timeOpts = (from, to) => { const o = []; for (let q = from; q <= to; q++) o.push({ value: String(q), label: this.t(q) }); return o; };
+    const hourOptions = []; for (let q = 20; q <= 88; q += 4) hourOptions.push({ value: String(q), label: this.t(q) });
+    const svc = (r) => ({ value: r.name, label: r.name });
+    const cell = (r) => ({ id: r.id, cells: {
+      name: R.createElement('div', { style: { display: 'grid', gap: 2 } }, R.createElement('strong', null, r.name), R.createElement('a', { href: 'tel:' + r.phone.replace(/\s/g, ''), style: { fontSize: 12 } }, r.phone)),
+      when: R.createElement('div', { style: { display: 'grid', gap: 2 } }, R.createElement('span', null, this.dl(r.date)), R.createElement('span', { style: { fontFamily: mono, fontSize: 12, color: '#687080' } }, this.t(r.a) + ' – ' + this.t(r.b) + ' · ' + this.dur(r.b - r.a))),
+      service: r.service, address: r.address,
+      status: R.createElement('div', { style: { display: 'grid', gap: 4, justifyItems: 'start' } }, R.createElement(C.Badge, { tone: r.status === 'confirmed' ? 'solid' : 'soft' }, this.STATUS[r.status]), this.conflicts(r).length && this.active(r) ? R.createElement('span', { style: { fontSize: 11, color: '#b42318' } }, 'Překryv') : null),
+      actions: R.createElement(R.Fragment, null,
+        R.createElement(C.Button, { variant: 'ghost', size: 'sm', onClick: () => this.openEdit(r) }, 'Upravit'),
+        r.status === 'new' ? R.createElement(C.Button, { variant: 'primary', size: 'sm', onClick: () => this.save(r, 'confirmed') }, 'Potvrdit') : null,
+        r.status === 'confirmed' ? R.createElement(C.Button, { variant: 'primary', size: 'sm', onClick: () => this.save(r, 'done') }, 'Hotovo') : null,
+        R.createElement(C.Button, { variant: 'outline-danger', size: 'sm', onClick: () => this.softDelete(r.id) }, 'Smazat'))
+    } });
+    const q = S.query.trim().toLowerCase();
+    const filtered = rs.filter(r => (S.orderFilter === 'all' ? true : r.status === S.orderFilter) && (!q || (r.name + ' ' + r.phone + ' ' + r.email + ' ' + r.address).toLowerCase().includes(q))).sort((x, y) => x.date.localeCompare(y.date) || x.a - y.a);
+    const byEmail = {}; rs.forEach(r => { const k = r.email; (byEmail[k] = byEmail[k] || { email: k, name: r.name, phone: r.phone, orders: [] }).orders.push(r); });
+    const customers = Object.values(byEmail).sort((x, y) => y.orders.length - x.orders.length);
+    const d = M.draft || {}, dConf = M.type === 'edit' ? this.conflicts(d) : [];
+    const price = (p) => ({ ...p, priceLabel: /^\d/.test(p.price) || /^od/.test(p.price) ? p.price + ' Kč' : p.price, itemsLabel: p.items.join(' · '), edit: () => this.setState({ modal: { type: 'price', pd: { ...p, items: p.items.join('\n') } } }) });
+    const pd = M.pd || {}, ud = M.ud || {};
+    const setP = (patch) => this.setState({ modal: { ...S.modal, pd: { ...pd, ...patch } } });
+    const setU = (patch) => this.setState({ modal: { ...S.modal, ud: { ...ud, ...patch } } });
+    const shift = (n, label) => ({ label, apply: () => set({ a: Math.max(S.open, d.a + n), b: Math.min(S.close, d.b + n) }) });
+    return {
+      todayLabel: ['Neděle', 'Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota'][S.today.getDay()] + ' · ' + S.today.getDate() + '. ' + (S.today.getMonth() + 1) + '. ' + S.today.getFullYear(),
+      todayShort: this.dl(todayIso),
+      tabs: [{ id: 'overview', label: 'Přehled' }, { id: 'calendar', label: 'Kalendář', count: conflictCount || undefined }, { id: 'orders', label: 'Objednávky', count: newList.length }, { id: 'customers', label: 'Zákazníci' }, { id: 'pricing', label: 'Ceník' }, { id: 'settings', label: 'Nastavení' }],
+      tab: S.tab, setTab: (id) => this.setState({ tab: id }),
+      isOverview: S.tab === 'overview', isCalendar: S.tab === 'calendar', isOrders: S.tab === 'orders', isCustomers: S.tab === 'customers', isPricing: S.tab === 'pricing', isSettings: S.tab === 'settings',
+      newOrder: () => this.openEdit(null),
+      stats: [
+        { label: 'Čeká na potvrzení', value: String(newList.length), sub: 'nové rezervace z webu', go: () => this.setState({ tab: 'orders', orderFilter: 'new' }) },
+        { label: 'Dnes', value: String(rs.filter(r => r.date === todayIso && this.active(r)).length), sub: 'zakázky na dnešek', go: () => this.setState({ tab: 'calendar' }) },
+        { label: 'Tento týden', value: String(rs.filter(r => weekIso.includes(r.date) && r.status !== 'cancelled').length), sub: this.dl(weekIso[0]) + ' – ' + this.dl(weekIso[6]), go: () => this.setState({ tab: 'calendar' }) },
+        { label: 'Překryvy', value: String(conflictCount), sub: conflictCount ? 'vyžadují domluvu s klientem' : 'kalendář je čistý', go: () => this.setState({ tab: 'calendar' }) }
+      ],
+      todayList: rs.filter(r => r.date === todayIso && this.active(r)).sort((x, y) => x.a - y.a).map(row), todayEmpty: !rs.some(r => r.date === todayIso && this.active(r)),
+      pendingList: newList.map(row), pendingEmpty: newList.length === 0, newCount: String(newList.length),
+      weekLabel: this.dl(weekIso[0]) + ' – ' + this.dl(weekIso[6]) + ' ' + new Date(weekIso[6] + 'T00:00:00').getFullYear(),
+      prevWeek: () => { const w = new Date(S.weekStart); w.setDate(w.getDate() - 7); this.setState({ weekStart: w }); },
+      nextWeek: () => { const w = new Date(S.weekStart); w.setDate(w.getDate() + 7); this.setState({ weekStart: w }); },
+      thisWeek: () => { const w = new Date(S.today); w.setDate(w.getDate() - ((w.getDay() + 6) % 7)); this.setState({ weekStart: w }); },
+      weekCols, hours,
+      nowLineStyle: { position: 'absolute', left: 0, right: 0, top: (nowQ - S.open) * PX + Math.floor((new Date().getMinutes() % 15) / 15 * PX), height: 2, background: '#b42318', zIndex: 2, pointerEvents: 'none', display: nowQ >= S.open && nowQ < S.close ? 'block' : 'none' },
+      orderTabs: [{ id: 'new', label: 'Nové', count: newList.length }, { id: 'confirmed', label: 'Potvrzené', count: rs.filter(r => r.status === 'confirmed').length }, { id: 'done', label: 'Hotové', count: rs.filter(r => r.status === 'done').length }, { id: 'all', label: 'Vše' }],
+      orderFilter: S.orderFilter, setOrderFilter: (id) => this.setState({ orderFilter: id }), query: S.query, setQuery: (e) => this.setState({ query: e.target.value }),
+      orderColumns: [{ key: 'name', label: 'Klient' }, { key: 'when', label: 'Termín' }, { key: 'service', label: 'Služba' }, { key: 'address', label: 'Adresa' }, { key: 'status', label: 'Stav' }, { key: 'actions', label: 'Akce', actions: true }],
+      orderRows: filtered.map(cell),
+      customerColumns: [{ key: 'name', label: 'Zákazník' }, { key: 'contact', label: 'Kontakt' }, { key: 'count', label: 'Zakázek' }, { key: 'last', label: 'Poslední termín' }, { key: 'actions', label: 'Akce', actions: true }],
+      customerRows: customers.map(c => { const last = [...c.orders].sort((x, y) => y.date.localeCompare(x.date))[0]; return { id: c.email, cells: { name: R.createElement('strong', null, c.name), contact: R.createElement('div', { style: { display: 'grid', gap: 2, fontSize: 13 } }, R.createElement('a', { href: 'tel:' + c.phone.replace(/\s/g, '') }, c.phone), R.createElement('a', { href: 'mailto:' + c.email }, c.email)), count: R.createElement(C.Badge, { tone: 'count' }, String(c.orders.length)), last: this.dl(last.date) + ' · ' + last.service, actions: R.createElement(R.Fragment, null, R.createElement(C.Button, { variant: 'ghost', size: 'sm', onClick: () => this.setState({ modal: { type: 'customer', cust: c } }) }, 'Detail'), R.createElement(C.Button, { variant: 'primary', size: 'sm', onClick: () => this.setState({ modal: { type: 'edit', orig: null, draft: { id: null, name: c.name, phone: c.phone, email: c.email, address: last.address, service: last.service, date: todayIso, a: S.open + 8, b: S.open + 16, status: 'confirmed', note: '' } } }) }, 'Nová zakázka')) } }; }),
+      priceList: S.prices.map(price), addPrice: () => this.setState({ modal: { type: 'price', pd: { id: null, name: '', price: '', items: '', featured: false } } }),
+      hourOptions, openVal: String(S.open), closeVal: String(S.close), setOpen: (e) => this.setState({ open: Math.min(+e.target.value, S.close - 4) }), setClose: (e) => this.setState({ close: Math.max(+e.target.value, S.open + 4) }),
+      dayToggles: this.DOW.slice(1).concat(this.DOW.slice(0, 1)).map((l, i) => ({ label: l, toggle: () => { const w = S.workDays.slice(); w[i] = w[i] ? 0 : 1; this.setState({ workDays: w }); }, style: { width: 44, height: 40, border: '1px solid ' + (S.workDays[i] ? '#1769ff' : '#e1e5eb'), background: S.workDays[i] ? '#1769ff' : '#fff', color: S.workDays[i] ? '#fff' : '#687080', fontFamily: mono, fontSize: 12, cursor: 'pointer' } })),
+      stepOptions: [{ value: '15', label: '15 minut' }, { value: '30', label: '30 minut' }, { value: '60', label: '60 minut' }], bufferOptions: [{ value: '0', label: 'Bez přejezdu' }, { value: '15', label: '15 minut' }, { value: '30', label: '30 minut' }, { value: '45', label: '45 minut' }],
+      saveSettings: (e) => { e.preventDefault(); this.toast({ icon: 'check-circle', title: 'Nastavení uloženo', text: 'Provozní doba ' + this.t(S.open) + ' – ' + this.t(S.close) + ' se projeví na webu.' }); },
+      userList: S.users.map(u => ({ ...u, remove: () => { this.setState({ users: S.users.filter(x => x.id !== u.id) }); this.toast({ tone: 'danger', icon: 'trash', title: 'Uživatel odebrán', text: u.name, ttl: 7000, actionLabel: 'Vrátit', action: () => this.setState(s => ({ users: s.users.concat([u]) })) }); } })), addUser: () => this.setState({ modal: { type: 'user', ud: { name: '', email: '', role: 'Technik' } } }),
+      savePassword: (e) => { e.preventDefault(); e.target.reset(); this.toast({ icon: 'shield', title: 'Heslo změněno', text: 'Při dalším přihlášení použijte nové heslo.' }); },
+      draftAvatarStyle: { width: 44, height: 44, display: 'grid', placeItems: 'center', background: d.status === 'confirmed' ? '#1769ff' : d.status === 'done' ? '#e1e5eb' : '#dce8ff', color: d.status === 'confirmed' ? '#fff' : d.status === 'done' ? '#687080' : '#1769ff', fontFamily: mono, fontSize: 14, fontWeight: 700, flexShrink: 0, border: d.status === 'new' ? '1px dashed #1769ff' : 'none', boxSizing: 'border-box' },
+      draftInitials: (d.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(), draftTel: 'tel:' + String(d.phone || '').replace(/\s/g, ''),
+      hasKnown: M.type === 'edit' && d.id === null && !d.email, knownCustomers: customers.slice(0, 4).map(c => ({ name: c.name, apply: () => { const last = [...c.orders].sort((x, y) => y.date.localeCompare(x.date))[0]; set({ name: c.name, phone: c.phone, email: c.email, address: last.address }); } })),
+      serviceCards: S.prices.map(p => { const on = d.service === p.name; return { name: p.name, price: /^\d/.test(p.price) || /^od/.test(p.price) ? p.price + ' Kč' : p.price, on, pick: () => set({ service: p.name }), style: { display: 'grid', gap: 6, padding: '12px 14px', border: '1px solid ' + (on ? '#1769ff' : '#e1e5eb'), background: on ? '#1769ff' : '#fff', color: on ? '#fff' : '#080b12', textAlign: 'left', cursor: 'pointer', font: 'inherit' } }; }),
+      statusChips: Object.keys(this.STATUS).map(k => { const on = d.status === k; return { label: this.STATUS[k], pick: () => set({ status: k }), style: { padding: '7px 12px', border: '1px solid ' + (on ? '#080b12' : '#e1e5eb'), background: on ? '#080b12' : '#fff', color: on ? '#fff' : '#687080', fontSize: 12, cursor: 'pointer', font: 'inherit', fontWeight: on ? 600 : 400 } }; }),
+      draftDayLabel: d.date ? this.dl(d.date) : '', draftDayCount: (() => { const n = rs.filter(r => r.date === d.date && r.id !== d.id && r.status !== 'cancelled').length; return n ? n + ' dalš' + (n === 1 ? 'í zakázka' : n < 5 ? 'í zakázky' : 'ích zakázek') : 'jinak volný den'; })(),
+      miniHours: (() => { const H = 440 / rows, o = []; for (let q = S.open; q < S.close; q += 4) o.push({ label: this.t(q), style: { position: 'absolute', left: 6, top: (q - S.open) * H, fontFamily: mono, fontSize: 10, color: '#a9afb9', borderTop: '1px solid #edf0f4', width: 'calc(100% - 6px)', paddingTop: 2 } }); return o; })(),
+      miniEvents: rs.filter(r => r.date === d.date && r.id !== d.id && r.status !== 'cancelled').map(r => { const H = 440 / rows, conf = this.active(r) && d.a < r.b && d.b > r.a; return { name: r.name + ' · ' + this.t(r.a) + ' – ' + this.t(r.b), title: r.name + ' · ' + this.STATUS[r.status], style: { position: 'absolute', left: 40, right: 8, top: (r.a - S.open) * H, height: (r.b - r.a) * H - 2, background: '#e1e5eb', color: '#687080', fontSize: 11, padding: '3px 6px', boxSizing: 'border-box', overflow: 'hidden', boxShadow: conf ? 'inset 0 0 0 1px #b42318' : 'none' } }; }),
+      miniDraftStyle: { position: 'absolute', left: 40, right: 8, top: (d.a - S.open) * (440 / rows), height: Math.max(0, d.b - d.a) * (440 / rows) - 2, background: dConf.length ? 'rgba(23,105,255,.75)' : '#1769ff', color: '#fff', fontSize: 11, fontWeight: 600, padding: '3px 6px', boxSizing: 'border-box', overflow: 'hidden', boxShadow: dConf.length ? '0 0 0 2px #b42318' : 'none', zIndex: 2, transition: 'top 160ms, height 160ms' },
+      miniDraftLabel: d.a !== undefined ? this.t(d.a) + ' – ' + this.t(d.b) : '',
+      autoFix: () => { const len = d.b - d.a, others = rs.filter(r => r.date === d.date && r.id !== d.id && this.active(r)); for (let q = S.open; q + len <= S.close; q++) { if (!others.some(o => o.a < q + len && o.b > q)) { set({ a: q, b: q + len }); this.toast({ icon: 'sparkle', title: 'Nalezen volný čas', text: this.t(q) + ' – ' + this.t(q + len) + ' · ' + this.dl(d.date) }); return; } } this.toast({ tone: 'warn', icon: 'alert', title: 'V tento den už není volno', text: 'Zkuste jiné datum.' }); },
+      draftDirtyLabel: M.type === 'edit' && M.orig && M.orig !== JSON.stringify(d) ? 'Neuložené změny · Ctrl+Enter uloží' : M.type === 'edit' && !M.orig ? 'Ctrl+Enter uloží' : '',
+      saveLabel: d.id === null ? 'Založit objednávku' : 'Uložit změny',
+      editOpen: M.type === 'edit', draft: d, draftExists: M.type === 'edit' && d.id !== null, draftIsNew: M.type === 'edit' && d.status === 'new',
+      draftEyebrow: d.id === null ? 'Nová objednávka' : 'Objednávka #' + d.id + ' · ' + (this.STATUS[d.status] || ''), draftTitle: d.id === null ? 'Založit objednávku po telefonu' : d.name || '',
+      draftDuration: d.a !== undefined ? this.dur(Math.max(0, d.b - d.a)) : '', draftA: String(d.a), draftB: String(d.b),
+      timeOptions: timeOpts(S.open, S.close - 1), timeOptionsEnd: timeOpts(S.open + 1, S.close), serviceOptions: S.prices.map(svc),
+      statusOptions: Object.keys(this.STATUS).map(k => ({ value: k, label: this.STATUS[k] })),
+      setName: (e) => set({ name: e.target.value }), setPhone: (e) => set({ phone: e.target.value }), setEmail: (e) => set({ email: e.target.value }), setAddress: (e) => set({ address: e.target.value }), setDate: (e) => set({ date: e.target.value }), setService: (e) => set({ service: e.target.value }), setStatus: (e) => set({ status: e.target.value }), setNote: (e) => set({ note: e.target.value }),
+      setA: (e) => { const a = +e.target.value; set({ a, b: Math.max(d.b, a + 1) }); }, setB: (e) => set({ b: +e.target.value }),
+      quickShifts: [shift(-4, '− 1 h'), shift(-1, '− 15 min'), shift(1, '+ 15 min'), shift(4, '+ 1 h'), { label: 'Prodloužit o 30 min', apply: () => set({ b: Math.min(S.close, d.b + 2) }) }],
+      hasConflict: dConf.length > 0, noConflict: M.type === 'edit' && dConf.length === 0, conflictNames: dConf.map(c => c.name + ' (' + this.t(c.a) + ' – ' + this.t(c.b) + ')').join(', '),
+      saveDraft: () => this.save(d), confirmDraft: () => this.save(d, 'confirmed'), askDelete: () => this.setState({ modal: { type: 'delete', id: d.id } }),
+      closeModal: () => this.setState({ modal: null }), stop: (e) => e.stopPropagation(),
+      priceOpen: M.type === 'price', pd, pdExists: M.type === 'price' && pd.id !== null, priceTitle: pd.id === null ? 'Nový balíček' : 'Upravit balíček',
+      setPName: (e) => setP({ name: e.target.value }), setPPrice: (e) => setP({ price: e.target.value }), setPItems: (e) => setP({ items: e.target.value }), setPFeatured: (e) => setP({ featured: e.target.checked }),
+      savePrice: () => { const p = { ...pd, items: String(pd.items).split('\n').map(s => s.trim()).filter(Boolean) }; let list = S.prices; if (p.id === null) { p.id = Math.max(0, ...list.map(x => x.id)) + 1; list = list.concat([p]); } else list = list.map(x => x.id === p.id ? p : x); if (p.featured) list = list.map(x => x.id === p.id ? x : { ...x, featured: false }); this.setState({ prices: list, modal: null }); this.toast({ icon: 'tag', title: 'Ceník uložen', text: 'Balíček ' + p.name + ' je aktualizovaný na webu.' }); },
+      deletePrice: () => { const p = S.prices.find(x => x.id === pd.id); this.setState({ prices: S.prices.filter(x => x.id !== pd.id), modal: null }); this.toast({ tone: 'danger', icon: 'trash', title: 'Balíček smazán', text: p.name, ttl: 7000, actionLabel: 'Vrátit', action: () => this.setState(s => ({ prices: s.prices.concat([p]) })) }); },
+      pdPreviewName: pd.name || 'Název balíčku', pdPreviewPrice: pd.price ? (/^\d/.test(pd.price) || /^od/.test(pd.price) ? pd.price + ' Kč' : pd.price) : '—', pdPreviewItems: String(pd.items || '').split('\n').map(s => s.trim()).filter(Boolean).join(' · ') || 'Položky balíčku',
+      customerOpen: M.type === 'customer', cust: M.cust ? { ...M.cust, tel: 'tel:' + M.cust.phone.replace(/\s/g, ''), mailto: 'mailto:' + M.cust.email, stats: [{ label: 'Zakázek', value: String(M.cust.orders.length) }, { label: 'Hotových', value: String(M.cust.orders.filter(o => o.status === 'done').length) }, { label: 'Nejčastěji', value: (() => { const c = {}; M.cust.orders.forEach(o => c[o.service] = (c[o.service] || 0) + 1); return Object.keys(c).sort((x, y) => c[y] - c[x])[0] || '—'; })() }], newOrder: () => { const c = M.cust, last = [...c.orders].sort((x, y) => y.date.localeCompare(x.date))[0]; this.setState({ modal: { type: 'edit', orig: null, draft: { id: null, name: c.name, phone: c.phone, email: c.email, address: last.address, service: last.service, date: todayIso, a: S.open + 8, b: S.open + 16, status: 'confirmed', note: '' } } }); }, orders: [...M.cust.orders].sort((x, y) => y.date.localeCompare(x.date)).map(o => ({ when: this.dl(o.date) + ' · ' + this.t(o.a) + ' – ' + this.t(o.b), service: o.service, statusLabel: this.STATUS[o.status], open: () => this.openEdit(o) })) } : { orders: [] },
+      userOpen: M.type === 'user', ud, roleOptions: [{ value: 'Správce', label: 'Správce' }, { value: 'Technik', label: 'Technik' }], setUName: (e) => setU({ name: e.target.value }), setUEmail: (e) => setU({ email: e.target.value }), setURole: (e) => setU({ role: e.target.value }),
+      saveUser: () => { if (!ud.name || !ud.email) return this.toast({ tone: 'warn', icon: 'alert', title: 'Doplňte jméno a e-mail' }); this.setState({ users: S.users.concat([{ id: Date.now(), ...ud }]), modal: null }); this.toast({ icon: 'users', title: 'Uživatel přidán', text: ud.name + ' dostane e-mail s odkazem pro nastavení hesla.' }); },
+      delOpen: M.type === 'delete', delName: M.type === 'delete' ? (rs.find(r => r.id === M.id) || {}).name : '', cancelDelete: () => this.setState({ modal: null }),
+      doDelete: () => this.softDelete(M.id),
+      toasts: S.toasts.map(n => { const col = n.tone === 'danger' ? '#ff6b5c' : n.tone === 'warn' ? '#ffb020' : '#1769ff'; return { ...n, hasText: !!n.text, hasAction: !!n.action, act: () => { n.action(); this.dismiss(n.id); }, dismiss: () => this.dismiss(n.id), style: { position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 14px 16px 16px', background: '#080b12', color: '#fff', boxShadow: 'var(--hd-shadow-dark)', pointerEvents: 'auto', animation: 'hdToast .3s cubic-bezier(.2,.7,.2,1) both', overflow: 'hidden' }, iconStyle: { color: col, marginTop: 1 }, barStyle: { position: 'absolute', left: 0, bottom: 0, height: 2, width: '100%', background: col, transformOrigin: 'left', animation: 'hdShrink ' + n.ttl + 'ms linear both' } }; })
+    };
+  }
+}
+</script>
+</body>
+</html>
