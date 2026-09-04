@@ -529,6 +529,13 @@
 
 /* Responsive */
 
+@media (max-width: 1180px) {
+  .carModel {
+    width: 128%;
+    height: 100%;
+  }
+}
+
 @media (max-width: 900px) {
   .hero,
   .split,
