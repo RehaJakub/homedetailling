@@ -1,13 +1,24 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run lint)",
-      "Bash(npm run lint:*)",
-      "Bash(npm test)",
-      "Bash(npm run test:*)",
-      "Bash(npm run build)",
-      "Bash(npx tsc --noEmit)",
-      "Bash(npm run db:generate)"
+      "Bash(bun install)",
+      "Bash(bun run lint)",
+      "Bash(bun run lint:*)",
+      "Bash(bun run typecheck)",
+      "Bash(bun run test)",
+      "Bash(bun run test:*)",
+      "Bash(bun run build)",
+      "Bash(bun run db:generate)",
+      "Bash(make help)",
+      "Bash(make check)",
+      "Bash(make lint)",
+      "Bash(make typecheck)",
+      "Bash(make test)",
+      "Bash(make test-unit)",
+      "Bash(make test-integration)",
+      "Bash(make db-up)",
+      "Bash(make db-generate)",
+      "Bash(make build)"
     ]
   }
 }

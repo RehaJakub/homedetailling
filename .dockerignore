@@ -1,0 +1,25 @@
+node_modules
+.next
+design-system/dist
+.ds-sync
+ds-bundle
+.design-sync
+.playwright-mcp
+.git
+.idea
+.vscode
+.claude
+coverage
+data
+*.tsbuildinfo
+# never bake secrets into the image (next build reads .env files)
+.env*
+!.env.example
+Dockerfile
+compose*.yml
+docker-compose*.yml
+.github
+Makefile
+README.md
+CLAUDE.md
+AGENTS.md

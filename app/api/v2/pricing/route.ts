@@ -9,7 +9,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireUser(["admin", "manager"]);
+  const auth = await requireUser(request, ["admin", "manager"]);
   if (auth.error) return auth.error;
   const parsed = parsePricePackage((await request.json()) as Record<string, unknown>);
   if (!parsed) return Response.json({ error: "Vyplňte název, cenu a alespoň jeden popisek." }, { status: 400 });

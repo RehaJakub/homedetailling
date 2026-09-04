@@ -1,0 +1,52 @@
+# Production stack: app + Postgres + one-shot migrations.
+# Usage: cp .env.production.example .env.production, fill it in, then
+#   docker compose -f compose.prod.yml --env-file .env.production up -d --build
+# (or `make prod-up`). Postgres is reachable only on the compose network; the
+# app binds to APP_BIND:APP_PORT for the host's reverse proxy.
+name: homedetailing-prod
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - homedetailing_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    image: ${APP_IMAGE:-homedetailing/app:local}
+    build: .
+    restart: "no"
+    command: ["node", "scripts/migrate.mjs"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    image: ${APP_IMAGE:-homedetailing/app:local}
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_REGISTRATION_CODE: ${ADMIN_REGISTRATION_CODE}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  homedetailing_postgres:
