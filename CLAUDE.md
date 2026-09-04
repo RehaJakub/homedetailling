@@ -50,7 +50,8 @@ make prod-up / prod-down / prod-logs   # compose.prod.yml with .env.production
 - `scripts/seed.ts` — local dummy data (`make seed`, refuses non-local databases); `scripts/migrate.mjs` — programmatic migrator for the prod stack; `scripts/migrate-sqlite-to-postgres.mjs` — one-off legacy import
 - `compose.yml` — dev Postgres (+ `homedetailing_test` via `docker/postgres/init-test-db.sh`); `compose.prod.yml` + `Dockerfile` — app, Postgres and one-shot migrate service
 - `.design-sync/` — Claude Design sync inputs (config, authored previews, notes, conventions)
-- `.github/workflows/ci.yml` — lint, typecheck, tests, build and Docker image on push/PR; on `main` it also pushes the image to GHCR and runs the `deploy` job on the self-hosted runner in LXC ct302 (`scripts/deploy/install-runner.sh`; secrets only in `/opt/homedetailing/.env.production` on the runner)
+- `.github/workflows/ci.yml` — lint, typecheck, tests, build and Docker image on push/PR; on `main` the `release` job (`scripts/release.mjs`) bumps `package.json`, prepends `CHANGELOG.md`, tags `vX.Y.Z` and publishes a GitHub Release, then the image is pushed to GHCR and the `deploy` job runs on the self-hosted runner in LXC ct302 (`scripts/deploy/install-runner.sh`; secrets only in `/opt/homedetailing/.env.production` on the runner)
+- `lib/version.ts` — `APP_VERSION` from `NEXT_PUBLIC_APP_VERSION`, which `next.config.ts` fills from `APP_VERSION` (Docker build arg) or `package.json`; shown in the landing footer, admin top bar, login page and `/api/health`
 
 ## Conventions
 
@@ -58,6 +59,7 @@ make prod-up / prod-down / prod-logs   # compose.prod.yml with .env.production
 - Before touching Next.js-specific APIs (route handlers, caching, metadata, proxy, server/client boundaries), read the matching guide in `node_modules/next/dist/docs/01-app/` or delegate to the `nextjs-docs-guide` agent. Do not rely on memory of older Next versions.
 - Every `app/api/v2` handler receives `request: Request`, checks the session and role through `requireUser(request, roles)` from `lib/auth.ts` before reading or writing data, and parses bodies through `lib/validation.ts`.
 - Schema changes: edit `lib/db/schema.ts`, run `make db-generate`, review the SQL, then `make db-migrate`. Keep `lib/auth.ts` role literals and the `user_role` enum identical. Keep the `outputFileTracingIncludes` entry in `next.config.ts`; the prod image needs `drizzle/` at runtime.
+- Versioning: never bump `package.json` or edit `CHANGELOG.md` by hand; CI does it on every merge to `main` (patch by default, PR labels `release:minor` / `release:major` for bigger bumps).
 - Environment: `DATABASE_URL`, `JWT_SECRET` (at least 32 chars), `ADMIN_REGISTRATION_CODE`; optional `TEST_DATABASE_URL`. Copy `.env.example` to `.env` (`bun run` loads it automatically). The prod stack reads `.env.production` (see `.env.production.example`). Neither file is ever committed or printed.
 - Tests: unit tests live next to the module as `lib/<name>.test.ts` (Vitest project `unit`, pure logic, never a DB connection). Integration tests live in `tests/integration/*.test.ts` (project `integration`), call route handlers directly and use only the `homedetailing_test` database. Import from `vitest` explicitly (no globals).
 

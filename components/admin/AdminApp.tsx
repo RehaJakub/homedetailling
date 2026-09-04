@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Card, Dialog, Eyebrow, Field, Heading, Icon, Input, Select, Tabs } from "@homedetailing/ui";
 import { addDays, conflictsOf, dayLabel, defaultSettings, DOW_LONG, estimateSlots, fromIso, isActive, servicesLabel, slotLabel, STATUS_LABEL, toIso, type BookingStatus, type Settings } from "@/lib/booking";
 import { Wordmark } from "@/components/Wordmark";
+import { APP_VERSION } from "@/lib/version";
 import styles from "@/app/admin/admin.module.css";
 import { api, ApiError, toDraft } from "./api";
 import { OrderModal } from "./OrderModal";
@@ -338,6 +339,9 @@ export function AdminApp({ user }: { user: User }) {
           <div style={{ display: "flex", alignItems: "center", gap: 22, fontSize: 13 }}>
             <span className={styles.monoLabel} style={{ color: "#87909d" }}>
               {`${DOW_LONG[todayDate.getDay()]} · ${todayDate.getDate()}. ${todayDate.getMonth() + 1}. ${todayDate.getFullYear()}`}
+            </span>
+            <span className={styles.monoLabel} style={{ color: "#5d6673", textTransform: "none" }}>
+              version: {APP_VERSION}
             </span>
             <Link href="/" className={styles.topLink}>
               <Icon name="external" size={14} />

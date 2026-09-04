@@ -13,7 +13,10 @@ WORKDIR /app
 COPY --from=deps /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
+# Release builds pass the version from CI; an empty value falls back to package.json.
+ARG APP_VERSION=
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    APP_VERSION=$APP_VERSION
 RUN bun run build
 
 # 3. Runtime: standalone server plus the migration script.

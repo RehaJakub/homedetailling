@@ -71,3 +71,12 @@ Každý merge do `main` projde CI, sestaví image `ghcr.io/rehajakub/homedetaill
 3. Deploy job udělá `docker compose pull`, `up -d` (migrace proběhnou v jednorázové službě `migrate`) a čeká na `/api/health`. Při neúspěchu vypíše logy a job selže; běžící verze zůstává, dokud nový kontejner nenastartuje.
 
 Ruční nasazení na ct302: znovu spustit workflow `CI` pro `main` v záložce Actions (Re-run jobs).
+
+## Verzování a changelog
+
+Verzi i changelog generuje CI, ručně se nemění:
+
+- Každý merge do `main` zvedne patch verzi (`0.1.0` → `0.1.1`). PR s labelem `release:minor` zvedne minor, `release:major` major. První release vydá verzi, která je zrovna v `package.json`.
+- Job `Version and changelog` (`scripts/release.mjs`) zapíše verzi do `package.json`, přidá sekci do `CHANGELOG.md` z commit messages od posledního tagu, commitne `chore(release): vX.Y.Z`, vytvoří tag a GitHub Release. Image v GHCR dostane i tag `vX.Y.Z`.
+- Běžící verze je vidět malým písmem v patičce webu, v horní liště administrace, na přihlašovací stránce a v `/api/health` (`{"ok":true,"version":"0.1.0"}`). Deploy job kontroluje, že nasazená verze odpovídá vydané.
+- Lokálně se verze bere z `package.json` (`next.config.ts` ji vloží do `NEXT_PUBLIC_APP_VERSION`); `node scripts/release.mjs --dry-run` ukáže, co by CI vydalo.

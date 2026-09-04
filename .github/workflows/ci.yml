@@ -47,17 +47,83 @@ jobs:
       - run: bun run test:integration
       - run: bun run build
 
+  release:
+    # Every merge to main becomes a release: patch bump by default, minor/major
+    # when the merged PR carries the label release:minor / release:major.
+    # scripts/release.mjs bumps package.json and prepends CHANGELOG.md; this job
+    # commits, tags and publishes the GitHub Release. Pushes made with
+    # GITHUB_TOKEN do not start another workflow run, so there is no loop.
+    name: Version and changelog
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && !startsWith(github.event.head_commit.message, 'chore(release)')
+    needs: checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+      tag: ${{ steps.bump.outputs.tag }}
+      sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Resolve the bump from the merged PR labels
+        id: labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          labels=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" --jq '[.[].labels[].name] | join(" ")' 2>/dev/null || true)
+          bump=patch
+          case " $labels " in
+            *" release:major "*) bump=major ;;
+            *" release:minor "*) bump=minor ;;
+          esac
+          echo "labels: ${labels:-none} -> $bump"
+          echo "bump=$bump" >> "$GITHUB_OUTPUT"
+      - name: Bump version and changelog
+        id: bump
+        env:
+          RELEASE_BUMP: ${{ steps.labels.outputs.bump }}
+        run: node scripts/release.mjs --notes "$RUNNER_TEMP/release-notes.md"
+      - name: Commit, tag and push
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json CHANGELOG.md
+          git commit -m "chore(release): ${{ steps.bump.outputs.tag }}"
+          git tag "${{ steps.bump.outputs.tag }}"
+          git push origin HEAD:main "${{ steps.bump.outputs.tag }}"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Publish the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ steps.bump.outputs.tag }}" --title "${{ steps.bump.outputs.tag }}" --notes-file "$RUNNER_TEMP/release-notes.md"
+
   docker:
-    # Pull requests only build the image; pushes to main also publish it to GHCR.
+    # Pull requests only build the image; pushes to main build the release
+    # commit and publish it to GHCR.
     name: Docker image
+    needs: [checks, release]
+    if: ${{ !cancelled() && needs.checks.result == 'success' && needs.release.result != 'failure' && needs.release.result != 'cancelled' }}
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.sha || github.sha }}
       - uses: docker/setup-buildx-action@v3
       - id: meta
-        run: echo "tag=sha-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "tag=sha-$(git rev-parse --short=12 HEAD)" >> "$GITHUB_OUTPUT"
+          if [ -n "${{ needs.release.outputs.tag }}" ]; then
+            echo "version_tag=${IMAGE}:${{ needs.release.outputs.tag }}" >> "$GITHUB_OUTPUT"
+          fi
       - name: Log in to GHCR
         if: github.event_name == 'push'
         uses: docker/login-action@v3
@@ -70,11 +136,15 @@ jobs:
           context: .
           push: ${{ github.event_name == 'push' }}
           load: ${{ github.event_name != 'push' }}
+          build-args: |
+            APP_VERSION=${{ needs.release.outputs.version }}
           tags: |
             ${{ env.IMAGE }}:${{ steps.meta.outputs.tag }}
             ${{ env.IMAGE }}:latest
+            ${{ steps.meta.outputs.version_tag }}
           labels: |
             org.opencontainers.image.source=https://github.com/RehaJakub/homedetailling
+            org.opencontainers.image.version=${{ needs.release.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Migrator is traced into the image
@@ -87,7 +157,7 @@ jobs:
     # /opt/homedetailing/.env.production; the workflow never reads them.
     name: Deploy to ct302
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [checks, docker]
+    needs: [checks, release, docker]
     runs-on: [self-hosted, linux, ct302]
     concurrency:
       group: deploy-production
@@ -95,8 +165,11 @@ jobs:
     env:
       ENV_FILE: /opt/homedetailing/.env.production
       APP_IMAGE: ghcr.io/rehajakub/homedetailling:${{ needs.docker.outputs.tag }}
+      EXPECTED_VERSION: ${{ needs.release.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.sha || github.sha }}
       - name: Check the environment file
         run: test -r "$ENV_FILE" || { echo "Missing $ENV_FILE on the runner"; exit 1; }
       - name: Log in to GHCR
@@ -109,8 +182,12 @@ jobs:
         run: |
           port=$(grep -E '^APP_PORT=' "$ENV_FILE" | cut -d= -f2)
           for i in $(seq 1 30); do
-            if curl -fsS "http://127.0.0.1:${port:-3000}/api/health" >/dev/null; then
-              echo "healthy after $i checks"
+            if body=$(curl -fsS "http://127.0.0.1:${port:-3000}/api/health"); then
+              echo "healthy after $i checks: $body"
+              if [ -n "$EXPECTED_VERSION" ] && ! echo "$body" | grep -q "\"version\":\"$EXPECTED_VERSION\""; then
+                echo "Deployed version does not match $EXPECTED_VERSION"
+                exit 1
+              fi
               exit 0
             fi
             sleep 2

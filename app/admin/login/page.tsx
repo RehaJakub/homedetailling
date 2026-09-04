@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { Button, Card, Field, Heading, Input, Notice, Text } from "@homedetailing/ui";
 import { Wordmark } from "@/components/Wordmark";
+import { APP_VERSION } from "@/lib/version";
 import styles from "../admin.module.css";
 
 /** Admin sign-in. While no user exists it turns into the one-time first-admin registration. */
@@ -76,6 +77,9 @@ export default function AdminLoginPage() {
           </div>
         </Card>
       </div>
+      <span className={styles.monoLabel} style={{ color: "#5d6673", textTransform: "none" }}>
+        version: {APP_VERSION}
+      </span>
     </main>
   );
 }
