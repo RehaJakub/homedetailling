@@ -17,6 +17,7 @@ import {
   type IconName,
 } from "@homedetailing/ui";
 import { durationLabel, slotsForMinutes } from "@/lib/booking";
+import { APP_VERSION } from "@/lib/version";
 import { Wordmark } from "@/components/Wordmark";
 import { BookingForm, type PricePackage } from "@/components/landing/BookingForm";
 import { Faq } from "@/components/landing/Faq";
@@ -407,7 +408,8 @@ export default function Home() {
             © 2026 Home Detailing. Všechna práva vyhrazena. ·{" "}
             <Link href="/admin" className={styles.footerLink}>
               Administrace
-            </Link>
+            </Link>{" "}
+            · <span className={styles.monoLabel} style={{ textTransform: "none" }}>version: {APP_VERSION}</span>
           </>
         }
       />
