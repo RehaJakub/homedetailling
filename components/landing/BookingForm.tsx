@@ -7,8 +7,9 @@ import {
   defaultSettings,
   durationLabel,
   estimateSlots,
-  firstFree,
-  freeCount,
+  publicBookingSlots,
+  PUBLIC_BOOKING_STEP_MINUTES,
+  PUBLIC_BOOKING_STEP_SLOTS,
   isSlotBusy,
   MONTHS,
   priceList,
@@ -34,7 +35,7 @@ export type BookingFormProps = {
 };
 
 /**
- * Booking section: month calendar → 15-minute from–to range → ticked services.
+ * Booking section: month calendar → 30-minute from–to range → ticked services.
  * The customer picks the range themselves; the summed package estimate is only
  * a hint, and a warning appears when the chosen range is shorter than it.
  */
@@ -103,9 +104,9 @@ export function BookingForm({ packages, onToast, onNextFree }: BookingFormProps)
       const iso = addDays(today, k);
       const info = days[iso];
       if (!info) return "…";
-      if (info.closed || freeCount(info.busy, settings) === 0) continue;
-      const slot = firstFree(info.busy, settings);
-      if (slot === null) continue;
+      if (info.closed) continue;
+      const slot = publicBookingSlots(settings, info.busy)[0];
+      if (slot === undefined) continue;
       return `${k === 0 ? "Dnes" : k === 1 ? "Zítra" : dayLabel(iso)} ${slotLabel(slot)}`;
     }
     return "Po domluvě";
@@ -118,8 +119,7 @@ export function BookingForm({ packages, onToast, onNextFree }: BookingFormProps)
   const estimate = estimateSlots(services, packages);
   const busy = day ? busyOf(day) : null;
   const dayOpen = busy !== null;
-  // Booking step from the admin settings: one grid cell = `step` quarter-hour slots.
-  const step = Math.max(1, Math.round(settings.stepMinutes / 15));
+  const step = PUBLIC_BOOKING_STEP_SLOTS;
   const isBusy = (i: number) => busy === null || Array.from({ length: step }, (_, k) => i + k).some((q) => q >= settings.closeSlot || isSlotBusy(q, busy));
   // b is the first slot of the last selected cell (inclusive); the booking end is b + step.
   const n = a !== null && b !== null ? b - a + step : 0;
@@ -188,7 +188,7 @@ export function BookingForm({ packages, onToast, onNextFree }: BookingFormProps)
     const info = days[iso];
     const past = iso < today;
     const closed = !past && (!info || info.closed);
-    const full = !past && !closed && info !== undefined && freeCount(info.busy, settings) === 0;
+    const full = !past && !closed && info !== undefined && publicBookingSlots(settings, info.busy).length === 0;
     const disabled = past || closed || full;
     const selected = day === iso;
     const isToday = iso === today;
@@ -228,7 +228,7 @@ export function BookingForm({ packages, onToast, onNextFree }: BookingFormProps)
 
   const slots = [];
   if (busy && day) {
-    const starts = Array.from({ length: Math.floor((settings.closeSlot - settings.openSlot) / step) }, (_, k) => settings.openSlot + k * step);
+    const starts = publicBookingSlots(settings);
     for (const i of starts) {
       const slotBusy = isBusy(i);
       const inSel = a !== null && (b !== null ? i >= a && i <= b : i === a);
@@ -278,7 +278,7 @@ export function BookingForm({ packages, onToast, onNextFree }: BookingFormProps)
   const slotHint = !day
     ? "nejdřív vyberte den"
     : a === null
-      ? `${slotLabel(settings.openSlot)} – ${slotLabel(settings.closeSlot)} · krok ${settings.stepMinutes} min`
+      ? `${slotLabel(settings.openSlot)} – ${slotLabel(settings.closeSlot)} · krok ${PUBLIC_BOOKING_STEP_MINUTES} min`
       : b === null
         ? "teď zvolte konec"
         : "kliknutím vyberete znovu";
@@ -296,7 +296,7 @@ export function BookingForm({ packages, onToast, onNextFree }: BookingFormProps)
     {
       icon: n ? "check" : "clock",
       label: "02 · Čas",
-      value: n && a !== null && b !== null ? `${slotLabel(a)} – ${slotLabel(b + step)} · ${durationLabel(n)}` : a !== null ? `od ${slotLabel(a)} · zvolte konec` : `Od – do po ${settings.stepMinutes} min`,
+      value: n && a !== null && b !== null ? `${slotLabel(a)} – ${slotLabel(b + step)} · ${durationLabel(n)}` : a !== null ? `od ${slotLabel(a)} · zvolte konec` : `Od – do po ${PUBLIC_BOOKING_STEP_MINUTES} min`,
       done: n > 0,
     },
     { icon: services.length ? "check" : "car", label: "03 · Služby", value: services.length ? servicesLabel(services) : "Zaškrtněte služby", done: services.length > 0 },

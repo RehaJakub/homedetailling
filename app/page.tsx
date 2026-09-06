@@ -45,7 +45,7 @@ const trust: Array<{ icon: IconName; title: string; text: string }> = [
 ];
 
 const steps: Array<{ icon: IconName; index: string; title: string; text: string }> = [
-  { icon: "calendar", index: "01", title: "Vyberete službu a čas", text: "V kalendáři kliknete na den, pak na začátek a konec úseku. Nejkratší krok je 15 minut." },
+  { icon: "calendar", index: "01", title: "Vyberete službu a čas", text: "V kalendáři kliknete na den, pak na začátek a konec úseku. Nejkratší krok je 30 minut." },
   { icon: "phone", index: "02", title: "Potvrdíme termín", text: "Ozveme se telefonicky nebo e-mailem. Případnou změnu času vidíte hned v potvrzení." },
   { icon: "sparkle", index: "03", title: "Přijedeme a vyčistíme", text: "Na místě u vás doma nebo v práci. Platba hotově, kartou nebo převodem po dokončení." },
 ];
@@ -63,7 +63,7 @@ const fallbackPackages: PricePackage[] = [
   { id: 3, name: "Tepování", price: "od 500", showCurrency: true, featured: false, durationMinutes: 90, items: ["Tepování sedaček", "Tepování koberců", "Cena za kus"] },
 ];
 
-const marqueeText = "Interiér · Exteriér · Tepování · Ostrava · Poruba · Havířov · Frýdek-Místek · Přijedeme k vám · Termín po 15 minutách ·";
+const marqueeText = "Interiér · Exteriér · Tepování · Ostrava · Poruba · Havířov · Frýdek-Místek · Přijedeme k vám · Termín po 30 minutách ·";
 
 export default function Home() {
   const [packages, setPackages] = useState<PricePackage[]>(fallbackPackages);
@@ -174,8 +174,7 @@ export default function Home() {
               {(
                 [
                   ["clock", "4 h", "Průměrná návštěva"],
-                  ["calendar", "15 min", "Krok rezervace"],
-                  ["home", "0 km", "Vaše cesta k nám"],
+                  ["calendar", "30 min", "Krok rezervace"],
                 ] as Array<[IconName, string, string]>
               ).map(([icon, value, label]) => (
                 <div key={label} className={styles.metric}>

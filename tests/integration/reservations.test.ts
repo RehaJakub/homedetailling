@@ -26,6 +26,12 @@ async function create(body: Record<string, unknown> = valid, cookie?: string) {
 }
 
 describe("POST /api/v2/reservations (public)", () => {
+  it("rejects quarter-hour boundaries and accepts a half-hour reservation", async () => {
+    expect((await create({ ...valid, a: 37, b: 40 })).response.status).toBe(400);
+    expect((await create({ ...valid, a: 36, b: 39 })).response.status).toBe(400);
+    expect((await create({ ...valid, a: 36, b: 38 })).response.status).toBe(201);
+  });
+
   it("stores a valid reservation as new", async () => {
     const { response, body } = await create();
     expect(response.status).toBe(201);

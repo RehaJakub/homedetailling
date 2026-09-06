@@ -21,6 +21,18 @@ export type Settings = {
 };
 
 export const SLOTS_PER_DAY = 96;
+export const PUBLIC_BOOKING_STEP_MINUTES = 30;
+export const PUBLIC_BOOKING_STEP_SLOTS = PUBLIC_BOOKING_STEP_MINUTES / 15;
+
+/** Complete public booking cells, aligned to :00/:30 within opening hours. */
+export function publicBookingSlots(s: Settings, busy: Array<[number, number]> = []) {
+  const slots: number[] = [];
+  const step = PUBLIC_BOOKING_STEP_SLOTS;
+  for (let i = Math.ceil(s.openSlot / step) * step; i + step <= s.closeSlot; i += step) {
+    if (!busy.some(([a, b]) => a < i + step && b > i)) slots.push(i);
+  }
+  return slots;
+}
 export const STATUS_LABEL: Record<BookingStatus, string> = {
   new: "Čeká na potvrzení",
   confirmed: "Potvrzeno",

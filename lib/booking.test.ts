@@ -17,6 +17,7 @@ import {
   mergeRanges,
   priceLabel,
   priceList,
+  publicBookingSlots,
   servicesLabel,
   slotLabel,
   slotsForMinutes,
@@ -24,6 +25,19 @@ import {
 } from "./booking";
 
 const s = defaultSettings;
+
+describe("public half-hour availability", () => {
+  it("offers :00/:30 even with legacy 15-minute settings and clips opening hours", () => {
+    const settings = { ...s, openSlot: 77, closeSlot: 83, stepMinutes: 15 };
+    expect(publicBookingSlots(settings).map(slotLabel)).toEqual(["19:30", "20:00"]);
+  });
+
+  it("blocks a whole cell for a partial overlap and skips 15-minute gaps", () => {
+    const settings = { ...s, openSlot: 78, closeSlot: 86 };
+    expect(publicBookingSlots(settings, [[79, 81]]).map(slotLabel)).toEqual(["20:30", "21:00"]);
+    expect(publicBookingSlots({ ...settings, closeSlot: 80 }, [[79, 80]])).toEqual([]);
+  });
+});
 
 describe("labels", () => {
   it("formats slots and durations", () => {

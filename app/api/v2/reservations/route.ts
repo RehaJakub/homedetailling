@@ -2,7 +2,7 @@ import { asc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { reservations } from "@/lib/db/schema";
 import { currentUser, requireUser } from "@/lib/auth";
-import { busyRanges, isSlotBusy, isWorkDay } from "@/lib/booking";
+import { busyRanges, isSlotBusy, isWorkDay, PUBLIC_BOOKING_STEP_SLOTS } from "@/lib/booking";
 import { businessNow, getSettings } from "@/lib/settings";
 import { bookingStatuses, parseReservation } from "@/lib/validation";
 import type { BookingStatus } from "@/lib/booking";
@@ -35,6 +35,9 @@ export async function POST(request: Request) {
       status = body.status as BookingStatus;
     }
   } else {
+    if (parsed.slotStart % PUBLIC_BOOKING_STEP_SLOTS !== 0 || parsed.slotEnd % PUBLIC_BOOKING_STEP_SLOTS !== 0) {
+      return Response.json({ error: "Začátek i konec rezervace vybírejte po 30 minutách." }, { status: 400 });
+    }
     const now = businessNow();
     if (parsed.date < now.iso || !isWorkDay(parsed.date, settings)) return Response.json({ error: "V tento den nejezdíme. Vyberte prosím jiný." }, { status: 409 });
     if (parsed.slotStart < settings.openSlot || parsed.slotEnd > settings.closeSlot) return Response.json({ error: "Čas je mimo provozní dobu." }, { status: 409 });
