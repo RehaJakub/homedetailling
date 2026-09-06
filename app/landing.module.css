@@ -87,34 +87,9 @@
   position: relative;
 }
 
-.nextFreeMobile {
-  display: none;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 16px;
-  background: #080b12;
-  color: #fff;
-  text-decoration: none;
-  width: fit-content;
-}
 
-.nextFreeMobile > span:not(.pulse) {
-  display: grid;
-  gap: 2px;
-  line-height: 1.2;
-}
 
-.nextFreeMobile > span:not(.pulse) > span {
-  font-family: var(--hd-font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #87909d;
-}
 
-.nextFreeMobile strong {
-  font-size: 14px;
-}
 
 .footerLink {
   color: #1769ff;
@@ -138,56 +113,8 @@
   --poster-color: transparent;
 }
 
-.floatDark {
-  position: absolute;
-  left: -28px;
-  bottom: 48px;
-  background: #080b12;
-  color: #fff;
-  padding: 18px 22px;
-  display: grid;
-  gap: 4px;
-  box-shadow: var(--hd-shadow-dark);
-  animation: hdFloat 5s ease-in-out infinite;
-}
 
-.floatDark span {
-  font-family: var(--hd-font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  color: #87909d;
-  text-transform: uppercase;
-}
 
-.floatDark strong {
-  font-size: 20px;
-}
-
-.floatBlue {
-  position: absolute;
-  right: 20px;
-  top: -22px;
-  background: #1769ff;
-  color: #fff;
-  padding: 14px 18px;
-  display: grid;
-  gap: 2px;
-  box-shadow: var(--hd-shadow-blue);
-  animation: hdFloat 6s ease-in-out 0.8s infinite;
-}
-
-.floatBlue strong {
-  font-size: 22px;
-  letter-spacing: -0.02em;
-}
-
-.floatBlue span {
-  font-family: var(--hd-font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  opacity: 0.85;
-}
 
 /* Marquee */
 
@@ -219,7 +146,7 @@
 
 .trust {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -315,6 +242,21 @@
 }
 
 /* Booking band */
+.serviceGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.priceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 850px) {
+  .serviceGrid {
+    grid-template-columns: 1fr;
+  }
+}
 
 .bookingBand {
   background: #1769ff;
@@ -329,31 +271,17 @@
 }
 
 .bookingCtaSide {
-  display: grid;
-  gap: 18px;
-  justify-items: start;
-  padding: 28px;
-  border: 1px solid rgb(255 255 255 / 25%);
+  display: inline-flex;
+  justify-self: center;
+  max-width: 100%;
+  padding: 10px;
+  border: 1px solid rgb(255 255 255 / 55%);
   background: rgb(255 255 255 / 8%);
+  box-shadow: 0 8px 24px rgb(0 30 100 / 14%);
 }
 
-.bookingCtaNext {
-  display: grid;
-  gap: 4px;
-}
 
-.bookingCtaNext span {
-  font-family: var(--hd-font-mono);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  opacity: 0.8;
-}
 
-.bookingCtaNext strong {
-  font-size: 22px;
-  font-weight: 700;
-}
 
 /* Booking modal: the whole form lives here, opened from every "#rezervace" link. */
 
@@ -533,15 +461,6 @@
   margin-top: 4px;
 }
 
-.estimateRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 16px;
-  background: rgb(255 255 255 / 12%);
-  border: 1px solid rgb(255 255 255 / 25%);
-}
 
 .linkButton {
   background: none;
@@ -555,31 +474,8 @@
   opacity: 0.85;
 }
 
-.warnChips {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-  font-size: 12px;
-}
 
-.warnChip {
-  padding: 6px 10px;
-  border: 1px solid rgb(255 255 255 / 70%);
-  background: #fff;
-  color: #1769ff;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
 
-.warnChip:hover {
-  background: #080b12;
-  border-color: #080b12;
-  color: #fff;
-}
 
 .gdpr {
   font-size: 12px;
@@ -635,14 +531,8 @@
   animation: hdUp 0.25s ease both;
 }
 
-/* Availability indicators and toast */
+/* Toast */
 
-.pulse {
-  width: 10px;
-  height: 10px;
-  background: #1769ff;
-  animation: hdPulse 2s ease-out infinite;
-}
 
 .toast {
   position: fixed;
@@ -687,6 +577,10 @@
     gap: 28px;
   }
 
+  .bookingCtaSide {
+    justify-self: start;
+  }
+
   .bookingModal {
     padding: 0;
   }
@@ -718,17 +612,11 @@
     grid-template-columns: 1fr;
   }
 
-  .floatDark {
-    left: 0;
-  }
 
   .heroVisual {
     display: none;
   }
 
-  .nextFreeMobile {
-    display: flex;
-  }
 }
 
 @media (max-width: 650px) {

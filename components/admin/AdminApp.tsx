@@ -239,7 +239,7 @@ export function AdminApp({ user }: { user: User }) {
     try {
       const { settings: saved } = await api.saveSettings(settings);
       setSettings(saved);
-      toast({ icon: "check-circle", title: "Nastavení uloženo", text: `Provozní doba ${slotLabel(saved.openSlot)} – ${slotLabel(saved.closeSlot)} se projeví na webu.` });
+      toast({ icon: "check-circle", title: "Nastavení uloženo", text: "Pracovní doba pro jednotlivé dny se projeví na webu." });
     } catch (e) {
       fail(e);
     }

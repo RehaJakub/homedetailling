@@ -154,6 +154,15 @@ describe("parsePricePackage", () => {
 
 describe("parseSettings", () => {
   const valid = { openSlot: 28, closeSlot: 76, stepMinutes: 15, bufferMinutes: 30, workDays: [1, 1, 1, 1, 1, 1, 0] };
+  it("validates all seven daily ranges and derives the calendar bounds", () => {
+    const weeklyHours = [{ openSlot: 52, closeSlot: 76 }, null, { openSlot: 32, closeSlot: 64 }, null, null, null, null];
+    expect(parseSettings({ ...valid, weeklyHours })).toMatchObject({ weeklyHours, openSlot: 32, closeSlot: 76, workDays: [1, 0, 1, 0, 0, 0, 0] });
+    for (const bad of [undefined, {}, { openSlot: 60, closeSlot: 52 }, { openSlot: 53, closeSlot: 76 }, { openSlot: 0, closeSlot: 98 }]) {
+      expect(parseSettings({ ...valid, weeklyHours: [bad, ...weeklyHours.slice(1)] })).toBeNull();
+    }
+    expect(parseSettings({ ...valid, weeklyHours: weeklyHours.slice(1) })).toBeNull();
+    expect(parseSettings({ ...valid, weeklyHours: Array(7).fill(null) })?.workDays).toEqual([0, 0, 0, 0, 0, 0, 0]);
+  });
 
   it("accepts a valid body", () => {
     expect(parseSettings(valid)).toEqual(valid);

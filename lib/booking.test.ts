@@ -18,6 +18,8 @@ import {
   priceLabel,
   priceList,
   publicBookingSlots,
+  settingsForDate,
+  weeklyHoursOf,
   servicesLabel,
   slotLabel,
   slotsForMinutes,
@@ -25,6 +27,23 @@ import {
 } from "./booking";
 
 const s = defaultSettings;
+
+describe("daily opening hours", () => {
+  const schedule = { ...s, weeklyHours: [{ openSlot: 52, closeSlot: 76 }, null, { openSlot: 32, closeSlot: 64 }, null, null, null, null] };
+  it("resolves independent Monday and Wednesday hours and closes Tuesday", () => {
+    expect(publicBookingSlots(schedule, [], "2026-09-07").map(slotLabel)).toEqual(
+      Array.from({ length: 12 }, (_, i) => slotLabel(52 + 2 * i)),
+    );
+    expect(settingsForDate("2026-09-09", schedule)).toMatchObject({ openSlot: 32, closeSlot: 64 });
+    expect(publicBookingSlots(schedule, [], "2026-09-08")).toEqual([]);
+    expect(isWorkDay("2026-09-08", schedule)).toBe(false);
+  });
+  it("keeps legacy opening hours and clips buffers to the day's hours", () => {
+    expect(weeklyHoursOf(s)[0]).toEqual({ openSlot: 28, closeSlot: 76 });
+    expect(weeklyHoursOf(s)[6]).toBeNull();
+    expect(busyRanges("2026-09-07", [{ date: "2026-09-07", slotStart: 52, slotEnd: 54, status: "new" }], schedule)).toEqual([[52, 56]]);
+  });
+});
 
 describe("public half-hour availability", () => {
   it("offers :00/:30 even with legacy 15-minute settings and clips opening hours", () => {

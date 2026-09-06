@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Heading, Icon, Text } from "@homedetailing/ui";
-import { addDays, conflictsOf, dayLabel, DOW_SHORT, fromIso, layoutColumns, servicesLabel, slotLabel, slotOf, STATUS_LABEL } from "@/lib/booking";
+import { addDays, conflictsOf, dayLabel, DOW_SHORT, fromIso, isWorkDay, settingsForDate, layoutColumns, servicesLabel, slotLabel, slotOf, STATUS_LABEL } from "@/lib/booking";
 import styles from "@/app/admin/admin.module.css";
 import type { Booking, Settings } from "./types";
 
@@ -39,7 +39,9 @@ const DRAG_THRESHOLD = 4;
 
 /** Week grid: 15 min = 13px, overlapping bookings side by side, conflict stripe, now-line, click to create, drag to move. */
 export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, focusDay, onWeekChange, onFocusDay, onOpen, onCreateAt, onMove, stepSlots = 1 }: WeekCalendarProps) {
-  const { openSlot: open, closeSlot: close, workDays } = settings;
+  // Keep existing orders visible even after opening hours are narrowed.
+  const open = Math.min(settings.openSlot, ...bookings.map(b => b.slotStart));
+  const close = Math.max(settings.closeSlot, ...bookings.map(b => b.slotEnd));
   const rows = close - open;
   const weekIso = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
   const visible = useMemo(() => (dayMode ? [focusDay] : weekIso), [dayMode, focusDay, weekIso]);
@@ -159,7 +161,8 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
           {visible.map((iso) => {
             const d = fromIso(iso);
             const isToday = iso === today;
-            const off = !workDays[(d.getDay() + 6) % 7];
+            const off = !isWorkDay(iso, settings);
+            const hours = settingsForDate(iso, settings);
             const count = bookings.filter((r) => r.date === iso && r.status !== "cancelled").length;
             return (
               <div key={iso} className={styles.dayHead} style={{ color: isToday ? "#1769ff" : off ? "#a9afb9" : "#080b12", background: isToday ? "#dce8ff" : "transparent" }}>
@@ -167,6 +170,7 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
                   {DOW_SHORT[d.getDay()]}
                 </span>
                 <strong style={{ fontSize: 18, letterSpacing: "-.02em" }}>{d.getDate()}</strong>
+                <span style={{ fontSize: 10 }}>{off ? "Zavřeno" : `${slotLabel(hours.openSlot)}–${slotLabel(hours.closeSlot)}`}</span>
                 <span style={{ fontSize: 11, opacity: 0.7 }}>{count ? `${count} ${count === 1 ? "zakázka" : count < 5 ? "zakázky" : "zakázek"}` : ""}</span>
               </div>
             );
@@ -181,8 +185,8 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
             ))}
           </div>
           {visible.map((iso, colIndex) => {
-            const d = fromIso(iso);
-            const off = !workDays[(d.getDay() + 6) % 7];
+            const off = !isWorkDay(iso, settings);
+            const hours = settingsForDate(iso, settings);
             const events = layoutColumns(bookings.filter((r) => r.date === iso && r.status !== "cancelled"));
             const ghost = drag?.target && drag.target.col === colIndex ? drag : null;
             return (
@@ -199,6 +203,9 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
                   onCreateAt(iso, q);
                 }}
               >
+                {!off && [[open, hours.openSlot], [hours.closeSlot, close]].map(([start, end], i) => end > start && (
+                  <div key={i} aria-hidden="true" style={{ position: "absolute", left: 0, right: 0, top: (start - open) * PX, height: (end - start) * PX, background: "repeating-linear-gradient(135deg,#f5f7fa 0 8px,#fff 8px 16px)", pointerEvents: "none" }} />
+                ))}
                 {iso === today && nowSlot >= open && nowSlot < close && <div className={styles.nowLine} style={{ top: nowTop }} />}
                 {ghost && ghost.target && (
                   <div
@@ -264,4 +271,3 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
     </>
   );
 }
-

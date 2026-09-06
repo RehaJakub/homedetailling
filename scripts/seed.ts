@@ -38,8 +38,7 @@ await db.insert(users).values([
 
 await db.insert(pricePackages).values([
   { name: "Exteriér", price: "Domluvou", showCurrency: false, featured: false, durationMinutes: 180, sortOrder: 1, items: ["Ruční mytí karoserie", "Dekontaminace laku", "Čištění kol a pneu", "Ochranný vosk"] },
-  { name: "Interiér", price: "1 500", showCurrency: true, featured: true, durationMinutes: 150, sortOrder: 2, items: ["Hloubkové vysátí", "Čištění plastů a kůže", "Vnitřní okna", "Odstranění zápachu"] },
-  { name: "Tepování", price: "od 500", showCurrency: true, featured: false, durationMinutes: 90, sortOrder: 3, items: ["Tepování sedaček", "Tepování koberců", "Cena za kus"] },
+  { name: "Interiér + tepování", price: "2 000", showCurrency: true, featured: true, durationMinutes: 240, sortOrder: 2, items: ["Hloubkové vysátí", "Čištění plastů a kůže", "Vnitřní okna", "Tepování sedaček, koberců a stropu", "Odstranění zápachu"] },
 ]);
 
 type Row = typeof reservations.$inferInsert;
@@ -81,6 +80,6 @@ await db.insert(reservations).values([
 ]);
 
 const [{ count }] = (await db.execute(sql`SELECT count(*)::int AS count FROM reservations`)).rows as Array<{ count: number }>;
-console.log(`Seeded 3 users, 3 packages, settings and ${count} reservations.`);
+console.log(`Seeded 3 users, 2 packages, settings and ${count} reservations.`);
 console.log("Sign in at /admin/login: admin@admin.cz / admin (also marek@homedetailing.cz / manager, petra@homedetailing.cz / viewer).");
 await closeDb();

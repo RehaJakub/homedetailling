@@ -1,0 +1,1 @@
+ALTER TABLE "settings" ADD COLUMN "weekly_hours" jsonb;

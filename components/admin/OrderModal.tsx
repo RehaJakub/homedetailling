@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { Button, Field, Heading, Icon, Input, Notice, Textarea, Select } from "@homedetailing/ui";
-import { conflictsOf, dayLabel, durationLabel, estimateSlots, initials, isActive, priceLabel, slotLabel, slotsForMinutes, STATUS_LABEL, type BookingStatus } from "@/lib/booking";
+import { conflictsOf, dayLabel, durationLabel, initials, isActive, priceLabel, slotLabel, STATUS_LABEL, type BookingStatus } from "@/lib/booking";
 import styles from "@/app/admin/admin.module.css";
 import type { Booking, Customer, Draft, Package, Settings } from "./types";
 
@@ -36,7 +36,6 @@ export function OrderModal({ draft: d, orig, bookings, packages, settings, custo
   const timeOptions = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, i) => ({ value: String(from + i), label: slotLabel(from + i) }));
   const shift = (n: number) => onChange({ a: Math.max(open, d.a + n), b: Math.min(close, d.b + n) });
   const H = MINI_H / rows;
-  const estimate = estimateSlots(d.services, packages);
 
   // Drag the blue block in the mini-timeline: body moves it (length kept),
   // the bottom edge resizes it. Snaps to 15-minute rows.
@@ -75,7 +74,6 @@ export function OrderModal({ draft: d, orig, bookings, packages, settings, custo
     ev.stopPropagation();
     setDrag({ mode, startY: ev.clientY, a: d.a, b: d.b });
   };
-  const tooShort = estimate > 0 && d.b - d.a < estimate;
 
   function autoFix() {
     const len = d.b - d.a;
@@ -233,27 +231,12 @@ export function OrderModal({ draft: d, orig, bookings, packages, settings, custo
                         {on && <Icon name="check" size={14} stroke={2.5} />}
                       </span>
                       <span style={{ fontFamily: mono, fontSize: 11, opacity: 0.75 }}>
-                        {priceLabel(p.price, p.showCurrency)} · {durationLabel(slotsForMinutes(p.durationMinutes))}
+                        {priceLabel(p.price, p.showCurrency)}
                       </span>
                     </button>
                   );
                 })}
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 12, color: "#687080" }}>
-                  Odhad podle balíčků: <strong style={{ color: "#080b12" }}>{estimate ? durationLabel(estimate) : "—"}</strong>
-                </span>
-                {estimate > 0 && d.b - d.a !== estimate && (
-                  <button type="button" className={styles.shiftChip} onClick={() => onChange({ b: Math.min(close, d.a + estimate) })}>
-                    Použít odhad ({durationLabel(estimate)})
-                  </button>
-                )}
-              </div>
-              {tooShort && (
-                <Notice tone="error">
-                  Odhad služeb {durationLabel(estimate)} je delší než termín ({durationLabel(d.b - d.a)}). Domluvte s klientem prodloužení nebo rozdělení na dva termíny.
-                </Notice>
-              )}
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {(Object.keys(STATUS_LABEL) as BookingStatus[]).map((k) => {
                   const on = d.status === k;

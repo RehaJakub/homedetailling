@@ -72,6 +72,7 @@ export const settings = pgTable("settings", {
   openSlot: integer("open_slot").notNull().default(28),
   closeSlot: integer("close_slot").notNull().default(76),
   workDays: jsonb("work_days").$type<number[]>().notNull().default([1, 1, 1, 1, 1, 1, 0]),
+  weeklyHours: jsonb("weekly_hours").$type<Array<{ openSlot: number; closeSlot: number } | null>>(),
   stepMinutes: integer("step_minutes").notNull().default(15),
   bufferMinutes: integer("buffer_minutes").notNull().default(30),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

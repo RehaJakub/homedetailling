@@ -1,13 +1,12 @@
 "use client";
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Button, Dialog, Icon, Input, Notice, ServiceChecklist, Textarea, type IconName } from "@homedetailing/ui";
 import {
-  addDays,
   dayLabel,
   defaultSettings,
   durationLabel,
-  estimateSlots,
   publicBookingSlots,
+  settingsForDate,
   PUBLIC_BOOKING_STEP_MINUTES,
   PUBLIC_BOOKING_STEP_SLOTS,
   isSlotBusy,
@@ -30,20 +29,17 @@ const WEEKDAYS = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
 export type BookingFormProps = {
   packages: PricePackage[];
   onToast: (message: string, icon?: IconName) => void;
-  /** Receives the "next free slot" label whenever it changes. */
-  onNextFree: (label: string) => void;
+  active?: boolean;
 };
 
 /**
  * Booking section: month calendar → 30-minute from–to range → ticked services.
- * The customer picks the range themselves; the summed package estimate is only
- * a hint, and a warning appears when the chosen range is shorter than it.
+ * The customer picks the booking range themselves.
  */
-export function BookingForm({ packages, onToast, onNextFree }: BookingFormProps) {
+export function BookingForm({ packages, onToast, active = true }: BookingFormProps) {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [today, setToday] = useState(() => toIso(new Date()));
   const [days, setDays] = useState<Record<string, DayInfo>>({});
-  const loadedMonths = useRef(new Set<string>());
   const [month, setMonth] = useState(() => {
     const t = new Date();
     return new Date(t.getFullYear(), t.getMonth(), 1);
@@ -65,31 +61,31 @@ export function BookingForm({ packages, onToast, onNextFree }: BookingFormProps)
   const [sent, setSent] = useState(false);
   const [sentSummary, setSentSummary] = useState("");
 
-  const loadRange = useCallback(async (from: string, to: string) => {
-    try {
-      const response = await fetch(`/api/v2/availability?from=${from}&to=${to}`, { cache: "no-store" });
-      if (!response.ok) return;
-      const data = (await response.json()) as Availability;
-      setSettings(data.settings);
-      setToday(data.today);
-      setDays((prev) => ({ ...prev, ...data.days }));
-    } catch {
-      /* offline: calendar stays disabled */
-    }
-  }, []);
+  const loadRange = useCallback((from: string, to: string) =>
+    fetch(`/api/v2/availability?from=${from}&to=${to}`, { cache: "no-store" })
+      .then(response => {
+        if (!response.ok) throw new Error("Availability failed");
+        return response.json() as Promise<Availability>;
+      })
+      .then(data => {
+        setSettings(data.settings);
+        setToday(data.today);
+        setDays(prev => ({ ...prev, ...data.days }));
+        setError("");
+      })
+      .catch(() => {
+        setDays({});
+        setError("Dostupné termíny se nepodařilo načíst. Zkuste rezervaci znovu otevřít.");
+      }), []);
 
-  const monthKey = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}`;
-
-  // Current month (clipped to today) plus the next two weeks for the "next free" badge.
+  // Refresh the displayed month on each opening so saved hours are reflected.
   useEffect(() => {
-    if (loadedMonths.current.has(monthKey)) return;
-    loadedMonths.current.add(monthKey);
+    if (!active) return;
     const first = toIso(month);
     const last = toIso(new Date(month.getFullYear(), month.getMonth() + 1, 0));
     const from = first < today ? today : first;
-    const to = last < addDays(today, 13) ? addDays(today, 13) : last;
-    void loadRange(from, to);
-  }, [monthKey, month, today, loadRange]);
+    void loadRange(from, last);
+  }, [active, month, today, loadRange]);
 
   const busyOf = useCallback(
     (iso: string): Array<[number, number]> | null => {
@@ -99,36 +95,16 @@ export function BookingForm({ packages, onToast, onNextFree }: BookingFormProps)
     [days],
   );
 
-  const nextFreeLabel = useMemo(() => {
-    for (let k = 0; k < 14; k++) {
-      const iso = addDays(today, k);
-      const info = days[iso];
-      if (!info) return "…";
-      if (info.closed) continue;
-      const slot = publicBookingSlots(settings, info.busy)[0];
-      if (slot === undefined) continue;
-      return `${k === 0 ? "Dnes" : k === 1 ? "Zítra" : dayLabel(iso)} ${slotLabel(slot)}`;
-    }
-    return "Po domluvě";
-  }, [days, today, settings]);
-
-  useEffect(() => onNextFree(nextFreeLabel), [nextFreeLabel, onNextFree]);
-
   /* ---- derived selection ---- */
 
-  const estimate = estimateSlots(services, packages);
   const busy = day ? busyOf(day) : null;
+  const daySettings = day ? settingsForDate(day, settings) : settings;
   const dayOpen = busy !== null;
   const step = PUBLIC_BOOKING_STEP_SLOTS;
-  const isBusy = (i: number) => busy === null || Array.from({ length: step }, (_, k) => i + k).some((q) => q >= settings.closeSlot || isSlotBusy(q, busy));
+  const isBusy = (i: number) => busy === null || Array.from({ length: step }, (_, k) => i + k).some((q) => q >= daySettings.closeSlot || isSlotBusy(q, busy));
   // b is the first slot of the last selected cell (inclusive); the booking end is b + step.
   const n = a !== null && b !== null ? b - a + step : 0;
   const end = a !== null && b !== null ? b + step : null;
-  const tooShort = n > 0 && estimate > 0 && n < estimate;
-  // Can the range be stretched to the estimate without hitting a busy slot or closing time?
-  const extendedEnd = a !== null ? a + Math.ceil(estimate / step) * step : null;
-  const canExtend =
-    tooShort && a !== null && extendedEnd !== null && extendedEnd <= settings.closeSlot && Array.from({ length: (extendedEnd - a) / step }, (_, k) => a + k * step).every((i) => !isBusy(i));
 
   function pickDay(iso: string) {
     setDay(iso);
@@ -188,7 +164,7 @@ export function BookingForm({ packages, onToast, onNextFree }: BookingFormProps)
     const info = days[iso];
     const past = iso < today;
     const closed = !past && (!info || info.closed);
-    const full = !past && !closed && info !== undefined && publicBookingSlots(settings, info.busy).length === 0;
+    const full = !past && !closed && info !== undefined && publicBookingSlots(settings, info.busy, iso).length === 0;
     const disabled = past || closed || full;
     const selected = day === iso;
     const isToday = iso === today;
@@ -228,13 +204,11 @@ export function BookingForm({ packages, onToast, onNextFree }: BookingFormProps)
 
   const slots = [];
   if (busy && day) {
-    const starts = publicBookingSlots(settings);
+    const starts = publicBookingSlots(daySettings);
     for (const i of starts) {
       const slotBusy = isBusy(i);
       const inSel = a !== null && (b !== null ? i >= a && i <= b : i === a);
       const inHov = a !== null && b === null && hov !== null && i > a && i <= hov;
-      // Cells the estimate would still need beyond the chosen end.
-      const wanted = tooShort && a !== null && end !== null && i >= end && i < a + estimate && !slotBusy;
       slots.push(
         <button
           key={i}
@@ -249,9 +223,9 @@ export function BookingForm({ packages, onToast, onNextFree }: BookingFormProps)
             textAlign: "center",
             fontFamily: mono,
             fontSize: 12,
-            border: `1px solid ${inSel ? "#fff" : wanted ? "rgba(255,224,224,.8)" : "rgba(255,255,255,.22)"}`,
+            border: `1px solid ${inSel ? "#fff" : "rgba(255,255,255,.22)"}`,
             color: inSel ? "#1769ff" : "#fff",
-            background: inSel ? "#fff" : inHov ? "rgba(255,255,255,.28)" : wanted ? "rgba(255,255,255,.14)" : "transparent",
+            background: inSel ? "#fff" : inHov ? "rgba(255,255,255,.28)" : "transparent",
             cursor: slotBusy ? "not-allowed" : "pointer",
             opacity: slotBusy ? 0.3 : 1,
             textDecoration: slotBusy ? "line-through" : "none",
@@ -278,7 +252,7 @@ export function BookingForm({ packages, onToast, onNextFree }: BookingFormProps)
   const slotHint = !day
     ? "nejdřív vyberte den"
     : a === null
-      ? `${slotLabel(settings.openSlot)} – ${slotLabel(settings.closeSlot)} · krok ${PUBLIC_BOOKING_STEP_MINUTES} min`
+      ? `${slotLabel(daySettings.openSlot)} – ${slotLabel(daySettings.closeSlot)} · krok ${PUBLIC_BOOKING_STEP_MINUTES} min`
       : b === null
         ? "teď zvolte konec"
         : "kliknutím vyberete znovu";
@@ -302,7 +276,6 @@ export function BookingForm({ packages, onToast, onNextFree }: BookingFormProps)
     { icon: services.length ? "check" : "car", label: "03 · Služby", value: services.length ? servicesLabel(services) : "Zaškrtněte služby", done: services.length > 0 },
   ];
 
-  const shortNote = tooShort ? `Odhad služeb ${durationLabel(estimate)}, zákazník rezervoval ${durationLabel(n)} – nemusíme vše stihnout, domluvit postup.` : "";
 
   /* ---- submit ---- */
 
@@ -344,17 +317,16 @@ export function BookingForm({ packages, onToast, onNextFree }: BookingFormProps)
       setError("");
       return;
     }
-    const note = shortNote ? `${shortNote} ${fields.note ?? ""}`.trim() : fields.note;
     setSending(true);
     setError("");
     const response = await fetch("/api/v2/reservations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...fields, note, services, date: day, a, b: end }),
+      body: JSON.stringify({ ...fields, services, date: day, a, b: end }),
     });
     setSending(false);
     if (response.ok) {
-      setSentSummary(`${servicesLabel(services)}, ${summary} (${durationLabel(n)}).${shortNote ? " Úsek je kratší než odhad služeb, ozveme se a domluvíme postup." : ""}`);
+      setSentSummary(`${servicesLabel(services)}, ${summary} (${durationLabel(n)}).`);
       setSent(true);
       form.reset();
       onToast("Rezervace odeslána. Potvrzení přijde na e-mail.", "check-circle");
@@ -466,29 +438,6 @@ export function BookingForm({ packages, onToast, onNextFree }: BookingFormProps)
           <span className={styles.stepLabel}>03 · Služby a kontakt</span>
           <ServiceChecklist options={packages} values={services} onChange={changeServices} />
 
-          <div className={styles.estimateRow}>
-            <div style={{ display: "grid", gap: 2 }}>
-              <span className={styles.stepLabel} style={{ opacity: 0.75 }}>
-                Odhadovaný čas · orientačně
-              </span>
-              <strong style={{ fontSize: 17 }}>{estimate ? durationLabel(estimate) : "vyberte služby"}</strong>
-            </div>
-            <span style={{ fontSize: 12, opacity: 0.8, textAlign: "right", maxWidth: 190 }}>Čas od–do si vybíráte sami v mřížce vlevo.</span>
-          </div>
-
-          {tooShort && a !== null && (
-            <Notice tone="on-blue" style={{ color: "#fff" }}>
-              Vybraný úsek ({durationLabel(n)}) je kratší než odhad na zvolené služby ({durationLabel(estimate)}). Nemusíme všechno stihnout.
-              <span className={styles.warnChips}>
-                {canExtend && extendedEnd !== null && (
-                  <button type="button" className={styles.warnChip} onClick={() => setB(extendedEnd - 1)}>
-                    Prodloužit do {slotLabel(extendedEnd)}
-                  </button>
-                )}
-                <span style={{ opacity: 0.85 }}>{canExtend ? "nebo nechte jak je – ozveme se a domluvíme postup." : "Po odeslání se ozveme a domluvíme, jak to rozdělit nebo posunout."}</span>
-              </span>
-            </Notice>
-          )}
 
           <div className={styles.twoCols}>
             <div style={{ display: "grid", gap: 6 }}>

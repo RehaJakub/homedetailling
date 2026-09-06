@@ -19,14 +19,14 @@ export async function getSettings(): Promise<Settings> {
 export async function saveSettings(next: Settings): Promise<Settings> {
   const [row] = await db
     .insert(settings)
-    .values({ id: ROW_ID, ...next })
-    .onConflictDoUpdate({ target: settings.id, set: { ...next, updatedAt: new Date() } })
+    .values({ id: ROW_ID, ...next, weeklyHours: next.weeklyHours ?? null })
+    .onConflictDoUpdate({ target: settings.id, set: { ...next, weeklyHours: next.weeklyHours ?? null, updatedAt: new Date() } })
     .returning();
   return pick(row);
 }
 
 function pick(row: typeof settings.$inferSelect): Settings {
-  return { openSlot: row.openSlot, closeSlot: row.closeSlot, workDays: row.workDays, stepMinutes: row.stepMinutes, bufferMinutes: row.bufferMinutes };
+  return { openSlot: row.openSlot, closeSlot: row.closeSlot, workDays: row.workDays, stepMinutes: row.stepMinutes, bufferMinutes: row.bufferMinutes, ...(row.weeklyHours ? { weeklyHours: row.weeklyHours } : {}) };
 }
 
 /** Today's ISO date and current quarter-hour slot in the business timezone. */

@@ -1,6 +1,6 @@
 "use client";
 import { Badge, Button, Card, DataTable, Field, Heading, Icon, Input, Select, Tabs, Text } from "@homedetailing/ui";
-import { conflictsOf, dayLabel, durationLabel, isActive, priceLabel, servicesLabel, slotLabel, slotsForMinutes, STATUS_LABEL } from "@/lib/booking";
+import { conflictsOf, dayLabel, durationLabel, isActive, priceLabel, servicesLabel, slotLabel, slotsForMinutes, weeklyHoursOf, STATUS_LABEL } from "@/lib/booking";
 import styles from "@/app/admin/admin.module.css";
 import { ROLE_LABEL, type Booking, type Customer, type Package, type PriceDraft, type Settings, type User } from "./types";
 
@@ -500,7 +500,18 @@ export function SettingsPanel({
   onAddUser: () => void;
   onChangePassword: (current: string, next: string, reset: () => void) => void;
 }) {
-  const hourOptions = Array.from({ length: 18 }, (_, i) => 20 + i * 4).map((q) => ({ value: String(q), label: slotLabel(q) }));
+  const hourOptions = Array.from({ length: 49 }, (_, i) => i * 2).map((q) => ({ value: String(q), label: slotLabel(q) }));
+  const weeklyHours = weeklyHoursOf(settings);
+  const updateDay = (index: number, hours: { openSlot: number; closeSlot: number } | null) => {
+    const next = weeklyHours.map((day, i) => i === index ? hours : day);
+    const openDays = next.filter((day) => day !== null);
+    onSettings({
+      weeklyHours: next,
+      workDays: next.map(day => day ? 1 : 0),
+      openSlot: openDays.length ? Math.min(...openDays.map(day => day.openSlot)) : 28,
+      closeSlot: openDays.length ? Math.max(...openDays.map(day => day.closeSlot)) : 76,
+    });
+  };
   const days = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
   return (
     <>
@@ -509,7 +520,7 @@ export function SettingsPanel({
           Nastavení
         </Heading>
         <Text tone="muted" size="sm">
-          Provozní doba určuje, jaké časy si klienti mohou na webu vybrat.
+          Pro každý den nastavte vlastní čas od–do, nebo ho vypněte. Rozvrh se opakuje každý týden a po uložení platí pro nové rezervace.
         </Text>
       </div>
       <div className={styles.settingsGrid}>
@@ -521,37 +532,50 @@ export function SettingsPanel({
             onSaveSettings();
           }}
         >
-          <div className={styles.twoCols}>
-            <Field label="Otevřeno od">
-              <Select options={hourOptions} value={String(settings.openSlot)} onChange={(e) => onSettings({ openSlot: Math.min(Number(e.target.value), settings.closeSlot - 4) })} disabled={!canEdit} />
-            </Field>
-            <Field label="Otevřeno do">
-              <Select options={hourOptions} value={String(settings.closeSlot)} onChange={(e) => onSettings({ closeSlot: Math.max(Number(e.target.value), settings.openSlot + 4) })} disabled={!canEdit} />
-            </Field>
-          </div>
-          <div style={{ display: "grid", gap: 8 }}>
-            <span className={styles.monoLabel}>Pracovní dny</span>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {days.map((label, i) => {
-                const on = Boolean(settings.workDays[i]);
-                return (
-                  <button
-                    key={label}
-                    type="button"
-                    disabled={!canEdit}
-                    className={styles.dayToggle}
-                    style={{ border: `1px solid ${on ? "#1769ff" : "#e1e5eb"}`, background: on ? "#1769ff" : "#fff", color: on ? "#fff" : "#687080" }}
-                    onClick={() => {
-                      const workDays = settings.workDays.slice();
-                      workDays[i] = on ? 0 : 1;
-                      onSettings({ workDays });
-                    }}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
+          <div style={{ display: "grid", gap: 16 }}>
+            {days.map((label, i) => {
+              const hours = weeklyHours[i];
+              return (
+                <div key={label} style={{ display: "grid", gap: 8, borderBottom: "1px solid #e1e5eb", paddingBottom: 16 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <button
+                      type="button"
+                      disabled={!canEdit}
+                      aria-label={`Pracovní den ${label}`}
+                      aria-pressed={hours !== null}
+                      className={styles.dayToggle}
+                      style={{ border: `1px solid ${hours ? "#1769ff" : "#e1e5eb"}`, background: hours ? "#1769ff" : "#fff", color: hours ? "#fff" : "#687080" }}
+                      onClick={() => updateDay(i, hours ? null : { openSlot: settings.openSlot, closeSlot: settings.closeSlot })}
+                    >
+                      {label}
+                    </button>
+                    <span className={styles.monoLabel}>{hours ? "Otevřeno" : "Zavřeno"}</span>
+                  </div>
+                  {hours && (
+                    <div className={styles.twoCols}>
+                      <Field label={`${label} · Od`}>
+                        <Select
+                          aria-label={`${label} otevřeno od`}
+                          options={hourOptions.filter(o => Number(o.value) < hours.closeSlot)}
+                          value={String(hours.openSlot)}
+                          onChange={e => updateDay(i, { ...hours, openSlot: Number(e.target.value) })}
+                          disabled={!canEdit}
+                        />
+                      </Field>
+                      <Field label={`${label} · Do`}>
+                        <Select
+                          aria-label={`${label} otevřeno do`}
+                          options={hourOptions.filter(o => Number(o.value) > hours.openSlot)}
+                          value={String(hours.closeSlot)}
+                          onChange={e => updateDay(i, { ...hours, closeSlot: Number(e.target.value) })}
+                          disabled={!canEdit}
+                        />
+                      </Field>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
           <div className={styles.twoCols}>
             <Field label="Krok rezervace">

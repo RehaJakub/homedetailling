@@ -22,6 +22,20 @@
       "when": 1788514340436,
       "tag": "0002_little_mantis",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788710400000,
+      "tag": "0003_merge_interior_upholstery",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788710400001,
+      "tag": "0004_daily_opening_hours",
+      "breakpoints": true
     }
   ]
 }

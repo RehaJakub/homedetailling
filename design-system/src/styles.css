@@ -1014,7 +1014,7 @@
 
 .hd-checklist__row {
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr) auto auto;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   width: 100%;
@@ -1059,14 +1059,6 @@
 
 .hd-checklist__name {
   font-weight: 700;
-}
-
-.hd-checklist__meta {
-  font-family: var(--hd-font-mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  opacity: 0.8;
-  white-space: nowrap;
 }
 
 .hd-checklist__price {

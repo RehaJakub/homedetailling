@@ -2,7 +2,7 @@ import { asc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { reservations } from "@/lib/db/schema";
 import { currentUser, requireUser } from "@/lib/auth";
-import { busyRanges, isSlotBusy, isWorkDay, PUBLIC_BOOKING_STEP_SLOTS } from "@/lib/booking";
+import { busyRanges, isSlotBusy, isWorkDay, settingsForDate, PUBLIC_BOOKING_STEP_SLOTS } from "@/lib/booking";
 import { businessNow, getSettings } from "@/lib/settings";
 import { bookingStatuses, parseReservation } from "@/lib/validation";
 import type { BookingStatus } from "@/lib/booking";
@@ -40,7 +40,8 @@ export async function POST(request: Request) {
     }
     const now = businessNow();
     if (parsed.date < now.iso || !isWorkDay(parsed.date, settings)) return Response.json({ error: "V tento den nejezdíme. Vyberte prosím jiný." }, { status: 409 });
-    if (parsed.slotStart < settings.openSlot || parsed.slotEnd > settings.closeSlot) return Response.json({ error: "Čas je mimo provozní dobu." }, { status: 409 });
+    const hours = settingsForDate(parsed.date, settings);
+    if (parsed.slotStart < hours.openSlot || parsed.slotEnd > hours.closeSlot) return Response.json({ error: "Čas je mimo provozní dobu." }, { status: 409 });
     const rows = await db
       .select({ id: reservations.id, date: reservations.date, slotStart: reservations.slotStart, slotEnd: reservations.slotEnd, status: reservations.status })
       .from(reservations)

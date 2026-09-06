@@ -1,4 +1,4 @@
-import { isIsoDate, SLOTS_PER_DAY, type BookingStatus } from "@/lib/booking";
+import { isIsoDate, SLOTS_PER_DAY, type BookingStatus, type DayHours } from "@/lib/booking";
 
 export const bookingStatuses: BookingStatus[] = ["new", "confirmed", "done", "cancelled"];
 
@@ -127,6 +127,28 @@ export function parsePricePackage(body: Record<string, unknown>) {
 }
 
 export function parseSettings(body: Record<string, unknown>) {
+  if (body.weeklyHours !== undefined) {
+    if (!Array.isArray(body.weeklyHours) || body.weeklyHours.length !== 7) return null;
+    const weeklyHours: Array<DayHours | null> = [];
+    for (const day of body.weeklyHours) {
+      if (day === null) { weeklyHours.push(null); continue; }
+      if (typeof day !== "object" || Array.isArray(day)) return null;
+      const openSlot = slot(day.openSlot);
+      const closeSlot = slot(day.closeSlot);
+      if (openSlot === null || closeSlot === null || closeSlot - openSlot < 2 || openSlot % 2 || closeSlot % 2) return null;
+      weeklyHours.push({ openSlot, closeSlot });
+    }
+    const stepMinutes = Number(body.stepMinutes);
+    const bufferMinutes = Number(body.bufferMinutes);
+    if (![15, 30, 60].includes(stepMinutes) || ![0, 15, 30, 45].includes(bufferMinutes)) return null;
+    const openDays = weeklyHours.filter((d): d is DayHours => d !== null);
+    return {
+      weeklyHours, workDays: weeklyHours.map(d => d ? 1 : 0),
+      openSlot: openDays.length ? Math.min(...openDays.map(d => d.openSlot)) : 28,
+      closeSlot: openDays.length ? Math.max(...openDays.map(d => d.closeSlot)) : 76,
+      stepMinutes, bufferMinutes,
+    };
+  }
   const openSlot = slot(body.openSlot);
   const closeSlot = slot(body.closeSlot);
   const stepMinutes = Number(body.stepMinutes);

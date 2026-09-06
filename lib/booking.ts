@@ -11,11 +11,14 @@ export type BookingLike = {
   status: BookingStatus;
 };
 
+export type DayHours = { openSlot: number; closeSlot: number };
 export type Settings = {
   openSlot: number;
   closeSlot: number;
   /** Monday-first flags, 1 = working day. */
   workDays: number[];
+  /** Monday-first opening hours; null means closed. Legacy settings use workDays. */
+  weeklyHours?: Array<DayHours | null>;
   stepMinutes: number;
   bufferMinutes: number;
 };
@@ -25,7 +28,8 @@ export const PUBLIC_BOOKING_STEP_MINUTES = 30;
 export const PUBLIC_BOOKING_STEP_SLOTS = PUBLIC_BOOKING_STEP_MINUTES / 15;
 
 /** Complete public booking cells, aligned to :00/:30 within opening hours. */
-export function publicBookingSlots(s: Settings, busy: Array<[number, number]> = []) {
+export function publicBookingSlots(s: Settings, busy: Array<[number, number]> = [], date?: string) {
+  if (date) s = settingsForDate(date, s);
   const slots: number[] = [];
   const step = PUBLIC_BOOKING_STEP_SLOTS;
   for (let i = Math.ceil(s.openSlot / step) * step; i + step <= s.closeSlot; i += step) {
@@ -94,7 +98,17 @@ export function weekdayIndex(iso: string) {
 }
 
 export function isWorkDay(iso: string, s: Settings) {
-  return Boolean(s.workDays[weekdayIndex(iso)]);
+  return weeklyHoursOf(s)[weekdayIndex(iso)] !== null;
+}
+
+export function weeklyHoursOf(s: Settings): Array<DayHours | null> {
+  return s.weeklyHours ?? s.workDays.map(on => on ? { openSlot: s.openSlot, closeSlot: s.closeSlot } : null);
+}
+
+/** Resolve one day's limits, keeping the shared buffer and booking settings. */
+export function settingsForDate(iso: string, s: Settings): Settings {
+  const hours = weeklyHoursOf(s)[weekdayIndex(iso)];
+  return { ...s, openSlot: hours?.openSlot ?? 0, closeSlot: hours?.closeSlot ?? 0 };
 }
 
 export function overlaps(a: { slotStart: number; slotEnd: number }, b: { slotStart: number; slotEnd: number }) {
@@ -112,6 +126,7 @@ export function conflictsOf<T extends BookingLike>(r: BookingLike, all: T[]) {
  * when the day is today. Ranges are clipped to opening hours.
  */
 export function busyRanges(date: string, bookings: BookingLike[], s: Settings, nowSlot?: number): Array<[number, number]> {
+  s = settingsForDate(date, s);
   const pad = Math.ceil(s.bufferMinutes / 15);
   const ranges: Array<[number, number]> = [];
   for (const b of bookings) {

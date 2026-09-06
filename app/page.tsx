@@ -16,7 +16,6 @@ import {
   Text,
   type IconName,
 } from "@homedetailing/ui";
-import { durationLabel, slotsForMinutes } from "@/lib/booking";
 import { APP_VERSION } from "@/lib/version";
 import { Wordmark } from "@/components/Wordmark";
 import { BookingForm, type PricePackage } from "@/components/landing/BookingForm";
@@ -32,22 +31,20 @@ const navLinks = [
 ];
 
 const services = [
-  { number: "01", title: "Interiér", text: "Hloubkové vysátí, čištění plastů, kůže i vnitřních oken. Auto voní a vypadá jako nové." },
+  { number: "01", title: "Interiér + tepování", text: "Hloubkové vysátí, čištění plastů, kůže a vnitřních oken včetně tepování sedaček, koberců a stropu. Kompletní péče o interiér za 2 000 Kč." },
   { number: "02", title: "Exteriér", text: "Ruční mytí, dekontaminace laku, čištění kol a ochranný vosk na několik měsíců." },
-  { number: "03", title: "Tepování", text: "Extrakční tepování sedaček, koberců a stropu. Odstraníme fleky, zápach i alergeny." },
 ];
 
 const trust: Array<{ icon: IconName; title: string; text: string }> = [
-  { icon: "shield", title: "Pojištění odpovědnosti", text: "Pracujeme pojištění do 2 mil. Kč." },
   { icon: "droplet", title: "Vlastní voda i elektřina", text: "Nepotřebujeme od vás nic než místo." },
-  { icon: "wallet", title: "Platba po dokončení", text: "Hotově, kartou nebo převodem." },
+  { icon: "wallet", title: "Platba po dokončení", text: "Hotově nebo převodem." },
   { icon: "phone", title: "Potvrzení do 3 hodin", text: "Zavoláme nebo napíšeme e-mail." },
 ];
 
 const steps: Array<{ icon: IconName; index: string; title: string; text: string }> = [
   { icon: "calendar", index: "01", title: "Vyberete službu a čas", text: "V kalendáři kliknete na den, pak na začátek a konec úseku. Nejkratší krok je 30 minut." },
   { icon: "phone", index: "02", title: "Potvrdíme termín", text: "Ozveme se telefonicky nebo e-mailem. Případnou změnu času vidíte hned v potvrzení." },
-  { icon: "sparkle", index: "03", title: "Přijedeme a vyčistíme", text: "Na místě u vás doma nebo v práci. Platba hotově, kartou nebo převodem po dokončení." },
+  { icon: "sparkle", index: "03", title: "Přijedeme a vyčistíme", text: "Na místě u vás doma nebo v práci. Platba hotově nebo převodem po dokončení." },
 ];
 
 const gallery = [
@@ -59,17 +56,15 @@ const gallery = [
 // Shown until the pricing API answers; mirrors the seed content of the design.
 const fallbackPackages: PricePackage[] = [
   { id: 1, name: "Exteriér", price: "Domluvou", showCurrency: false, featured: false, durationMinutes: 180, items: ["Ruční mytí karoserie", "Dekontaminace laku", "Čištění kol a pneu", "Ochranný vosk"] },
-  { id: 2, name: "Interiér", price: "1 500", showCurrency: true, featured: true, durationMinutes: 150, items: ["Hloubkové vysátí", "Čištění plastů a kůže", "Vnitřní okna", "Odstranění zápachu"] },
-  { id: 3, name: "Tepování", price: "od 500", showCurrency: true, featured: false, durationMinutes: 90, items: ["Tepování sedaček", "Tepování koberců", "Cena za kus"] },
+  { id: 2, name: "Interiér + tepování", price: "2 000", showCurrency: true, featured: true, durationMinutes: 240, items: ["Hloubkové vysátí", "Čištění plastů a kůže", "Vnitřní okna", "Tepování sedaček, koberců a stropu", "Odstranění zápachu"] },
 ];
 
-const marqueeText = "Interiér · Exteriér · Tepování · Ostrava · Poruba · Havířov · Frýdek-Místek · Přijedeme k vám · Termín po 30 minutách ·";
+const marqueeText = "Interiér + tepování · Exteriér · Ostrava · Poruba · Havířov · Frýdek-Místek · Přijedeme k vám ·";
 
 export default function Home() {
   const [packages, setPackages] = useState<PricePackage[]>(fallbackPackages);
   const [toast, setToast] = useState<{ message: string; icon: IconName } | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [nextFree, setNextFree] = useState("…");
   const [activeHref, setActiveHref] = useState<string | undefined>(undefined);
   const [bookingOpen, setBookingOpen] = useState(false);
 
@@ -162,19 +157,10 @@ export default function Home() {
                 Jak to funguje
               </Button>
             </div>
-            <a href="#rezervace" className={`${styles.nextFreeMobile} ${styles.up}`} style={{ animationDelay: ".35s" }}>
-              <span className={styles.pulse} />
-              <span>
-                <span>Nejbližší volný termín</span>
-                <strong>{nextFree}</strong>
-              </span>
-              <Icon name="arrow-up-right" size={16} stroke={2} />
-            </a>
             <div className={`${styles.metrics} ${styles.up}`} style={{ animationDelay: ".4s" }}>
               {(
                 [
-                  ["clock", "4 h", "Průměrná návštěva"],
-                  ["calendar", "30 min", "Krok rezervace"],
+                  ["clock", "2 h", "Průměrná návštěva"],
                 ] as Array<[IconName, string, string]>
               ).map(([icon, value, label]) => (
                 <div key={label} className={styles.metric}>
@@ -207,14 +193,6 @@ export default function Home() {
                 interaction-prompt="none"
                 className={styles.carModel}
               />
-            </div>
-            <div className={styles.floatDark}>
-              <span>Nejbližší volný termín</span>
-              <strong>{nextFree}</strong>
-            </div>
-            <div className={styles.floatBlue}>
-              <strong>120+</strong>
-              <span>vyčištěných aut</span>
             </div>
           </div>
         </div>
@@ -252,7 +230,7 @@ export default function Home() {
           </Text>
         </div>
         <div className={styles.revealLate}>
-          <ServiceGrid>
+          <ServiceGrid className={styles.serviceGrid}>
             {services.map((service) => (
               <ServiceCard key={service.title} {...service} />
             ))}
@@ -317,7 +295,7 @@ export default function Home() {
             Ceny jsou konečné, doprava po Ostravě je v ceně. Balíčky lze kombinovat.
           </Text>
         </div>
-        <div className={`${styles.threeCols} ${styles.revealLate}`}>
+        <div className={`${styles.priceGrid} ${styles.revealLate}`}>
           {packages.map((item) => (
             <PriceCard
               key={item.id}
@@ -327,7 +305,6 @@ export default function Home() {
               from={/^od\s/i.test(item.price)}
               showCurrency={item.showCurrency}
               items={item.items}
-              duration={`cca ${durationLabel(slotsForMinutes(item.durationMinutes))}`}
               ctaLabel="Rezervovat"
               ctaHref="#rezervace"
             />
@@ -348,10 +325,6 @@ export default function Home() {
               </Text>
             </div>
             <div className={styles.bookingCtaSide}>
-              <span className={styles.bookingCtaNext}>
-                <span>Nejbližší volný termín</span>
-                <strong>{nextFree}</strong>
-              </span>
               <Button variant="light" icon="arrow-up-right" onClick={() => setBookingOpen(true)}>
                 Otevřít rezervaci
               </Button>
@@ -375,7 +348,7 @@ export default function Home() {
             </button>
           </div>
           <div className={styles.bookingModalBody}>
-            <BookingForm packages={packages} onToast={showToast} onNextFree={setNextFree} />
+            <BookingForm packages={packages} onToast={showToast} active={bookingOpen} />
           </div>
         </div>
       </div>

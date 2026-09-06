@@ -21,14 +21,8 @@ export type ServiceChecklistProps = {
   tone?: "on-blue" | "light";
 };
 
-function durationText(minutes: number) {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return `${h ? `${h} h` : ""}${h && m ? " " : ""}${m ? `${m} min` : ""}`;
-}
-
 /**
- * Multi-select list of service packages with price and estimated duration.
+ * Multi-select list of service packages with price.
  * Each row is a toggle; several services can be ticked for one booking.
  */
 export function ServiceChecklist({ options, values, onChange, currency = "Kč", tone = "on-blue" }: ServiceChecklistProps) {
@@ -44,7 +38,6 @@ export function ServiceChecklist({ options, values, onChange, currency = "Kč", 
               {on && <Icon name="check" size={14} stroke={2.5} />}
             </span>
             <span className="hd-checklist__name">{option.name}</span>
-            <span className="hd-checklist__meta">{durationText(option.durationMinutes)}</span>
             <span className="hd-checklist__price">{price}</span>
           </button>
         );
