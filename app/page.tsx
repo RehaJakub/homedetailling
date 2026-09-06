@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   BeforeAfterSlider,
@@ -17,7 +18,6 @@ import {
   type IconName,
 } from "@homedetailing/ui";
 import { APP_VERSION } from "@/lib/version";
-import { Wordmark } from "@/components/Wordmark";
 import { BookingForm, type PricePackage } from "@/components/landing/BookingForm";
 import { Faq } from "@/components/landing/Faq";
 import styles from "./landing.module.css";
@@ -31,7 +31,7 @@ const navLinks = [
 ];
 
 const services = [
-  { number: "01", title: "Interiér + tepování", text: "Hloubkové vysátí, čištění plastů, kůže a vnitřních oken včetně tepování sedaček, koberců a stropu. Kompletní péče o interiér za 2 000 Kč." },
+  { number: "01", title: "Interiér", text: "Basic za 1 500 Kč zahrnuje vysávání, čištění a impregnaci interiéru. Premium za 2 000 Kč přidává péči o kožené sedačky a tepování sedaček a koberce." },
   { number: "02", title: "Exteriér", text: "Ruční mytí, dekontaminace laku, čištění kol a ochranný vosk na několik měsíců." },
 ];
 
@@ -56,10 +56,11 @@ const gallery = [
 // Shown until the pricing API answers; mirrors the seed content of the design.
 const fallbackPackages: PricePackage[] = [
   { id: 1, name: "Exteriér", price: "Domluvou", showCurrency: false, featured: false, durationMinutes: 180, items: ["Ruční mytí karoserie", "Dekontaminace laku", "Čištění kol a pneu", "Ochranný vosk"] },
-  { id: 2, name: "Interiér + tepování", price: "2 000", showCurrency: true, featured: true, durationMinutes: 240, items: ["Hloubkové vysátí", "Čištění plastů a kůže", "Vnitřní okna", "Tepování sedaček, koberců a stropu", "Odstranění zápachu"] },
+  { id: 2, name: "Basic interiér", price: "1 500", showCurrency: true, featured: false, durationMinutes: 150, items: ["Vysávání", "Čištění plastů, kůže a textilu", "Vnitřní okna", "Impregnace kůže a plastů", "Čištění koberců"] },
+  { id: 3, name: "Premium interiér", price: "2 000", showCurrency: true, featured: true, durationMinutes: 240, items: ["Vše z balíčku Basic", "Čištění a impregnace kožených sedaček", "Tepování sedaček a koberce"] },
 ];
 
-const marqueeText = "Interiér + tepování · Exteriér · Ostrava · Poruba · Havířov · Frýdek-Místek · Přijedeme k vám ·";
+const marqueeText = "Basic interiér · Premium interiér · Exteriér · Ostrava · Poruba · Havířov · Frýdek-Místek · Přijedeme k vám ·";
 
 export default function Home() {
   const [packages, setPackages] = useState<PricePackage[]>(fallbackPackages);
@@ -131,7 +132,13 @@ export default function Home() {
 
   return (
     <main className={styles.page}>
-      <SiteHeader logo={<Wordmark />} links={navLinks} cta={{ href: "#rezervace", label: "Rezervovat termín" }} sticky activeHref={activeHref} />
+      <SiteHeader
+        logo={<Image src="/home-detailing-logo.png" alt="Home Detailing" width={2073} height={758} sizes="(max-width: 650px) 160px, 180px" className={styles.headerLogo} loading="eager" />}
+        links={navLinks}
+        cta={{ href: "#rezervace", label: "Rezervovat termín" }}
+        sticky
+        activeHref={activeHref}
+      />
 
       <Container as="section" id="uvod" style={{ display: "block" }}>
         <div className={styles.hero}>
@@ -362,8 +369,12 @@ export default function Home() {
             </Heading>
             <Text tone="muted">
               Nenašli jste odpověď? Zavolejte na{" "}
-              <a href="tel:+420777000111" style={{ color: "#1769ff", textDecoration: "none" }}>
-                +420 777 000 111
+              <a href="tel:+420777011690" style={{ color: "#1769ff", textDecoration: "none" }}>
+                +420 777 011 690
+              </a>
+              {" nebo "}
+              <a href="tel:+420733477254" style={{ color: "#1769ff", textDecoration: "none" }}>
+                +420 733 477 254
               </a>
               .
             </Text>
@@ -373,7 +384,7 @@ export default function Home() {
       </Container>
 
       <Footer
-        logo={<Wordmark size={20} />}
+        logo={<Image src="/home-detailing-logo.png" alt="Home Detailing" width={2073} height={758} sizes="220px" className={styles.footerLogo} />}
         tagline="Mobilní detailing · Ostrava a okolí"
         note={
           <>

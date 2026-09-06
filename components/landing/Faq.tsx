@@ -5,7 +5,7 @@ import styles from "@/app/landing.module.css";
 
 export const FAQ: Array<[string, string]> = [
   ["Kolik místa potřebujete?", "Stačí parkovací místo a asi metr kolem auta. Vodu i elektřinu si přivezeme, nepotřebujeme od vás žádné přípojky."],
-  ["Jak dlouho čištění trvá?", "Interiér včetně tepování přibližně 4 hodiny, exteriér 2–4 hodiny. V kalendáři vybíráte úsek po 30 minutách, takže víte přesně, kdy budeme hotovi."],
+  ["Jak dlouho čištění trvá?", "Délka závisí na zvoleném balíčku, velikosti auta a míře znečištění. Konkrétní čas s vámi potvrdíme po přijetí rezervace."],
   ["Co když se termín nehodí vám nebo nám?", "Po přijetí rezervace se ozveme. Když bude třeba čas posunout, domluvíme se telefonicky a změnu uvidíte v potvrzení."],
   ["Jezdíte i mimo Ostravu?", "Ano, do 30 km od Ostravy bez příplatku. Dál po domluvě, cestu si účtujeme podle vzdálenosti."],
   ["Jak se platí?", "Až po dokončení a kontrole výsledku. Hotově nebo převodem podle faktury."],

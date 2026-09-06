@@ -95,6 +95,27 @@
   color: #1769ff;
 }
 
+.headerLogo,
+.footerLogo {
+  display: block;
+  height: auto;
+  object-fit: contain;
+}
+
+.headerLogo {
+  width: 180px;
+}
+
+.footerLogo {
+  width: 220px;
+}
+
+@media (max-width: 650px) {
+  .headerLogo {
+    width: 160px;
+  }
+}
+
 .heroModel {
   position: relative;
   aspect-ratio: 4 / 5;
