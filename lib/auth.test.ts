@@ -91,7 +91,7 @@ describe("cookies", () => {
   });
 
   it("builds set and clear headers", () => {
-    expect(sessionCookieHeader("tok")).toMatch(new RegExp(`^${sessionCookieName}=tok; Path=/; HttpOnly; SameSite=Lax; Max-Age=28800`));
-    expect(clearSessionCookieHeader()).toBe(`${sessionCookieName}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);
+    expect(sessionCookieHeader("tok")).toMatch(new RegExp(`^${sessionCookieName}=tok; Path=/; HttpOnly; SameSite=Strict; Max-Age=14400; Priority=High`));
+    expect(clearSessionCookieHeader()).toBe(`${sessionCookieName}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0; Priority=High`);
   });
 });

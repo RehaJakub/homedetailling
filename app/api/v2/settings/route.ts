@@ -1,7 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import { getSettings, saveSettings } from "@/lib/settings";
 import { parseSettings } from "@/lib/validation";
-import { invalidJson, readJsonObject } from "@/lib/request";
+import { invalidJson, readJsonObject, rejectUnsafeMutation } from "@/lib/request";
 
 export async function GET(request: Request) {
   const auth = await requireUser(request, ["admin", "manager", "viewer"]);
@@ -10,6 +10,8 @@ export async function GET(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const rejected = rejectUnsafeMutation(request);
+  if (rejected) return rejected;
   const auth = await requireUser(request, ["admin", "manager"]);
   if (auth.error) return auth.error;
   const body = await readJsonObject(request);

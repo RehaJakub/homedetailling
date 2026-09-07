@@ -3,13 +3,15 @@ import { db } from "@/lib/db";
 import { pricePackages } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth";
 import { parsePricePackage } from "@/lib/validation";
-import { invalidJson, readJsonObject } from "@/lib/request";
+import { invalidJson, readJsonObject, rejectUnsafeMutation } from "@/lib/request";
 
 export async function GET() {
   return Response.json({ packages: await db.select().from(pricePackages).orderBy(asc(pricePackages.sortOrder), asc(pricePackages.id)) });
 }
 
 export async function POST(request: Request) {
+  const rejected = rejectUnsafeMutation(request);
+  if (rejected) return rejected;
   const auth = await requireUser(request, ["admin", "manager"]);
   if (auth.error) return auth.error;
   const body = await readJsonObject(request);

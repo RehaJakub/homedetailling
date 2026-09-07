@@ -31,7 +31,7 @@ export default function AdminLoginPage() {
     setError("");
     const response = await fetch(bootstrap ? "/api/v2/auth/bootstrap" : "/api/v2/auth/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
       body: JSON.stringify(Object.fromEntries(new FormData(event.currentTarget))),
     }).catch(() => null);
     const data = (await response?.json().catch(() => ({}))) as { error?: string } | undefined;
@@ -68,7 +68,7 @@ export default function AdminLoginPage() {
               <Input type="email" name="email" required autoComplete="username" />
             </Field>
             <Field label="Heslo" layout="stacked">
-              <Input type="password" name="password" required minLength={bootstrap ? 10 : undefined} autoComplete={bootstrap ? "new-password" : "current-password"} />
+              <Input type="password" name="password" required minLength={bootstrap ? 15 : undefined} maxLength={128} autoComplete={bootstrap ? "new-password" : "current-password"} />
             </Field>
             {error && <Notice tone="error">{error}</Notice>}
             <Button type="submit" variant="primary" fullWidth disabled={busy}>

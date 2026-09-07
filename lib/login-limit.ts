@@ -5,9 +5,13 @@ import { db } from "@/lib/db";
 export const LOGIN_ATTEMPT_LIMIT = 10;
 export const LOGIN_WINDOW_SECONDS = 15 * 60;
 
+function loginKey(email: string) {
+  return `login:${createHash("sha256").update(email.trim().toLowerCase()).digest("hex")}`;
+}
+
 /** Account-based: cannot be bypassed by forging forwarding headers or changing IP. */
 export async function allowLogin(email: string) {
-  const key = createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
+  const key = loginKey(email);
   await db.execute(sql`DELETE FROM login_attempts WHERE expires_at < now()`);
   const result = await db.execute<{ attempts: number }>(sql`
     INSERT INTO login_attempts (key, attempts, expires_at)
@@ -18,4 +22,9 @@ export async function allowLogin(email: string) {
     RETURNING attempts
   `);
   return result.rows[0].attempts <= LOGIN_ATTEMPT_LIMIT;
+}
+
+/** A successful login starts a fresh attempt window for the account. */
+export async function clearLoginAttempts(email: string) {
+  await db.execute(sql`DELETE FROM login_attempts WHERE key = ${loginKey(email)}`);
 }

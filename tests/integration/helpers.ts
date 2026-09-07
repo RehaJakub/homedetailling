@@ -9,6 +9,8 @@ const origin = "http://test.local";
 /** Builds a Request the way Next hands it to a route handler. */
 export function jsonRequest(method: string, path: string, body?: unknown, cookie?: string) {
   const headers: Record<string, string> = {};
+  headers["x-requested-with"] = "XMLHttpRequest";
+  headers.origin = origin;
   if (body !== undefined) headers["content-type"] = "application/json";
   if (cookie) headers.cookie = cookie;
   return new Request(origin + path, {

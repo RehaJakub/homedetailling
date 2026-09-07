@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { reservations } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth";
 import { parseReservationPatch } from "@/lib/validation";
-import { invalidJson, readJsonObject } from "@/lib/request";
+import { invalidJson, readJsonObject, rejectUnsafeMutation } from "@/lib/request";
 import { SLOTS_PER_DAY } from "@/lib/booking";
 
 function validId(value: string) {
@@ -12,6 +12,8 @@ function validId(value: string) {
 }
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+  const rejected = rejectUnsafeMutation(request);
+  if (rejected) return rejected;
   const auth = await requireUser(request, ["admin", "manager"]);
   if (auth.error) return auth.error;
   const id = validId((await context.params).id);
@@ -37,6 +39,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 }
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
+  const rejected = rejectUnsafeMutation(request);
+  if (rejected) return rejected;
   const auth = await requireUser(request, ["admin", "manager"]);
   if (auth.error) return auth.error;
   const id = validId((await context.params).id);

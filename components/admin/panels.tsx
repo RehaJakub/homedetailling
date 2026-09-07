@@ -636,7 +636,7 @@ export function SettingsPanel({
               <Input type="password" name="current" autoComplete="current-password" required />
             </Field>
             <Field label="Nové heslo">
-              <Input type="password" name="next" minLength={10} autoComplete="new-password" required />
+              <Input type="password" name="next" minLength={15} maxLength={128} autoComplete="new-password" required />
             </Field>
             <div>
               <Button type="submit" variant="dark">

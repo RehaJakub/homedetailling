@@ -270,8 +270,8 @@ export function AdminApp({ user }: { user: User }) {
   }
 
   async function saveUser(ud: { name: string; email: string; role: Role; password: string }) {
-    if (!ud.name || !ud.email || ud.password.length < 10) {
-      toast({ tone: "warn", icon: "alert", title: "Doplňte jméno, e-mail a heslo (min. 10 znaků)" });
+    if (!ud.name || !ud.email || ud.password.length < 15) {
+      toast({ tone: "warn", icon: "alert", title: "Doplňte jméno, e-mail a heslo (min. 15 znaků)" });
       return;
     }
     try {
@@ -476,8 +476,8 @@ export function AdminApp({ user }: { user: User }) {
             <Field label="Role">
               <Select options={(Object.keys(ROLE_LABEL) as Role[]).map((r) => ({ value: r, label: ROLE_LABEL[r] }))} value={modal.ud.role} onChange={(e) => setModal({ ...modal, ud: { ...modal.ud, role: e.target.value as Role } })} />
             </Field>
-            <Field label="Počáteční heslo (min. 10 znaků)">
-              <Input type="password" value={modal.ud.password} onChange={(e) => setModal({ ...modal, ud: { ...modal.ud, password: e.target.value } })} autoComplete="new-password" />
+            <Field label="Počáteční heslo (min. 15 znaků)">
+              <Input type="password" minLength={15} maxLength={128} value={modal.ud.password} onChange={(e) => setModal({ ...modal, ud: { ...modal.ud, password: e.target.value } })} autoComplete="new-password" />
             </Field>
           </div>
         )}

@@ -38,12 +38,12 @@ const services = [
 const trust: Array<{ icon: IconName; title: string; text: string }> = [
   { icon: "droplet", title: "Vlastní voda i elektřina", text: "Nepotřebujeme od vás nic než místo." },
   { icon: "wallet", title: "Platba po dokončení", text: "Hotově nebo převodem." },
-  { icon: "phone", title: "Potvrzení do 3 hodin", text: "Zavoláme nebo napíšeme e-mail." },
+  { icon: "phone", title: "Potvrzení do 3 hodin", text: "Termín vám potvrdíme telefonicky." },
 ];
 
 const steps: Array<{ icon: IconName; index: string; title: string; text: string }> = [
   { icon: "calendar", index: "01", title: "Vyberete službu a čas", text: "Vyberete den a čas začátku po 30 minutách. Pro každou rezervaci vyhradíme 3 hodiny." },
-  { icon: "phone", index: "02", title: "Potvrdíme termín", text: "Ozveme se telefonicky nebo e-mailem. Případnou změnu času vidíte hned v potvrzení." },
+  { icon: "phone", index: "02", title: "Potvrdíme termín", text: "Ozveme se telefonicky a případnou změnu času rovnou domluvíme." },
   { icon: "sparkle", index: "03", title: "Přijedeme a vyčistíme", text: "Na místě u vás doma nebo v práci. Platba hotově nebo převodem po dokončení." },
 ];
 

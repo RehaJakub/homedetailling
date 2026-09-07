@@ -14,7 +14,18 @@ import * as settings from "@/app/api/v2/settings/route";
 import * as reservations from "@/app/api/v2/reservations/route";
 import * as reservationItem from "@/app/api/v2/reservations/[id]/route";
 import { allowLogin, LOGIN_ATTEMPT_LIMIT } from "@/lib/login-limit";
+import { addDays } from "@/lib/booking";
+import { PUBLIC_BOOKING_LIMIT } from "@/lib/booking-limit";
 import { ctx, defaultPassword, futureWorkday, jsonRequest, loginAs, sessionCookieFor } from "./helpers";
+
+it("rejects a state-changing request without the same-origin app marker", async () => {
+  const response = await login(new Request("http://test.local/api/v2/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email: "a@example.test", password: "irrelevant-password" }),
+    headers: { "content-type": "application/json", origin: "http://test.local" },
+  }));
+  expect(response.status).toBe(403);
+});
 
 it.each(["anonymous", "viewer", "manager"] as const)("access matrix: %s cannot exceed its rights", async role => {
   const cookie = role === "anonymous" ? undefined : (await loginAs(role)).cookie;
@@ -75,7 +86,11 @@ it("malformed cookie is unauthenticated", async () => {
 });
 
 it.each(["null", "[]", "{"])("bad login JSON returns 400: %s", async body => {
-  expect((await login(new Request("http://test.local", { method: "POST", body }))).status).toBe(400);
+  expect((await login(new Request("http://test.local", {
+    method: "POST",
+    body,
+    headers: { "content-type": "application/json", "x-requested-with": "XMLHttpRequest", origin: "http://test.local" },
+  }))).status).toBe(400);
 });
 
 it("login throttle returns 429 and normalizes account names", async () => {
@@ -102,6 +117,17 @@ it("accepts only one simultaneous public booking, including with an empty settin
   const responses = await Promise.all(Array.from({ length: 12 }, () => reservations.POST(jsonRequest("POST", "/", body))));
   expect(responses.filter(r => r.status === 201)).toHaveLength(1);
   expect(responses.filter(r => r.status === 409)).toHaveLength(11);
+});
+
+it("rate-limits repeated public bookings for the same contact", async () => {
+  const body = payload();
+  for (let i = 0; i < PUBLIC_BOOKING_LIMIT; i++) {
+    const response = await reservations.POST(jsonRequest("POST", "/", { ...body, date: futureWorkday(7 + i * 7) }));
+    expect(response.status).toBe(201);
+  }
+  const blocked = await reservations.POST(jsonRequest("POST", "/", { ...body, date: addDays(futureWorkday(7), 35) }));
+  expect(blocked.status).toBe(429);
+  expect(blocked.headers.get("retry-after")).toBe("3600");
 });
 
 it("rejects updates crossing midnight and keeps stored booking unchanged", async () => {

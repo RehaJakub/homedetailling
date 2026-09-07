@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { pricePackages } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth";
 import { parsePricePackage } from "@/lib/validation";
-import { invalidJson, readJsonObject } from "@/lib/request";
+import { invalidJson, readJsonObject, rejectUnsafeMutation } from "@/lib/request";
 
 function validId(value: string) {
   const id = Number(value);
@@ -11,6 +11,8 @@ function validId(value: string) {
 }
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+  const rejected = rejectUnsafeMutation(request);
+  if (rejected) return rejected;
   const auth = await requireUser(request, ["admin", "manager"]);
   if (auth.error) return auth.error;
   const id = validId((await context.params).id);
@@ -25,6 +27,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 }
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
+  const rejected = rejectUnsafeMutation(request);
+  if (rejected) return rejected;
   const auth = await requireUser(request, ["admin", "manager"]);
   if (auth.error) return auth.error;
   const id = validId((await context.params).id);

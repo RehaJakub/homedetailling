@@ -1,11 +1,13 @@
 import { promisify } from "node:util";
-import { randomBytes, scrypt as scryptCallback, timingSafeEqual } from "node:crypto";
+import { randomBytes, randomUUID, scrypt as scryptCallback, timingSafeEqual } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { jwtVerify, SignJWT } from "jose";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 
 const scrypt = promisify(scryptCallback);
+const SESSION_ISSUER = "homedetailing";
+const SESSION_AUDIENCE = "homedetailing-admin";
 export const sessionCookieName = "homedetailing_session";
 export type Role = "admin" | "manager" | "viewer";
 export const roles: Role[] = ["admin", "manager", "viewer"];
@@ -34,14 +36,21 @@ export async function createSessionToken(user: { id: number; role: Role; session
   return new SignJWT({ role: user.role, version: user.sessionVersion ?? 0 })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(String(user.id))
+    .setIssuer(SESSION_ISSUER)
+    .setAudience(SESSION_AUDIENCE)
+    .setJti(randomUUID())
     .setIssuedAt()
-    .setExpirationTime("8h")
+    .setExpirationTime("4h")
     .sign(jwtSecret());
 }
 
 export async function verifySessionToken(token: string): Promise<{ id: number; role: Role; version: number } | null> {
   try {
-    const { payload } = await jwtVerify(token, jwtSecret(), { algorithms: ["HS256"] });
+    const { payload } = await jwtVerify(token, jwtSecret(), {
+      algorithms: ["HS256"],
+      issuer: SESSION_ISSUER,
+      audience: SESSION_AUDIENCE,
+    });
     const id = Number(payload.sub);
     if (!Number.isInteger(id) || id < 1) return null;
     if (typeof payload.role !== "string" || !roles.includes(payload.role as Role)) return null;
@@ -54,21 +63,22 @@ export async function verifySessionToken(token: string): Promise<{ id: number; r
 
 export const sessionCookieOptions = {
   httpOnly: true,
-  sameSite: "lax" as const,
+  sameSite: "strict" as const,
   secure: process.env.NODE_ENV === "production",
   path: "/",
-  maxAge: 60 * 60 * 8,
+  maxAge: 60 * 60 * 4,
+  priority: "high" as const,
 };
 
 /** `Set-Cookie` header value that stores the session token. */
 export function sessionCookieHeader(token: string) {
   const { maxAge, secure } = sessionCookieOptions;
-  return `${sessionCookieName}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure ? "; Secure" : ""}`;
+  return `${sessionCookieName}=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${maxAge}; Priority=High${secure ? "; Secure" : ""}`;
 }
 
 /** `Set-Cookie` header value that clears the session cookie. */
 export function clearSessionCookieHeader() {
-  return `${sessionCookieName}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+  return `${sessionCookieName}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0; Priority=High${process.env.NODE_ENV === "production" ? "; Secure" : ""}`;
 }
 
 export function readCookie(request: Request, name: string) {

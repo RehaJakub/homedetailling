@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ModelViewerLoader } from "@/components/ModelViewerLoader";
 import "./globals.css";
 
 const geist = Geist({
@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="cs">
       <body className={`${geist.variable} ${mono.variable}`}>
-        <Script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.1.0/model-viewer.min.js" strategy="afterInteractive" />
+        <ModelViewerLoader />
         {children}
       </body>
     </html>

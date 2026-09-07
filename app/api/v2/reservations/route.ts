@@ -6,7 +6,8 @@ import { busyRanges, isSlotBusy, isWorkDay, settingsForDate, PUBLIC_BOOKING_STEP
 import { businessNow, getSettings } from "@/lib/settings";
 import { bookingStatuses, parseReservation } from "@/lib/validation";
 import type { BookingStatus } from "@/lib/booking";
-import { invalidJson, readJsonObject } from "@/lib/request";
+import { invalidJson, readJsonObject, rejectUnsafeMutation } from "@/lib/request";
+import { allowPublicBooking, PUBLIC_BOOKING_WINDOW_SECONDS } from "@/lib/booking-limit";
 
 export async function GET(request: Request) {
   const auth = await requireUser(request, ["admin", "manager", "viewer"]);
@@ -21,6 +22,8 @@ export async function GET(request: Request) {
  * overlaps allowed and shown in the calendar).
  */
 export async function POST(request: Request) {
+  const rejected = rejectUnsafeMutation(request);
+  if (rejected) return rejected;
   const body = await readJsonObject(request);
   if (!body) return invalidJson();
   const staff = await currentUser(request);
@@ -59,6 +62,12 @@ export async function POST(request: Request) {
       const busy = busyRanges(parsed.date, rows, settings, parsed.date === now.iso ? now.slot : undefined);
       for (let i = parsed.slotStart; i < parsed.slotEnd; i++) {
         if (isSlotBusy(i, busy)) return Response.json({ error: "Vybraný čas už je obsazený. Zvolte prosím jiný." }, { status: 409 });
+      }
+      if (!await allowPublicBooking(tx, parsed.email, parsed.phone)) {
+        return Response.json(
+          { error: "Odeslali jste příliš mnoho rezervací. Zkuste to prosím později." },
+          { status: 429, headers: { "Retry-After": String(PUBLIC_BOOKING_WINDOW_SECONDS) } },
+        );
       }
     }
 

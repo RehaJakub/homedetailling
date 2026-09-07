@@ -36,6 +36,14 @@ describe("bootstrap", () => {
     const again = await bootstrapPost(jsonRequest("POST", "/api/v2/auth/bootstrap", firstAdmin));
     expect(again.status).toBe(409);
   });
+
+  it("creates only one first admin under concurrent requests", async () => {
+    const responses = await Promise.all([
+      bootstrapPost(jsonRequest("POST", "/api/v2/auth/bootstrap", firstAdmin)),
+      bootstrapPost(jsonRequest("POST", "/api/v2/auth/bootstrap", { ...firstAdmin, email: "second@example.test" })),
+    ]);
+    expect(responses.map(response => response.status).sort()).toEqual([201, 409]);
+  });
 });
 
 describe("login", () => {
@@ -59,6 +67,14 @@ describe("login", () => {
     expect(body.user).toEqual({ id: user.id, name: user.name, email: user.email, role: "manager" });
     expect(body.user).not.toHaveProperty("passwordHash");
     expect(response.headers.get("set-cookie")).toContain(`${sessionCookieName}=`);
+  });
+
+  it("clears failed-attempt accounting after each successful login", async () => {
+    await createUser({ role: "admin", email: "a@example.test" });
+    for (let i = 0; i < 12; i++) {
+      const response = await login(jsonRequest("POST", "/api/v2/auth/login", { email: "a@example.test", password: defaultPassword }));
+      expect(response.status).toBe(200);
+    }
   });
 });
 

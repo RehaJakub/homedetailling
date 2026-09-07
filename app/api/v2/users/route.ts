@@ -3,7 +3,8 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { hashPassword, requireUser, type Role } from "@/lib/auth";
 import { validEmail } from "@/lib/validation";
-import { invalidJson, readJsonObject } from "@/lib/request";
+import { invalidJson, readJsonObject, rejectUnsafeMutation } from "@/lib/request";
+import { validNewPassword } from "@/lib/password-policy";
 
 const roles: Role[] = ["admin", "manager", "viewer"];
 
@@ -15,6 +16,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const rejected = rejectUnsafeMutation(request);
+  if (rejected) return rejected;
   const auth = await requireUser(request, ["admin"]);
   if (auth.error) return auth.error;
   const body = await readJsonObject(request);
@@ -23,7 +26,7 @@ export async function POST(request: Request) {
   const email = String(body.email ?? "").trim().toLowerCase();
   const password = String(body.password ?? "");
   const role = String(body.role ?? "viewer") as Role;
-  if (!name || !validEmail(email) || password.length < 10 || !roles.includes(role)) return Response.json({ error: "Neplatné údaje uživatele." }, { status: 400 });
+  if (!name || !validEmail(email) || !validNewPassword(password) || !roles.includes(role)) return Response.json({ error: "Neplatné údaje uživatele." }, { status: 400 });
   const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
   if (existing.length) return Response.json({ error: "Uživatel s tímto e-mailem už existuje." }, { status: 409 });
   const [created] = await db.insert(users).values({ name, email, passwordHash: await hashPassword(password), role }).returning({ id: users.id, name: users.name, email: users.email, role: users.role, active: users.active, createdAt: users.createdAt });

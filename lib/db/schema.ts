@@ -31,7 +31,8 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [uniqueIndex("users_email_unique").on(table.email)]);
 
-// Persistent, atomic login throttling shared by all app processes.
+// Persistent, atomic request throttling shared by all app processes. Keys are
+// namespaced for login attempts and public booking submissions.
 export const loginAttempts = pgTable("login_attempts", {
   key: text("key").primaryKey(),
   attempts: integer("attempts").notNull(),

@@ -2,8 +2,11 @@ import { clearSessionCookieHeader, currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
+import { rejectUnsafeMutation } from "@/lib/request";
 
 export async function POST(request: Request) {
+  const rejected = rejectUnsafeMutation(request);
+  if (rejected) return rejected;
   const user = await currentUser(request);
   // Logging out revokes all sessions for this account, including copied tokens.
   if (user) await db.update(users).set({ sessionVersion: sql`${users.sessionVersion} + 1` }).where(eq(users.id, user.id));

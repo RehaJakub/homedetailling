@@ -1119,6 +1119,7 @@
 .hd-dialog {
   width: min(480px, 100%);
   padding: 42px;
+  color: var(--hd-black);
   background: var(--hd-white);
   box-shadow: 0 30px 90px rgb(0 0 0 / 45%);
   font-family: var(--hd-font-sans);

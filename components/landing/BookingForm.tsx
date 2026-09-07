@@ -292,7 +292,7 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
     try {
       const response = await fetch("/api/v2/reservations", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
         body: JSON.stringify({ ...fields, services, date: day, a, b: end }),
         signal: AbortSignal.timeout(15_000),
       });
@@ -300,7 +300,7 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
         setSentSummary(`${servicesLabel(services)}, ${summary} (${durationLabel(n)}).`);
         setSent(true);
         form.reset();
-        onToast("Rezervace odeslána. Potvrzení přijde na e-mail.", "check-circle");
+        onToast("Rezervace odeslána. Termín potvrdíme telefonicky.", "check-circle");
         void loadRange(day, day);
       } else {
         const data = (await response.json().catch(() => ({}))) as { error?: string };
@@ -441,14 +441,14 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
           <Button type="submit" variant="light" fullWidth icon="arrow-up-right" disabled={sending}>
             {sending ? "Odesílám…" : "Odeslat rezervaci"}
           </Button>
-          <span className={styles.gdpr}>Odesláním souhlasíte se zpracováním údajů pro účely rezervace. Termín potvrdíme telefonicky nebo e-mailem.</span>
+          <span className={styles.gdpr}>Odesláním souhlasíte se zpracováním údajů pro účely rezervace. Termín potvrdíme telefonicky.</span>
         </div>
       </form>
 
       <Dialog
         open={sent}
         eyebrow="Rezervace odeslána"
-        title="Děkujeme, termín je zarezervován."
+        title="Děkujeme, rezervaci jsme přijali."
         actions={
           <Button
             variant="primary"
@@ -464,7 +464,7 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
           </Button>
         }
       >
-        {sentSummary} Potvrzení přijde na e-mail. Pokud bude potřeba čas upravit, ozveme se telefonicky.
+        {sentSummary} Termín vám potvrdíme telefonicky. Pokud bude potřeba čas upravit, rovnou se domluvíme.
       </Dialog>
     </>
   );
