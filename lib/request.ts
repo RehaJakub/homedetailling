@@ -40,8 +40,33 @@ export function rejectUnsafeMutation(request: Request): Response | null {
   const site = request.headers.get("sec-fetch-site");
   if (site === "cross-site" || site === "same-site") return forbiddenRequest();
   const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin) return forbiddenRequest();
+  if (origin && !isRequestOrigin(origin, request)) return forbiddenRequest();
   return null;
+}
+
+/**
+ * Next receives the container URL behind the production reverse proxy. Accept
+ * the public origin supplied by that trusted proxy while keeping an exact
+ * scheme-and-host comparison. The first value is the client-facing hop.
+ */
+function isRequestOrigin(origin: string, request: Request) {
+  let parsedOrigin: URL;
+  try {
+    parsedOrigin = new URL(origin);
+  } catch {
+    return false;
+  }
+  if (parsedOrigin.origin === new URL(request.url).origin) return true;
+
+  const forwardedHost = firstForwardedValue(request.headers.get("x-forwarded-host"));
+  const forwardedProto = firstForwardedValue(request.headers.get("x-forwarded-proto"));
+  if (!forwardedHost || (forwardedProto !== "http" && forwardedProto !== "https")) return false;
+
+  return parsedOrigin.origin === `${forwardedProto}://${forwardedHost}`;
+}
+
+function firstForwardedValue(header: string | null) {
+  return header?.split(",", 1)[0]?.trim().toLowerCase() || null;
 }
 
 function forbiddenRequest() {

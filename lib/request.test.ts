@@ -33,3 +33,33 @@ it("rejects mutations without the app header or from another origin", () => {
     headers: { "x-requested-with": "XMLHttpRequest", origin: "http://test.local" },
   }))).toBeNull();
 });
+
+it("accepts the exact public origin supplied by a reverse proxy", () => {
+  expect(rejectUnsafeMutation(new Request("http://app:3000/api", {
+    method: "POST",
+    headers: {
+      "x-requested-with": "XMLHttpRequest",
+      origin: "https://detail.sindelka.dev",
+      "x-forwarded-host": "detail.sindelka.dev",
+      "x-forwarded-proto": "https",
+    },
+  }))).toBeNull();
+});
+
+it("rejects spoofed, malformed and wrong-protocol forwarded origins", () => {
+  const headers = {
+    "x-requested-with": "XMLHttpRequest",
+    origin: "https://evil.test",
+    "x-forwarded-host": "detail.sindelka.dev",
+    "x-forwarded-proto": "https",
+  };
+  expect(rejectUnsafeMutation(new Request("http://app:3000/api", { method: "POST", headers }))?.status).toBe(403);
+  expect(rejectUnsafeMutation(new Request("http://app:3000/api", {
+    method: "POST",
+    headers: { ...headers, origin: "https://detail.sindelka.dev", "x-forwarded-proto": "http" },
+  }))?.status).toBe(403);
+  expect(rejectUnsafeMutation(new Request("http://app:3000/api", {
+    method: "POST",
+    headers: { ...headers, origin: "not a URL" },
+  }))?.status).toBe(403);
+});
