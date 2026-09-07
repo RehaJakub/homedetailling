@@ -17,7 +17,7 @@ describe("GET /api/v2/availability", () => {
     expect((await get("")).status).toBe(400);
   });
 
-  it("marks closed days, blocks the past and widens bookings by the buffer", async () => {
+  it("marks closed days, blocks the past and adds no extra buffer", async () => {
     const day = futureWorkday();
     let sunday = day;
     while (weekdayIndex(sunday) !== 6) sunday = addDays(sunday, 1);
@@ -26,8 +26,8 @@ describe("GET /api/v2/availability", () => {
     await POST(jsonRequest("POST", "/api/v2/reservations", { name: "Petr Dvořák", phone: "+420777123456", email: "p@example.test", services: ["Interiér"], address: "Ostrava", date: day, a: 60, b: 64, status: "cancelled" }, cookie));
 
     const body = await json<Availability>(await get(`from=${day}&to=${sunday}`));
-    expect(body.settings).toMatchObject({ openSlot: 28, closeSlot: 76, bufferMinutes: 30 });
-    expect(body.days[day]).toEqual({ closed: false, busy: [[34, 50]] });
+    expect(body.settings).toMatchObject({ openSlot: 28, closeSlot: 76, bufferMinutes: 0 });
+    expect(body.days[day]).toEqual({ closed: false, busy: [[36, 48]] });
     expect(body.days[sunday]).toEqual({ closed: true, busy: [] });
 
     const past = await json<Availability>(await get(`date=${addDays(body.today, -1)}`));

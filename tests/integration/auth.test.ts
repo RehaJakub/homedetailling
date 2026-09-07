@@ -80,7 +80,7 @@ describe("me / logout", () => {
   });
 
   it("clears the cookie on logout", async () => {
-    const response = await logout();
+    const response = await logout(jsonRequest("POST", "/api/v2/auth/logout"));
     expect(response.headers.get("set-cookie")).toContain("Max-Age=0");
   });
 });

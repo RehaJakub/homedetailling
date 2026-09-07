@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { createSessionToken, hashPassword, sessionCookieHeader } from "@/lib/auth";
 import { validEmail } from "@/lib/validation";
+import { invalidJson, readJsonObject } from "@/lib/request";
 
 export async function GET() {
   const [{ value }] = await db.select({ value: count() }).from(users);
@@ -10,7 +11,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const body = (await request.json()) as Record<string, unknown>;
+  const body = await readJsonObject(request);
+  if (!body) return invalidJson();
   const code = String(body.code ?? "");
   const name = String(body.name ?? "").trim();
   const email = String(body.email ?? "").trim().toLowerCase();

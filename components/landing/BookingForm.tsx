@@ -5,11 +5,10 @@ import {
   dayLabel,
   defaultSettings,
   durationLabel,
-  publicBookingSlots,
+  publicBookingStarts,
   settingsForDate,
   PUBLIC_BOOKING_STEP_MINUTES,
-  PUBLIC_BOOKING_STEP_SLOTS,
-  isSlotBusy,
+  PUBLIC_BOOKING_DURATION_SLOTS,
   MONTHS,
   priceList,
   servicesLabel,
@@ -18,6 +17,7 @@ import {
   type Settings,
 } from "@/lib/booking";
 import styles from "@/app/landing.module.css";
+import { selectServices } from "@/lib/service-selection";
 
 export type PricePackage = { id: number; name: string; price: string; showCurrency: boolean; items: string[]; featured: boolean; durationMinutes: number };
 type DayInfo = { closed: boolean; busy: Array<[number, number]> };
@@ -33,8 +33,7 @@ export type BookingFormProps = {
 };
 
 /**
- * Booking section: month calendar → 30-minute from–to range → ticked services.
- * The customer picks the booking range themselves.
+ * Booking section: day → start time → services. Each booking blocks three hours.
  */
 export function BookingForm({ packages, onToast, active = true }: BookingFormProps) {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
@@ -46,8 +45,6 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
   });
   const [day, setDay] = useState<string | null>(null);
   const [a, setA] = useState<number | null>(null);
-  const [b, setB] = useState<number | null>(null);
-  const [hov, setHov] = useState<number | null>(null);
   const [services, setServices] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -100,49 +97,27 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
   const busy = day ? busyOf(day) : null;
   const daySettings = day ? settingsForDate(day, settings) : settings;
   const dayOpen = busy !== null;
-  const step = PUBLIC_BOOKING_STEP_SLOTS;
-  const isBusy = (i: number) => busy === null || Array.from({ length: step }, (_, k) => i + k).some((q) => q >= daySettings.closeSlot || isSlotBusy(q, busy));
-  // b is the first slot of the last selected cell (inclusive); the booking end is b + step.
-  const n = a !== null && b !== null ? b - a + step : 0;
-  const end = a !== null && b !== null ? b + step : null;
+  const availableStarts = busy === null ? [] : publicBookingStarts(daySettings, busy);
+  const n = a !== null ? PUBLIC_BOOKING_DURATION_SLOTS : 0;
+  const end = a !== null ? a + PUBLIC_BOOKING_DURATION_SLOTS : null;
 
   function pickDay(iso: string) {
     setDay(iso);
     setA(null);
-    setB(null);
-    setHov(null);
     setError("");
     setTimeout(() => scrollTo(slotsRef.current), 50);
   }
 
   function pickSlot(i: number) {
-    if (!day || isBusy(i)) return;
-    if (a === null || b !== null) {
-      setA(i);
-      setB(null);
-      setError("");
-      return;
-    }
-    if (i < a) {
-      setA(i);
-      return;
-    }
-    for (let k = a; k <= i; k += step) {
-      if (isBusy(k)) {
-        onToast(`Mezi začátkem a koncem je obsazený čas. Začínáme znovu od ${slotLabel(i)}.`, "alert");
-        setA(i);
-        setB(null);
-        return;
-      }
-    }
-    setB(i);
+    if (!day || !availableStarts.includes(i)) return;
+    setA(i);
     setError("");
-    onToast(`Termín vybrán: ${dayLabel(day)} ${slotLabel(a)} – ${slotLabel(i + step)}`, "calendar");
+    onToast(`Termín vybrán: ${dayLabel(day)} ${slotLabel(i)} – ${slotLabel(i + PUBLIC_BOOKING_DURATION_SLOTS)}`, "calendar");
     setTimeout(() => scrollTo(servicesRef.current), 50);
   }
 
   function changeServices(next: string[]) {
-    setServices(next);
+    setServices(previous => selectServices(previous, next));
     setError("");
   }
 
@@ -164,7 +139,7 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
     const info = days[iso];
     const past = iso < today;
     const closed = !past && (!info || info.closed);
-    const full = !past && !closed && info !== undefined && publicBookingSlots(settings, info.busy, iso).length === 0;
+    const full = !past && !closed && info !== undefined && publicBookingStarts(settings, info.busy, iso).length === 0;
     const disabled = past || closed || full;
     const selected = day === iso;
     const isToday = iso === today;
@@ -204,20 +179,18 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
 
   const slots = [];
   if (busy && day) {
-    const starts = publicBookingSlots(daySettings);
+    const starts = publicBookingStarts(daySettings);
     for (const i of starts) {
-      const slotBusy = isBusy(i);
-      const inSel = a !== null && (b !== null ? i >= a && i <= b : i === a);
-      const inHov = a !== null && b === null && hov !== null && i > a && i <= hov;
+      const slotBusy = !availableStarts.includes(i);
+      const inSel = a === i;
       slots.push(
         <button
           key={i}
           type="button"
           disabled={slotBusy}
           onClick={() => pickSlot(i)}
-          onMouseEnter={() => {
-            if (a !== null && b === null) setHov(i);
-          }}
+          aria-pressed={inSel}
+          aria-label={`Začátek ${slotLabel(i)}, rezervováno do ${slotLabel(i + PUBLIC_BOOKING_DURATION_SLOTS)}`}
           style={{
             padding: "12px 0",
             textAlign: "center",
@@ -225,7 +198,7 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
             fontSize: 12,
             border: `1px solid ${inSel ? "#fff" : "rgba(255,255,255,.22)"}`,
             color: inSel ? "#1769ff" : "#fff",
-            background: inSel ? "#fff" : inHov ? "rgba(255,255,255,.28)" : "transparent",
+            background: inSel ? "#fff" : "transparent",
             cursor: slotBusy ? "not-allowed" : "pointer",
             opacity: slotBusy ? 0.3 : 1,
             textDecoration: slotBusy ? "line-through" : "none",
@@ -246,16 +219,12 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
     ? "Zatím nic nevybráno"
     : a === null
       ? `${dayLabel(day)} · vyberte začátek`
-      : b === null
-        ? `${dayLabel(day)} · od ${slotLabel(a)} · klikněte na konec`
-        : `${dayLabel(day)} · ${slotLabel(a)} – ${slotLabel(b + step)}`;
+      : `${dayLabel(day)} · ${slotLabel(a)} – ${slotLabel(end!)}`;
   const slotHint = !day
     ? "nejdřív vyberte den"
     : a === null
       ? `${slotLabel(daySettings.openSlot)} – ${slotLabel(daySettings.closeSlot)} · krok ${PUBLIC_BOOKING_STEP_MINUTES} min`
-      : b === null
-        ? "teď zvolte konec"
-        : "kliknutím vyberete znovu";
+      : "kliknutím změníte začátek";
 
   const tile = (done: boolean) => ({
     display: "grid",
@@ -270,7 +239,7 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
     {
       icon: n ? "check" : "clock",
       label: "02 · Čas",
-      value: n && a !== null && b !== null ? `${slotLabel(a)} – ${slotLabel(b + step)} · ${durationLabel(n)}` : a !== null ? `od ${slotLabel(a)} · zvolte konec` : `Od – do po ${PUBLIC_BOOKING_STEP_MINUTES} min`,
+      value: a !== null && end !== null ? `${slotLabel(a)} – ${slotLabel(end)} · ${durationLabel(n)}` : `Začátky po ${PUBLIC_BOOKING_STEP_MINUTES} min`,
       done: n > 0,
     },
     { icon: services.length ? "check" : "car", label: "03 · Služby", value: services.length ? servicesLabel(services) : "Zaškrtněte služby", done: services.length > 0 },
@@ -290,6 +259,7 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (sending) return;
     const form = event.currentTarget;
     if (!day) {
       onToast("Nejdřív vyberte den v kalendáři.", "alert");
@@ -297,8 +267,8 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
       scrollTo(form);
       return;
     }
-    if (a === null || b === null || end === null) {
-      setError("Vyberte prosím čas od a do.");
+    if (a === null || end === null || !availableStarts.includes(a)) {
+      setError("Vyberte prosím dostupný čas začátku.");
       scrollTo(slotsRef.current);
       return;
     }
@@ -319,26 +289,31 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
     }
     setSending(true);
     setError("");
-    const response = await fetch("/api/v2/reservations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...fields, services, date: day, a, b: end }),
-    });
-    setSending(false);
-    if (response.ok) {
-      setSentSummary(`${servicesLabel(services)}, ${summary} (${durationLabel(n)}).`);
-      setSent(true);
-      form.reset();
-      onToast("Rezervace odeslána. Potvrzení přijde na e-mail.", "check-circle");
-      void loadRange(day, day);
-    } else {
-      const data = (await response.json().catch(() => ({}))) as { error?: string };
-      setError(data.error ?? "Rezervaci se nepodařilo odeslat. Zkuste to znovu.");
-      if (response.status === 409) {
-        setA(null);
-        setB(null);
+    try {
+      const response = await fetch("/api/v2/reservations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...fields, services, date: day, a, b: end }),
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (response.ok) {
+        setSentSummary(`${servicesLabel(services)}, ${summary} (${durationLabel(n)}).`);
+        setSent(true);
+        form.reset();
+        onToast("Rezervace odeslána. Potvrzení přijde na e-mail.", "check-circle");
         void loadRange(day, day);
+      } else {
+        const data = (await response.json().catch(() => ({}))) as { error?: string };
+        setError(data.error ?? "Rezervaci se nepodařilo odeslat. Zkuste to znovu.");
+        if (response.status === 409) {
+          setA(null);
+          void loadRange(day, day);
+        }
       }
+    } catch {
+      setError("Spojení se přerušilo. Než rezervaci odešlete znovu, ověřte u nás, zda dorazila.");
+    } finally {
+      setSending(false);
     }
   }
 
@@ -390,18 +365,17 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
 
           <div style={{ display: "grid", gap: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
-              <span className={styles.stepLabel}>02 · Čas od – do</span>
+              <span className={styles.stepLabel}>02 · Čas začátku</span>
               <span style={{ fontFamily: mono, fontSize: 11, letterSpacing: ".06em", opacity: 0.8 }}>{slotHint}</span>
             </div>
             {day && !dayOpen && <div className={styles.closedDay}>V tento den nejezdíme. Vyberte prosím jiný.</div>}
+            <p style={{ margin: 0, fontSize: 13 }}>Vyberte jen začátek. Pro vaši rezervaci vyhradíme 3 hodiny.</p>
+            {dayOpen && availableStarts.length === 0 && <div className={styles.closedDay}>V tento den už není volný tříhodinový termín.</div>}
             {dayOpen && (
               <div
                 ref={slotsRef}
                 className={styles.slots}
-                style={{ gridTemplateColumns: `repeat(${step === 1 ? 8 : step === 2 ? 6 : 4}, minmax(0, 1fr))` }}
-                onMouseLeave={() => {
-                  if (hov !== null) setHov(null);
-                }}
+                style={{ gridTemplateColumns: "repeat(6, minmax(0, 1fr))" }}
               >
                 {slots}
               </div>
@@ -422,8 +396,6 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
                     aria-label="Zrušit výběr"
                     onClick={() => {
                       setA(null);
-                      setB(null);
-                      setHov(null);
                     }}
                   >
                     <Icon name="close" size={14} stroke={2} />
@@ -437,6 +409,7 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
         <div className={styles.bookingRight} ref={servicesRef}>
           <span className={styles.stepLabel}>03 · Služby a kontakt</span>
           <ServiceChecklist options={packages} values={services} onChange={changeServices} />
+          <p style={{ margin: 0, fontSize: 13 }}>Pro interiér vyberte Basic, nebo Premium. Exteriér můžete přidat k oběma.</p>
 
 
           <div className={styles.twoCols}>
@@ -484,7 +457,6 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
               setSent(false);
               setDay(null);
               setA(null);
-              setB(null);
               setServices([]);
             }}
           >

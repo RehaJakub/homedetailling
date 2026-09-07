@@ -262,6 +262,36 @@
   gap: 20px;
 }
 
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  width: 100%;
+  max-width: 660px;
+  margin-inline: auto;
+}
+
+.gallery :global(.hd-compare__image) {
+  height: auto;
+  aspect-ratio: 3 / 4;
+}
+
+.gallery :global(.hd-compare__before) {
+  text-align: left;
+}
+
+.gallery :global(.hd-compare__image:focus-within) {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+}
+
+@media (max-width: 600px) {
+  .gallery {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 320px;
+  }
+}
+
 /* Booking band */
 .serviceGrid {
   grid-template-columns: repeat(2, minmax(0, 1fr));

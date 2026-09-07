@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { hashPassword, requireUser, type Role } from "@/lib/auth";
 import { validEmail } from "@/lib/validation";
+import { invalidJson, readJsonObject } from "@/lib/request";
 
 const roles: Role[] = ["admin", "manager", "viewer"];
 
@@ -16,7 +17,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const auth = await requireUser(request, ["admin"]);
   if (auth.error) return auth.error;
-  const body = (await request.json()) as Record<string, unknown>;
+  const body = await readJsonObject(request);
+  if (!body) return invalidJson();
   const name = String(body.name ?? "").trim();
   const email = String(body.email ?? "").trim().toLowerCase();
   const password = String(body.password ?? "");

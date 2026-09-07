@@ -30,8 +30,8 @@ export async function verifyPassword(password: string, stored: string) {
   return derived.length === expected.length && timingSafeEqual(derived, expected);
 }
 
-export async function createSessionToken(user: { id: number; role: Role }) {
-  return new SignJWT({ role: user.role })
+export async function createSessionToken(user: { id: number; role: Role; sessionVersion?: number }) {
+  return new SignJWT({ role: user.role, version: user.sessionVersion ?? 0 })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(String(user.id))
     .setIssuedAt()
@@ -39,13 +39,14 @@ export async function createSessionToken(user: { id: number; role: Role }) {
     .sign(jwtSecret());
 }
 
-export async function verifySessionToken(token: string): Promise<{ id: number; role: Role } | null> {
+export async function verifySessionToken(token: string): Promise<{ id: number; role: Role; version: number } | null> {
   try {
-    const { payload } = await jwtVerify(token, jwtSecret());
+    const { payload } = await jwtVerify(token, jwtSecret(), { algorithms: ["HS256"] });
     const id = Number(payload.sub);
     if (!Number.isInteger(id) || id < 1) return null;
     if (typeof payload.role !== "string" || !roles.includes(payload.role as Role)) return null;
-    return { id, role: payload.role as Role };
+    if (typeof payload.version !== "number" || !Number.isInteger(payload.version) || payload.version < 0) return null;
+    return { id, role: payload.role as Role, version: payload.version };
   } catch {
     return null;
   }
@@ -74,7 +75,10 @@ export function readCookie(request: Request, name: string) {
   const header = request.headers.get("cookie") ?? "";
   for (const part of header.split(";")) {
     const [key, ...rest] = part.trim().split("=");
-    if (key === name) return decodeURIComponent(rest.join("="));
+    if (key === name) {
+      try { return decodeURIComponent(rest.join("=")); }
+      catch { return undefined; }
+    }
   }
   return undefined;
 }
@@ -85,7 +89,7 @@ export async function currentUser(request: Request) {
   const session = await verifySessionToken(token);
   if (!session) return null;
   const [user] = await db.select().from(users).where(eq(users.id, session.id)).limit(1);
-  if (!user?.active) return null;
+  if (!user?.active || user.sessionVersion !== session.version) return null;
   return { id: user.id, name: user.name, email: user.email, role: user.role };
 }
 

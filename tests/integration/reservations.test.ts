@@ -26,10 +26,11 @@ async function create(body: Record<string, unknown> = valid, cookie?: string) {
 }
 
 describe("POST /api/v2/reservations (public)", () => {
-  it("rejects quarter-hour boundaries and accepts a half-hour reservation", async () => {
-    expect((await create({ ...valid, a: 37, b: 40 })).response.status).toBe(400);
+  it("rejects quarter-hour starts and requires a three-hour booking", async () => {
+    expect((await create({ ...valid, a: 37, b: 49 })).response.status).toBe(400);
     expect((await create({ ...valid, a: 36, b: 39 })).response.status).toBe(400);
-    expect((await create({ ...valid, a: 36, b: 38 })).response.status).toBe(201);
+    expect((await create({ ...valid, a: 36, b: 38 })).response.status).toBe(400);
+    expect((await create({ ...valid, a: 36, b: 48 })).response.status).toBe(201);
   });
 
   it("stores a valid reservation as new", async () => {
@@ -60,16 +61,14 @@ describe("POST /api/v2/reservations (public)", () => {
     let sunday = day;
     while (weekdayIndex(sunday) !== 6) sunday = addDays(sunday, 1);
     expect((await create({ ...valid, date: sunday })).response.status).toBe(409);
-    expect((await create({ ...valid, a: 20, b: 24 })).response.status).toBe(409);
+    expect((await create({ ...valid, a: 20, b: 32 })).response.status).toBe(409);
     expect((await create({ ...valid, date: addDays(businessNow().iso, -1) })).response.status).toBe(409);
   });
 
-  it("rejects overlaps and the buffer around an active booking", async () => {
+  it("rejects overlaps but permits a booking immediately after an active booking", async () => {
     await create();
-    expect((await create({ ...valid, a: 44, b: 52 })).response.status).toBe(409);
-    // 30 min buffer = 2 slots after 12:00 → 12:00–12:30 is blocked, 12:30 is free
-    expect((await create({ ...valid, a: 48, b: 52 })).response.status).toBe(409);
-    expect((await create({ ...valid, a: 50, b: 56 })).response.status).toBe(201);
+    expect((await create({ ...valid, a: 44, b: 56 })).response.status).toBe(409);
+    expect((await create({ ...valid, a: 48, b: 60 })).response.status).toBe(201);
   });
 
   it("ignores cancelled bookings when checking availability", async () => {

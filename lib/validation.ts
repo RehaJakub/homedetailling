@@ -1,4 +1,5 @@
 import { isIsoDate, SLOTS_PER_DAY, type BookingStatus, type DayHours } from "@/lib/booking";
+import { isInteriorTier } from "@/lib/service-selection";
 
 export const bookingStatuses: BookingStatus[] = ["new", "confirmed", "done", "cancelled"];
 
@@ -18,6 +19,7 @@ function slot(value: unknown) {
 export function parseServices(body: Record<string, unknown>) {
   const raw = Array.isArray(body.services) ? body.services : body.service !== undefined ? [body.service] : [];
   const services = [...new Set(raw.map((v) => text(v).slice(0, 80)).filter(Boolean))].slice(0, 12);
+  if (services.filter(isInteriorTier).length > 1) return null;
   return services.length ? services : null;
 }
 

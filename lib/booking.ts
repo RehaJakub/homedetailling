@@ -26,6 +26,21 @@ export type Settings = {
 export const SLOTS_PER_DAY = 96;
 export const PUBLIC_BOOKING_STEP_MINUTES = 30;
 export const PUBLIC_BOOKING_STEP_SLOTS = PUBLIC_BOOKING_STEP_MINUTES / 15;
+export const PUBLIC_BOOKING_DURATION_SLOTS = 12; // Every public booking reserves 3 hours.
+
+/** Starts every 30 minutes, only when the entire three-hour block fits. */
+export function publicBookingStarts(s: Settings, busy: Array<[number, number]> = [], date?: string) {
+  const hours = date ? settingsForDate(date, s) : s;
+  return publicBookingSlots(hours).filter(start =>
+    start + PUBLIC_BOOKING_DURATION_SLOTS <= hours.closeSlot &&
+    !busy.some(([a, b]) => a < start + PUBLIC_BOOKING_DURATION_SLOTS && b > start),
+  );
+}
+
+/** Public bookings may follow immediately; legacy buffer settings do not apply. */
+export function publicBookingSettings(s: Settings): Settings {
+  return { ...s, bufferMinutes: 0 };
+}
 
 /** Complete public booking cells, aligned to :00/:30 within opening hours. */
 export function publicBookingSlots(s: Settings, busy: Array<[number, number]> = [], date?: string) {

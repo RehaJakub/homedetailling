@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { db } from "@/lib/db";
+import { db, type Database } from "@/lib/db";
 import { settings } from "@/lib/db/schema";
 import { defaultSettings, type Settings } from "@/lib/booking";
 
@@ -9,10 +9,10 @@ const ROW_ID = 1;
 export const BUSINESS_TZ = "Europe/Prague";
 
 /** Reads the single settings row, creating it with defaults on first use. */
-export async function getSettings(): Promise<Settings> {
-  const [row] = await db.select().from(settings).where(eq(settings.id, ROW_ID)).limit(1);
+export async function getSettings(connection: Pick<Database, "select" | "insert"> = db): Promise<Settings> {
+  const [row] = await connection.select().from(settings).where(eq(settings.id, ROW_ID)).limit(1);
   if (row) return pick(row);
-  const [created] = await db.insert(settings).values({ id: ROW_ID }).onConflictDoNothing().returning();
+  const [created] = await connection.insert(settings).values({ id: ROW_ID }).onConflictDoNothing().returning();
   return created ? pick(created) : defaultSettings;
 }
 

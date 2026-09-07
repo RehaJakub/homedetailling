@@ -578,7 +578,7 @@ export function SettingsPanel({
             })}
           </div>
           <div className={styles.twoCols}>
-            <Field label="Krok rezervace">
+            <Field label="Krok posunu v admin kalendáři">
               <Select
                 options={[
                   { value: "15", label: "15 minut" },
@@ -590,19 +590,7 @@ export function SettingsPanel({
                 disabled={!canEdit}
               />
             </Field>
-            <Field label="Přejezd mezi zakázkami">
-              <Select
-                options={[
-                  { value: "0", label: "Bez přejezdu" },
-                  { value: "15", label: "15 minut" },
-                  { value: "30", label: "30 minut" },
-                  { value: "45", label: "45 minut" },
-                ]}
-                value={String(settings.bufferMinutes)}
-                onChange={(e) => onSettings({ bufferMinutes: Number(e.target.value) })}
-                disabled={!canEdit}
-              />
-            </Field>
+            <Text tone="muted" size="sm">Zákazník vybírá začátek po 30 minutách. Rezervace blokuje 3 hodiny bez další mezery, například 15:00–18:00.</Text>
           </div>
           {canEdit && (
             <div>

@@ -288,15 +288,19 @@ export function AdminApp({ user }: { user: User }) {
     try {
       await api.changePassword(current, next);
       reset();
-      toast({ icon: "shield", title: "Heslo změněno", text: "Při dalším přihlášení použijte nové heslo." });
+      router.replace("/admin/login");
     } catch (e) {
       fail(e);
     }
   }
 
   async function logout() {
-    await api.logout().catch(() => undefined);
-    router.replace("/admin/login");
+    try {
+      await api.logout();
+      router.replace("/admin/login");
+    } catch (e) {
+      fail(e);
+    }
   }
 
   /* ---- keyboard ---- */

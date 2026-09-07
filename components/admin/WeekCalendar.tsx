@@ -71,8 +71,9 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
     };
     const finish = (ev: PointerEvent) => {
       const d = dragRef.current;
+      dragRef.current = null;
       setDrag(null);
-      if (!d) return;
+      if (!d || ev.type === "pointercancel") return;
       if (!d.target) {
         // No movement: treat as a click.
         if (ev.type === "pointerup") onOpen(d.booking);
@@ -84,7 +85,10 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
       onMove(d.booking, { date, slotStart: d.target.slotStart, slotEnd: d.target.slotStart + length });
     };
     const onKey = (ev: KeyboardEvent) => {
-      if (ev.key === "Escape") setDrag(null);
+      if (ev.key === "Escape") {
+        dragRef.current = null;
+        setDrag(null);
+      }
     };
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", finish);
@@ -138,6 +142,14 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
 
       <div className={styles.legend}>
         <span>
+          <i className={styles.workingSwatch} />
+          Pracovní doba
+        </span>
+        <span>
+          <i className={styles.closedSwatch} />
+          Mimo pracovní dobu
+        </span>
+        <span>
           <i style={{ background: "#1769ff" }} />
           Potvrzeno
         </span>
@@ -170,7 +182,10 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
                   {DOW_SHORT[d.getDay()]}
                 </span>
                 <strong style={{ fontSize: 18, letterSpacing: "-.02em" }}>{d.getDate()}</strong>
-                <span style={{ fontSize: 10 }}>{off ? "Zavřeno" : `${slotLabel(hours.openSlot)}–${slotLabel(hours.closeSlot)}`}</span>
+                <span className={`${styles.hoursBadge} ${off ? styles.hoursBadgeClosed : styles.hoursBadgeOpen}`}>
+                  <span>{off ? "Zavřeno" : "Pracujeme"}</span>
+                  <strong>{off ? "Celý den" : `${slotLabel(hours.openSlot)}–${slotLabel(hours.closeSlot)}`}</strong>
+                </span>
                 <span style={{ fontSize: 11, opacity: 0.7 }}>{count ? `${count} ${count === 1 ? "zakázka" : count < 5 ? "zakázky" : "zakázek"}` : ""}</span>
               </div>
             );
@@ -195,7 +210,6 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
                 className={styles.dayColumn}
                 style={{
                   height: rows * PX,
-                  background: `${off ? "repeating-linear-gradient(135deg,#f5f7fa 0 8px,#fff 8px 16px)," : ""}repeating-linear-gradient(to bottom,#edf0f4 0 1px,transparent 1px ${PX * 4}px)`,
                 }}
                 onClick={(ev) => {
                   if (ev.target !== ev.currentTarget) return;
@@ -203,8 +217,16 @@ export function WeekCalendar({ bookings, settings, weekStart, today, dayMode, fo
                   onCreateAt(iso, q);
                 }}
               >
-                {!off && [[open, hours.openSlot], [hours.closeSlot, close]].map(([start, end], i) => end > start && (
-                  <div key={i} aria-hidden="true" style={{ position: "absolute", left: 0, right: 0, top: (start - open) * PX, height: (end - start) * PX, background: "repeating-linear-gradient(135deg,#f5f7fa 0 8px,#fff 8px 16px)", pointerEvents: "none" }} />
+                {!off && (
+                  <div className={styles.workingRange} style={{ top: (hours.openSlot - open) * PX, height: (hours.closeSlot - hours.openSlot) * PX }}>
+                    <span className={styles.hoursStart}>Od {slotLabel(hours.openSlot)}</span>
+                    {hours.closeSlot - hours.openSlot >= 4 && <span className={styles.hoursEnd}>Do {slotLabel(hours.closeSlot)}</span>}
+                  </div>
+                )}
+                {(off ? [[open, close]] : [[open, hours.openSlot], [hours.closeSlot, close]]).map(([start, end], i) => end > start && (
+                  <div key={i} className={styles.closedRange} style={{ top: (start - open) * PX, height: (end - start) * PX }}>
+                    <span>{off ? "Celý den zavřeno" : "Mimo pracovní dobu"}</span>
+                  </div>
                 ))}
                 {iso === today && nowSlot >= open && nowSlot < close && <div className={styles.nowLine} style={{ top: nowTop }} />}
                 {ghost && ghost.target && (

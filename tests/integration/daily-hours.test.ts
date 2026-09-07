@@ -28,16 +28,17 @@ describe("per-day working hours", () => {
       name: "Jakub Test", email: "daily@example.test", phone: "+420777123456", address: "Ostrava",
       services: ["Interiér + tepování"], date, a, b,
     }));
-    expect((await book(monday, 32, 34)).status).toBe(409);
-    expect((await book(tuesday, 52, 54)).status).toBe(409);
-    expect((await book(wednesday, 64, 66)).status).toBe(409);
-    expect((await book(monday, 74, 76)).status).toBe(201);
-    expect((await book(wednesday, 32, 34)).status).toBe(201);
+    expect((await book(monday, 32, 44)).status).toBe(409);
+    expect((await book(tuesday, 52, 64)).status).toBe(409);
+    expect((await book(wednesday, 64, 76)).status).toBe(409);
+    expect((await book(monday, 74, 86)).status).toBe(409);
+    expect((await book(monday, 64, 76)).status).toBe(201);
+    expect((await book(wednesday, 32, 44)).status).toBe(201);
     expect((await save([{ openSlot: 32, closeSlot: 76 }, ...weeklyHours.slice(1)])).status).toBe(200);
-    expect((await book(monday, 32, 34)).status).toBe(201);
+    expect((await book(monday, 32, 44)).status).toBe(201);
     expect((await save(Array(7).fill(null))).status).toBe(200);
     expect((await getAvailability()).days[monday].closed).toBe(true);
-    expect((await book(monday, 40, 42)).status).toBe(409);
+    expect((await book(monday, 40, 52)).status).toBe(409);
     const list = await json<{ reservations: unknown[] }>(await orders(jsonRequest("GET", "/api/v2/reservations", undefined, cookie)));
     expect(list.reservations).toHaveLength(3);
   });

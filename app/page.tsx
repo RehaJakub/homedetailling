@@ -42,15 +42,16 @@ const trust: Array<{ icon: IconName; title: string; text: string }> = [
 ];
 
 const steps: Array<{ icon: IconName; index: string; title: string; text: string }> = [
-  { icon: "calendar", index: "01", title: "Vyberete službu a čas", text: "V kalendáři kliknete na den, pak na začátek a konec úseku. Nejkratší krok je 30 minut." },
+  { icon: "calendar", index: "01", title: "Vyberete službu a čas", text: "Vyberete den a čas začátku po 30 minutách. Pro každou rezervaci vyhradíme 3 hodiny." },
   { icon: "phone", index: "02", title: "Potvrdíme termín", text: "Ozveme se telefonicky nebo e-mailem. Případnou změnu času vidíte hned v potvrzení." },
   { icon: "sparkle", index: "03", title: "Přijedeme a vyčistíme", text: "Na místě u vás doma nebo v práci. Platba hotově nebo převodem po dokončení." },
 ];
 
 const gallery = [
-  { number: "01", title: "Sedačky", description: "Fleky a zašlá látka → Hloubkově vyčištěno", initialPosition: 45 },
-  { number: "02", title: "Lak", description: "Matný a zaprášený → Lesk s ochranným voskem", initialPosition: 55 },
-  { number: "03", title: "Kola", description: "Brzdový prach → Čisté disky i pneu", initialPosition: 50 },
+  { number: "01", title: "Interiér", description: "Palubní deska a středový panel před čištěním a po něm.", beforeImage: "/images/interier-pred.jpeg", afterImage: "/images/interier-po.jpeg", initialPosition: 50 },
+  { number: "02", title: "Volant", description: "Volant a prostor řidiče před čištěním a po něm.", beforeImage: "/images/volant-pred.jpeg", afterImage: "/images/volant-po.jpeg", initialPosition: 50 },
+  { number: "03", title: "Interiér – koberce", description: "Koberce a zadní prostor interiéru před čištěním a po něm.", beforeImage: "/images/interier-koberce-pred.jpeg", afterImage: "/images/interier-koberce-po.jpeg", initialPosition: 50 },
+  { number: "04", title: "Dveře", description: "Vnitřní výplň dveří před čištěním a po něm.", beforeImage: "/images/dvere-pred.jpeg", afterImage: "/images/dvere-po.jpeg", initialPosition: 50 },
 ];
 
 // Shown until the pricing API answers; mirrors the seed content of the design.
@@ -133,7 +134,7 @@ export default function Home() {
   return (
     <main className={styles.page}>
       <SiteHeader
-        logo={<Image src="/home-detailing-logo.png" alt="Home Detailing" width={2073} height={758} sizes="(max-width: 650px) 160px, 180px" className={styles.headerLogo} loading="eager" />}
+        logo={<Image src="/images/home-detailing-logo.png" alt="Home Detailing" width={2073} height={758} sizes="(max-width: 650px) 160px, 180px" className={styles.headerLogo} loading="eager" />}
         links={navLinks}
         cta={{ href: "#rezervace", label: "Rezervovat termín" }}
         sticky
@@ -284,7 +285,7 @@ export default function Home() {
               Přetáhněte dělicí čáru a porovnejte stav před čištěním a po něm.
             </Text>
           </div>
-          <div className={`${styles.threeCols} ${styles.revealLate}`}>
+          <div className={`${styles.gallery} ${styles.revealLate}`}>
             {gallery.map((item) => (
               <BeforeAfterSlider key={item.title} {...item} />
             ))}
@@ -299,7 +300,7 @@ export default function Home() {
             Vyberte péči pro <em>vaše auto.</em>
           </Heading>
           <Text tone="muted" lead>
-            Ceny jsou konečné, doprava po Ostravě je v ceně. Balíčky lze kombinovat.
+            Ceny jsou konečné, doprava po Ostravě je v ceně. Pro interiér zvolte Basic, nebo Premium; exteriér můžete přidat k oběma.
           </Text>
         </div>
         <div className={`${styles.priceGrid} ${styles.revealLate}`}>
@@ -328,7 +329,7 @@ export default function Home() {
                 Vyberte si den a čas.
               </Heading>
               <Text tone="on-blue" lead>
-                V kalendáři kliknete na den, potom na začátek a konec úseku a zaškrtnete služby. Celé to zabere minutu.
+                Vyberete den, čas začátku a služby. Automaticky vám vyhradíme 3 hodiny. Celé objednání zabere minutu.
               </Text>
             </div>
             <div className={styles.bookingCtaSide}>
@@ -384,7 +385,7 @@ export default function Home() {
       </Container>
 
       <Footer
-        logo={<Image src="/home-detailing-logo.png" alt="Home Detailing" width={2073} height={758} sizes="220px" className={styles.footerLogo} />}
+        logo={<Image src="/images/home-detailing-logo.png" alt="Home Detailing" width={2073} height={758} sizes="220px" className={styles.footerLogo} />}
         tagline="Mobilní detailing · Ostrava a okolí"
         note={
           <>

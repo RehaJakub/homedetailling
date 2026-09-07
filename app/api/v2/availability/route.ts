@@ -1,7 +1,7 @@
 import { and, gte, lte } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { reservations } from "@/lib/db/schema";
-import { addDays, busyRanges, fromIso, isIsoDate, isWorkDay } from "@/lib/booking";
+import { addDays, busyRanges, fromIso, isIsoDate, isWorkDay, publicBookingSettings } from "@/lib/booking";
 import { businessNow, getSettings } from "@/lib/settings";
 
 const MAX_DAYS = 92;
@@ -10,7 +10,7 @@ const MAX_DAYS = 92;
  * Public availability for the booking calendar.
  * `?date=YYYY-MM-DD` or `?from=YYYY-MM-DD&to=YYYY-MM-DD` (inclusive, max 92 days).
  * Returns opening settings and, per day, whether it is closed and which slot
- * ranges are busy (active bookings widened by the buffer, plus the past today).
+ * ranges are busy (active bookings without an extra buffer, plus the past today).
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   const span = Math.round((fromIso(to).getTime() - fromIso(from).getTime()) / 86_400_000) + 1;
   if (span > MAX_DAYS) return Response.json({ error: `Rozsah může mít nejvýše ${MAX_DAYS} dní.` }, { status: 400 });
 
-  const settings = await getSettings();
+  const settings = publicBookingSettings(await getSettings());
   const rows = await db
     .select({ id: reservations.id, date: reservations.date, slotStart: reservations.slotStart, slotEnd: reservations.slotEnd, status: reservations.status })
     .from(reservations)

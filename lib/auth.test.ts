@@ -40,7 +40,7 @@ describe("hashPassword / verifyPassword", () => {
 describe("session tokens", () => {
   it("round-trips id and role", async () => {
     const token = await createSessionToken({ id: 7, role: "manager" });
-    expect(await verifySessionToken(token)).toEqual({ id: 7, role: "manager" });
+    expect(await verifySessionToken(token)).toEqual({ id: 7, role: "manager", version: 0 });
   });
 
   it("rejects expired tokens", async () => {

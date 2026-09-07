@@ -24,11 +24,19 @@ export const users = pgTable("users", {
   name: varchar("name", { length: 120 }).notNull(),
   email: varchar("email", { length: 254 }).notNull(),
   passwordHash: text("password_hash").notNull(),
+  sessionVersion: integer("session_version").notNull().default(0),
   role: userRole("role").notNull().default("viewer"),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [uniqueIndex("users_email_unique").on(table.email)]);
+
+// Persistent, atomic login throttling shared by all app processes.
+export const loginAttempts = pgTable("login_attempts", {
+  key: text("key").primaryKey(),
+  attempts: integer("attempts").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+});
 
 // A booking occupies quarter-hour slots [slotStart, slotEnd) on one day;
 // slot 0 = 00:00, slot 28 = 07:00, slot 96 = 24:00.

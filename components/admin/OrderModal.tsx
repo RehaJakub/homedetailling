@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button, Field, Heading, Icon, Input, Notice, Textarea, Select } from "@homedetailing/ui";
 import { conflictsOf, dayLabel, durationLabel, initials, isActive, priceLabel, slotLabel, STATUS_LABEL, type BookingStatus } from "@/lib/booking";
 import styles from "@/app/admin/admin.module.css";
+import { selectServices } from "@/lib/service-selection";
 import type { Booking, Customer, Draft, Package, Settings } from "./types";
 
 const mono = "var(--hd-font-mono)";
@@ -222,7 +223,7 @@ export function OrderModal({ draft: d, orig, bookings, packages, settings, custo
                       type="button"
                       role="checkbox"
                       aria-checked={on}
-                      onClick={() => onChange({ services: on ? d.services.filter((s) => s !== p.name) : [...d.services, p.name] })}
+                      onClick={() => onChange({ services: selectServices(d.services, on ? d.services.filter((s) => s !== p.name) : [...d.services, p.name]) })}
                       className={styles.serviceCard}
                       style={{ border: `1px solid ${on ? "#1769ff" : "#e1e5eb"}`, background: on ? "#1769ff" : "#fff", color: on ? "#fff" : "#080b12" }}
                     >

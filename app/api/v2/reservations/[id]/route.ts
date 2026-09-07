@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { reservations } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth";
 import { parseReservationPatch } from "@/lib/validation";
+import { invalidJson, readJsonObject } from "@/lib/request";
+import { SLOTS_PER_DAY } from "@/lib/booking";
 
 function validId(value: string) {
   const id = Number(value);
@@ -14,7 +16,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   if (auth.error) return auth.error;
   const id = validId((await context.params).id);
   if (!id) return Response.json({ error: "Neplatné ID rezervace." }, { status: 400 });
-  const patch = parseReservationPatch((await request.json()) as Record<string, unknown>);
+  const body = await readJsonObject(request);
+  if (!body) return invalidJson();
+  const patch = parseReservationPatch(body);
   if (!patch) return Response.json({ error: "Neplatné údaje rezervace." }, { status: 400 });
 
   const [current] = await db.select().from(reservations).where(eq(reservations.id, id)).limit(1);
@@ -22,6 +26,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   const slotStart = patch.slotStart ?? current.slotStart;
   let slotEnd = patch.slotEnd ?? current.slotEnd;
   if (slotEnd <= slotStart) slotEnd = slotStart + 1;
+  if (slotStart >= SLOTS_PER_DAY || slotEnd > SLOTS_PER_DAY) return Response.json({ error: "Rezervace musí končit nejpozději o půlnoci." }, { status: 400 });
 
   const [updated] = await db
     .update(reservations)
