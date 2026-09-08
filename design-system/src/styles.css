@@ -36,7 +36,7 @@
 /* LAYOUT */
 
 .hd-container {
-  width: min(1180px, calc(100% - 40px));
+  width: min(1280px, calc(100% - 40px));
   margin-right: auto;
   margin-left: auto;
 }

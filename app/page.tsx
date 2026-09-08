@@ -63,6 +63,38 @@ const fallbackPackages: PricePackage[] = [
 
 const marqueeText = "Basic interiér · Premium interiér · Exteriér · Ostrava · Poruba · Havířov · Frýdek-Místek · Přijedeme k vám ·";
 
+const localBusinessJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "AutomotiveBusiness",
+  "@id": "https://homedetailing.cz/#business",
+  name: "Home Detailing",
+  url: "https://homedetailing.cz/",
+  logo: "https://homedetailing.cz/images/home-detailing-logo.png",
+  image: [
+    "https://homedetailing.cz/images/interier-po.jpeg",
+    "https://homedetailing.cz/images/stredpanel-v2-po.jpeg",
+    "https://homedetailing.cz/images/dvere-po.jpeg",
+  ],
+  description: "Mobilní čištění interiéru a exteriéru aut v Ostravě, Havířově, Frýdku-Místku a okolí.",
+  priceRange: "1 500–2 000 Kč",
+  telephone: ["+420777011690", "+420733477254"],
+  areaServed: [
+    { "@type": "City", name: "Ostrava" },
+    { "@type": "City", name: "Havířov" },
+    { "@type": "City", name: "Frýdek-Místek" },
+    { "@type": "AdministrativeArea", name: "okolí Ostravy" },
+  ],
+  hasOfferCatalog: {
+    "@type": "OfferCatalog",
+    name: "Čištění a detailing aut",
+    itemListElement: [
+      { "@type": "Offer", itemOffered: { "@type": "Service", name: "Čištění interiéru auta" } },
+      { "@type": "Offer", itemOffered: { "@type": "Service", name: "Tepování sedaček a koberců" } },
+      { "@type": "Offer", itemOffered: { "@type": "Service", name: "Ruční mytí exteriéru auta" } },
+    ],
+  },
+};
+
 export default function Home() {
   const [packages, setPackages] = useState<PricePackage[]>(fallbackPackages);
   const [toast, setToast] = useState<{ message: string; icon: IconName } | null>(null);
@@ -133,6 +165,10 @@ export default function Home() {
 
   return (
     <main className={styles.page}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd).replace(/</g, "\\u003c") }}
+      />
       <SiteHeader
         logo={<Image src="/images/home-detailing-logo.png" alt="Home Detailing" width={2073} height={758} sizes="(max-width: 650px) 160px, 180px" className={styles.headerLogo} loading="eager" />}
         links={navLinks}
@@ -149,12 +185,14 @@ export default function Home() {
             </div>
             <div className={styles.up} style={{ animationDelay: ".1s" }}>
               <Heading level={1} size="display">
-                Čisté auto <em>u vás doma.</em>
+                Čištění aut <em>Ostrava a okolí.</em>
               </Heading>
             </div>
             <div className={styles.up} style={{ animationDelay: ".2s" }}>
               <Text tone="muted" lead>
-                Přijedeme k vám, vyčistíme interiér i exteriér a vy mezitím děláte, co potřebujete. Termín si vyberete v kalendáři na minutu přesně.
+                <span className={styles.heroLeadLine}>Mobilní detailing v Ostravě, Havířově a okolí.</span>{" "}
+                <span className={styles.heroLeadLine}>Přijedeme k vám domů nebo do práce.</span>{" "}
+                <span className={styles.heroLeadLine}>Vyčistíme interiér i exteriér vozu.</span>
               </Text>
             </div>
             <div className={`${styles.heroButtons} ${styles.up}`} style={{ animationDelay: ".3s" }}>
@@ -386,7 +424,7 @@ export default function Home() {
 
       <Footer
         logo={<Image src="/images/home-detailing-logo.png" alt="Home Detailing" width={2073} height={758} sizes="220px" className={styles.footerLogo} />}
-        tagline="Mobilní detailing · Ostrava a okolí"
+        tagline="Mobilní detailing · Ostrava, Havířov a okolí"
         note={
           <>
             © 2026 Home Detailing. Všechna práva vyhrazena. ·{" "}

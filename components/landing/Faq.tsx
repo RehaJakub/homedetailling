@@ -7,7 +7,7 @@ export const FAQ: Array<[string, string]> = [
   ["Kolik místa potřebujete?", "Stačí parkovací místo a asi metr kolem auta. Vodu i elektřinu si přivezeme, nepotřebujeme od vás žádné přípojky."],
   ["Jak dlouho čištění trvá?", "Délka závisí na zvoleném balíčku, velikosti auta a míře znečištění. Konkrétní čas s vámi potvrdíme po přijetí rezervace."],
   ["Co když se termín nehodí vám nebo nám?", "Po přijetí rezervace se ozveme telefonicky. Když bude třeba čas posunout, rovnou se domluvíme."],
-  ["Jezdíte i mimo Ostravu?", "Ano, do 30 km od Ostravy bez příplatku. Dál po domluvě, cestu si účtujeme podle vzdálenosti."],
+  ["Kde nabízíte mobilní čištění aut?", "Přijíždíme za zákazníky v Ostravě, Havířově, Frýdku-Místku a do 30 km od Ostravy bez příplatku. Dál po domluvě, cestu si účtujeme podle vzdálenosti."],
   ["Jak se platí?", "Až po dokončení a kontrole výsledku. Hotově nebo převodem podle faktury."],
 ];
 

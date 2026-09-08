@@ -18,6 +18,12 @@
   margin-bottom: 56px;
 }
 
+.sectionIntro :global(.hd-heading),
+.splitIntro :global(.hd-heading),
+.bookingIntro :global(.hd-heading) {
+  margin-block: 0;
+}
+
 .reveal {
   animation: hdReveal linear both;
   animation-timeline: view();
@@ -39,14 +45,19 @@
 .hero {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  gap: 56px;
-  align-items: center;
-  padding: 96px 0 110px;
+  gap: 48px;
+  align-items: start;
+  padding: 64px 0 80px;
 }
 
 .heroCopy {
   display: grid;
-  gap: 26px;
+  gap: 22px;
+  padding-top: 24px;
+}
+
+.heroCopy :global(.hd-heading) {
+  margin-block: 4px;
 }
 
 .heroButtons {
@@ -678,6 +689,10 @@
     padding: 56px 0 72px;
   }
 
+  .heroCopy {
+    padding-top: 0;
+  }
+
   .trust {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -694,6 +709,26 @@
 }
 
 @media (max-width: 650px) {
+  .heroCopy :global(.hd-eyebrow),
+  .heroCopy :global(.hd-heading),
+  .heroCopy :global(.hd-text) {
+    max-width: calc(100% - 10px);
+    overflow-wrap: break-word;
+  }
+
+  .heroCopy :global(.hd-heading) em {
+    display: block;
+  }
+
+  .heroLeadLine {
+    display: block;
+  }
+
+  .heroCopy :global(.hd-text--lead) {
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
   .section {
     padding-top: 80px;
     padding-bottom: 80px;

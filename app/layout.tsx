@@ -14,9 +14,47 @@ const mono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Home Detailing | Mobilní čištění aut",
+  metadataBase: new URL("https://homedetailing.cz"),
+  title: {
+    default: "Mobilní čištění aut Ostrava a okolí | Home Detailing",
+    template: "%s | Home Detailing",
+  },
   description:
-    "Mobilní detailing interiéru a exteriéru v Ostravě a okolí.",
+    "Mobilní čištění a detailing aut v Ostravě, Havířově, Frýdku-Místku a okolí. Přijedeme za vámi domů nebo do práce. Rezervujte si termín online.",
+  keywords: [
+    "čištění aut Ostrava",
+    "mobilní detailing Ostrava",
+    "čištění interiéru auta Ostrava",
+    "tepování aut Ostrava",
+    "detailing aut Ostrava",
+    "čištění aut Havířov",
+    "detailing Havířov",
+    "čištění aut Frýdek-Místek",
+    "mobilní čištění aut",
+    "čištění auta doma",
+  ],
+  applicationName: "Home Detailing",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "cs_CZ",
+    url: "/",
+    siteName: "Home Detailing",
+    title: "Mobilní čištění aut Ostrava a okolí | Home Detailing",
+    description: "Profesionální čištění interiéru a exteriéru vozů u vás doma v Ostravě, Havířově, Frýdku-Místku a okolí.",
+    images: [{ url: "/images/home-detailing-logo.png", width: 2073, height: 758, alt: "Home Detailing – mobilní čištění aut" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Mobilní čištění aut Ostrava a okolí | Home Detailing",
+    description: "Profesionální mobilní detailing v Ostravě, Havířově, Frýdku-Místku a okolí.",
+    images: ["/images/home-detailing-logo.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
+  },
 };
 
 export default function RootLayout({
