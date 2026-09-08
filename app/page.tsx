@@ -49,7 +49,7 @@ const steps: Array<{ icon: IconName; index: string; title: string; text: string 
 
 const gallery = [
   { number: "01", title: "Interiér", description: "Palubní deska a středový panel před čištěním a po něm.", beforeImage: "/images/interier-pred.jpeg", afterImage: "/images/interier-po.jpeg", initialPosition: 50 },
-  { number: "02", title: "Středový panel", description: "Středový panel před čištěním a po něm.", beforeImage: "/images/stredpanel-pred.jpeg", afterImage: "/images/stredpanel-po.jpeg", initialPosition: 50 },
+  { number: "02", title: "Středový panel", description: "Středový panel před čištěním a po něm.", beforeImage: "/images/stredpanel-v2-pred.jpeg", afterImage: "/images/stredpanel-v2-po.jpeg", initialPosition: 50 },
   { number: "03", title: "Interiér – koberce", description: "Koberce a zadní prostor interiéru před čištěním a po něm.", beforeImage: "/images/interier-koberce-pred.jpeg", afterImage: "/images/interier-koberce-po.jpeg", initialPosition: 50 },
   { number: "04", title: "Dveře", description: "Vnitřní výplň dveří před čištěním a po něm.", beforeImage: "/images/dvere-pred.jpeg", afterImage: "/images/dvere-po.jpeg", initialPosition: 50 },
 ];
