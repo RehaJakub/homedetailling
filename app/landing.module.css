@@ -331,6 +331,52 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.locations {
+  display: grid;
+  gap: 28px;
+  margin-top: 72px;
+  padding: 36px;
+  border: 1px solid #e1e5eb;
+  background: #f5f7fa;
+}
+
+.locationsIntro {
+  display: grid;
+  max-width: 720px;
+  gap: 14px;
+}
+
+.locationsIntro :global(.hd-heading) {
+  margin-block: 0;
+}
+
+.locationGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  background: #dfe4eb;
+  border: 1px solid #dfe4eb;
+}
+
+.locationCard {
+  min-width: 0;
+  padding: 24px;
+  background: #fff;
+}
+
+.locationCard h3 {
+  margin: 0;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+
+.locationCard p {
+  margin: 10px 0 0;
+  color: #687080;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
 .priceGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
@@ -339,6 +385,10 @@
 
 @media (max-width: 850px) {
   .serviceGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .locationGrid {
     grid-template-columns: 1fr;
   }
 }
@@ -736,6 +786,11 @@
 
   .sectionIntro {
     margin-bottom: 36px;
+  }
+
+  .locations {
+    margin-top: 48px;
+    padding: 24px 20px;
   }
 
   .trust,

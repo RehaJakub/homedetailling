@@ -19,7 +19,7 @@ import {
 } from "@homedetailing/ui";
 import { APP_VERSION } from "@/lib/version";
 import { BookingForm, type PricePackage } from "@/components/landing/BookingForm";
-import { Faq } from "@/components/landing/Faq";
+import { FAQ, Faq } from "@/components/landing/Faq";
 import styles from "./landing.module.css";
 
 const navLinks = [
@@ -63,36 +63,81 @@ const fallbackPackages: PricePackage[] = [
 
 const marqueeText = "Basic interiér · Premium interiér · Exteriér · Ostrava · Poruba · Havířov · Frýdek-Místek · Přijedeme k vám ·";
 
+const siteUrl = "https://homedetailing.cz";
+const businessId = `${siteUrl}/#business`;
+const serviceAreas = ["Ostrava", "Havířov", "Frýdek-Místek"];
+
 const localBusinessJsonLd = {
   "@context": "https://schema.org",
-  "@type": "AutomotiveBusiness",
-  "@id": "https://homedetailing.cz/#business",
-  name: "Home Detailing",
-  url: "https://homedetailing.cz/",
-  logo: "https://homedetailing.cz/images/home-detailing-logo.png",
-  image: [
-    "https://homedetailing.cz/images/interier-po.jpeg",
-    "https://homedetailing.cz/images/stredpanel-v2-po.jpeg",
-    "https://homedetailing.cz/images/dvere-po.jpeg",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${siteUrl}/#website`,
+      url: `${siteUrl}/`,
+      name: "Home Detailing",
+      inLanguage: "cs-CZ",
+      publisher: { "@id": businessId },
+    },
+    {
+      "@type": "AutomotiveBusiness",
+      "@id": businessId,
+      name: "Home Detailing",
+      url: `${siteUrl}/`,
+      logo: `${siteUrl}/images/home-detailing-logo.png`,
+      image: [
+        `${siteUrl}/images/interier-po.jpeg`,
+        `${siteUrl}/images/stredpanel-v2-po.jpeg`,
+        `${siteUrl}/images/dvere-po.jpeg`,
+      ],
+      description: "Mobilní čištění interiéru a exteriéru aut v Ostravě, Havířově, Frýdku-Místku a okolí.",
+      priceRange: "1 500–2 000 Kč",
+      telephone: "+420777011690",
+      contactPoint: [
+        { "@type": "ContactPoint", telephone: "+420777011690", contactType: "rezervace", availableLanguage: "Czech" },
+        { "@type": "ContactPoint", telephone: "+420733477254", contactType: "rezervace", availableLanguage: "Czech" },
+      ],
+      areaServed: [
+        ...serviceAreas.map((name) => ({ "@type": "City", name })),
+        { "@type": "AdministrativeArea", name: "okolí Ostravy do 30 km" },
+      ],
+      hasOfferCatalog: {
+        "@type": "OfferCatalog",
+        name: "Mobilní čištění a detailing aut",
+        itemListElement: [
+          {
+            "@type": "Offer",
+            price: "1500",
+            priceCurrency: "CZK",
+            itemOffered: { "@type": "Service", name: "Basic čištění interiéru auta", areaServed: serviceAreas },
+          },
+          {
+            "@type": "Offer",
+            price: "2000",
+            priceCurrency: "CZK",
+            itemOffered: { "@type": "Service", name: "Premium čištění interiéru a tepování auta", areaServed: serviceAreas },
+          },
+          {
+            "@type": "Offer",
+            itemOffered: { "@type": "Service", name: "Ruční mytí a detailing exteriéru auta", areaServed: serviceAreas },
+          },
+        ],
+      },
+      potentialAction: {
+        "@type": "ReserveAction",
+        target: `${siteUrl}/#rezervace`,
+        result: { "@type": "Reservation", name: "Rezervace mobilního čištění auta" },
+      },
+    },
+    {
+      "@type": "FAQPage",
+      "@id": `${siteUrl}/#faq-schema`,
+      mainEntity: FAQ.map(([question, answer]) => ({
+        "@type": "Question",
+        name: question,
+        acceptedAnswer: { "@type": "Answer", text: answer },
+      })),
+    },
   ],
-  description: "Mobilní čištění interiéru a exteriéru aut v Ostravě, Havířově, Frýdku-Místku a okolí.",
-  priceRange: "1 500–2 000 Kč",
-  telephone: ["+420777011690", "+420733477254"],
-  areaServed: [
-    { "@type": "City", name: "Ostrava" },
-    { "@type": "City", name: "Havířov" },
-    { "@type": "City", name: "Frýdek-Místek" },
-    { "@type": "AdministrativeArea", name: "okolí Ostravy" },
-  ],
-  hasOfferCatalog: {
-    "@type": "OfferCatalog",
-    name: "Čištění a detailing aut",
-    itemListElement: [
-      { "@type": "Offer", itemOffered: { "@type": "Service", name: "Čištění interiéru auta" } },
-      { "@type": "Offer", itemOffered: { "@type": "Service", name: "Tepování sedaček a koberců" } },
-      { "@type": "Offer", itemOffered: { "@type": "Service", name: "Ruční mytí exteriéru auta" } },
-    ],
-  },
 };
 
 export default function Home() {
@@ -282,6 +327,32 @@ export default function Home() {
             ))}
           </ServiceGrid>
         </div>
+
+        <section className={`${styles.locations} ${styles.reveal}`} aria-labelledby="lokality-nadpis">
+          <div className={styles.locationsIntro}>
+            <Eyebrow>Kde jezdíme</Eyebrow>
+            <Heading level={2} size="card" id="lokality-nadpis">
+              Mobilní čištění aut <em>ve vašem okolí.</em>
+            </Heading>
+            <Text tone="muted">
+              Přijedeme na vaši adresu s vlastní vodou i elektřinou. Doprava do 30 km od Ostravy je bez příplatku.
+            </Text>
+          </div>
+          <div className={styles.locationGrid}>
+            <article className={styles.locationCard}>
+              <h3>Čištění aut Ostrava</h3>
+              <p>Mobilní čištění interiéru, tepování a ruční mytí auta přímo u vás doma nebo v práci v Ostravě.</p>
+            </article>
+            <article className={styles.locationCard}>
+              <h3>Čištění aut Havířov</h3>
+              <p>Za zákazníky v Havířově přijedeme kompletně vybaveni a vyčistíme interiér i exteriér vozu na místě.</p>
+            </article>
+            <article className={styles.locationCard}>
+              <h3>Čištění aut Frýdek-Místek</h3>
+              <p>Mobilní detailing ve Frýdku-Místku objednáte online. Termín s vámi následně potvrdíme telefonicky.</p>
+            </article>
+          </div>
+        </section>
       </Container>
 
       <div id="postup" className={styles.stepsBand}>

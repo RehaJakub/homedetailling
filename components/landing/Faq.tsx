@@ -20,11 +20,19 @@ export function Faq() {
         const isOpen = open === i;
         return (
           <div key={q} className={styles.faqItem}>
-            <button type="button" className={styles.faqQuestion} aria-expanded={isOpen} onClick={() => setOpen(isOpen ? -1 : i)}>
+            <button
+              type="button"
+              className={styles.faqQuestion}
+              aria-expanded={isOpen}
+              aria-controls={`faq-answer-${i}`}
+              onClick={() => setOpen(isOpen ? -1 : i)}
+            >
               <strong>{q}</strong>
               <Icon name={isOpen ? "minus" : "plus"} size={18} />
             </button>
-            {isOpen && <p className={styles.faqAnswer}>{a}</p>}
+            <p id={`faq-answer-${i}`} className={styles.faqAnswer} hidden={!isOpen}>
+              {a}
+            </p>
           </div>
         );
       })}
