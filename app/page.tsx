@@ -168,7 +168,7 @@ export default function Home() {
             <div className={`${styles.metrics} ${styles.up}`} style={{ animationDelay: ".4s" }}>
               {(
                 [
-                  ["clock", "2 h", "Průměrná návštěva"],
+                  ["clock", "3H", "Průměrná návštěva"],
                 ] as Array<[IconName, string, string]>
               ).map(([icon, value, label]) => (
                 <div key={label} className={styles.metric}>
