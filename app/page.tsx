@@ -32,7 +32,7 @@ const navLinks = [
 
 const services = [
   { number: "01", title: "Interiér", text: "Basic za 1 500 Kč zahrnuje vysávání, čištění a impregnaci interiéru. Premium za 2 000 Kč přidává péči o kožené sedačky a tepování sedaček a koberce." },
-  { number: "02", title: "Exteriér", text: "Ruční mytí, dekontaminace laku, čištění kol a ochranný vosk na několik měsíců." },
+  { number: "02", title: "Exteriér", text: "Ruční mytí, čištění kol a ochranný vosk na několik týdnů." },
 ];
 
 const trust: Array<{ icon: IconName; title: string; text: string }> = [
@@ -49,14 +49,14 @@ const steps: Array<{ icon: IconName; index: string; title: string; text: string 
 
 const gallery = [
   { number: "01", title: "Interiér", description: "Palubní deska a středový panel před čištěním a po něm.", beforeImage: "/images/interier-pred.jpeg", afterImage: "/images/interier-po.jpeg", initialPosition: 50 },
-  { number: "02", title: "Volant", description: "Volant a prostor řidiče před čištěním a po něm.", beforeImage: "/images/volant-pred.jpeg", afterImage: "/images/volant-po.jpeg", initialPosition: 50 },
+  { number: "02", title: "Středový panel", description: "Středový panel před čištěním a po něm.", beforeImage: "/images/stredpanel-pred.jpeg", afterImage: "/images/stredpanel-po.jpeg", initialPosition: 50 },
   { number: "03", title: "Interiér – koberce", description: "Koberce a zadní prostor interiéru před čištěním a po něm.", beforeImage: "/images/interier-koberce-pred.jpeg", afterImage: "/images/interier-koberce-po.jpeg", initialPosition: 50 },
   { number: "04", title: "Dveře", description: "Vnitřní výplň dveří před čištěním a po něm.", beforeImage: "/images/dvere-pred.jpeg", afterImage: "/images/dvere-po.jpeg", initialPosition: 50 },
 ];
 
 // Shown until the pricing API answers; mirrors the seed content of the design.
 const fallbackPackages: PricePackage[] = [
-  { id: 1, name: "Exteriér", price: "Domluvou", showCurrency: false, featured: false, durationMinutes: 180, items: ["Ruční mytí karoserie", "Dekontaminace laku", "Čištění kol a pneu", "Ochranný vosk"] },
+  { id: 1, name: "Exteriér", price: "Domluvou", showCurrency: false, featured: false, durationMinutes: 180, items: ["Ruční mytí karoserie", "Čištění kol a pneu", "Ochranný vosk na několik týdnů"] },
   { id: 2, name: "Basic interiér", price: "1 500", showCurrency: true, featured: false, durationMinutes: 150, items: ["Vysávání", "Čištění plastů, kůže a textilu", "Vnitřní okna", "Impregnace kůže a plastů", "Čištění koberců"] },
   { id: 3, name: "Premium interiér", price: "2 000", showCurrency: true, featured: true, durationMinutes: 240, items: ["Vše z balíčku Basic", "Čištění a impregnace kožených sedaček", "Tepování sedaček a koberce"] },
 ];
@@ -168,7 +168,7 @@ export default function Home() {
             <div className={`${styles.metrics} ${styles.up}`} style={{ animationDelay: ".4s" }}>
               {(
                 [
-                  ["clock", "3H", "Průměrná návštěva"],
+                  ["clock", "3 h", "Průměrná návštěva"],
                 ] as Array<[IconName, string, string]>
               ).map(([icon, value, label]) => (
                 <div key={label} className={styles.metric}>

@@ -37,7 +37,7 @@ await db.insert(users).values([
 ]);
 
 await db.insert(pricePackages).values([
-  { name: "Exteriér", price: "Domluvou", showCurrency: false, featured: false, durationMinutes: 180, sortOrder: 1, items: ["Ruční mytí karoserie", "Dekontaminace laku", "Čištění kol a pneu", "Ochranný vosk"] },
+  { name: "Exteriér", price: "Domluvou", showCurrency: false, featured: false, durationMinutes: 180, sortOrder: 1, items: ["Ruční mytí karoserie", "Čištění kol a pneu", "Ochranný vosk na několik týdnů"] },
   { name: "Basic interiér", price: "1 500", showCurrency: true, featured: false, durationMinutes: 150, sortOrder: 2, items: ["Vysávání", "Čištění plastů, kůže a textilu", "Vnitřní okna", "Impregnace kůže a plastů", "Čištění koberců"] },
   { name: "Premium interiér", price: "2 000", showCurrency: true, featured: true, durationMinutes: 240, sortOrder: 3, items: ["Vše z balíčku Basic", "Čištění a impregnace kožených sedaček", "Tepování sedaček a koberce"] },
 ]);
