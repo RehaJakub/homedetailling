@@ -300,7 +300,7 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
         setSentSummary(`${servicesLabel(services)}, ${summary} (${durationLabel(n)}).`);
         setSent(true);
         form.reset();
-        onToast("Rezervace odeslána. Termín potvrdíme telefonicky.", "check-circle");
+        onToast("Rezervace odeslána. Termín potvrdíme telefonicky během několika minut.", "check-circle");
         void loadRange(day, day);
       } else {
         const data = (await response.json().catch(() => ({}))) as { error?: string };
@@ -409,8 +409,11 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
         <div className={styles.bookingRight} ref={servicesRef}>
           <span className={styles.stepLabel}>03 · Služby a kontakt</span>
           <ServiceChecklist options={packages} values={services} onChange={changeServices} />
-          <p style={{ margin: 0, fontSize: 13 }}>Pro interiér vyberte Basic, nebo Premium. Exteriér můžete přidat k oběma.</p>
-
+          <p style={{ margin: 0, fontSize: 13 }}>Vyberte Interiér, Exteriér nebo obě služby společně.</p>
+          <p className={styles.bookingSurchargeNotice}>
+            <Icon name="alert" size={14} stroke={2} />
+            U výrazně znečištěného vozu může být po domluvě účtován příplatek.
+          </p>
 
           <div className={styles.twoCols}>
             <div style={{ display: "grid", gap: 6 }}>
@@ -441,7 +444,7 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
           <Button type="submit" variant="light" fullWidth icon="arrow-up-right" disabled={sending}>
             {sending ? "Odesílám…" : "Odeslat rezervaci"}
           </Button>
-          <span className={styles.gdpr}>Odesláním souhlasíte se zpracováním údajů pro účely rezervace. Termín potvrdíme telefonicky.</span>
+          <span className={styles.gdpr}>Odesláním souhlasíte se zpracováním údajů pro účely rezervace. Termín potvrdíme telefonicky během několika minut.</span>
         </div>
       </form>
 
@@ -464,7 +467,7 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
           </Button>
         }
       >
-        {sentSummary} Termín vám potvrdíme telefonicky. Pokud bude potřeba čas upravit, rovnou se domluvíme.
+        {sentSummary} Termín vám během několika minut potvrdíme telefonicky. Pokud bude potřeba čas upravit, rovnou se domluvíme.
       </Dialog>
     </>
   );

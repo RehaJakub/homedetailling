@@ -31,19 +31,19 @@ const navLinks = [
 ];
 
 const services = [
-  { number: "01", title: "Interiér", text: "Basic za 1 500 Kč zahrnuje vysávání, čištění a impregnaci interiéru. Premium za 2 000 Kč přidává péči o kožené sedačky a tepování sedaček a koberce." },
+  { number: "01", title: "Interiér", text: "Interiér za 1 500 Kč zahrnuje vysávání, čištění plastů, kůže a textilu, vnitřní okna, impregnaci kůže a plastů, čištění koberců, čištění a impregnaci kožených sedaček a tepování sedaček a koberců." },
   { number: "02", title: "Exteriér", text: "Ruční mytí, čištění kol a ochranný vosk na několik týdnů." },
 ];
 
 const trust: Array<{ icon: IconName; title: string; text: string }> = [
   { icon: "droplet", title: "Vlastní voda i elektřina", text: "Nepotřebujeme od vás nic než místo." },
   { icon: "wallet", title: "Platba po dokončení", text: "Hotově nebo převodem." },
-  { icon: "phone", title: "Potvrzení do 3 hodin", text: "Termín vám potvrdíme telefonicky." },
+  { icon: "phone", title: "Potvrzení během několika minut", text: "Termín vám potvrdíme telefonicky." },
 ];
 
 const steps: Array<{ icon: IconName; index: string; title: string; text: string }> = [
   { icon: "calendar", index: "01", title: "Vyberete službu a čas", text: "Vyberete den a čas začátku po 30 minutách. Pro každou rezervaci vyhradíme 3 hodiny." },
-  { icon: "phone", index: "02", title: "Potvrdíme termín", text: "Ozveme se telefonicky a případnou změnu času rovnou domluvíme." },
+  { icon: "phone", index: "02", title: "Potvrdíme termín", text: "Během několika minut se ozveme telefonicky a případnou změnu času rovnou domluvíme." },
   { icon: "sparkle", index: "03", title: "Přijedeme a vyčistíme", text: "Na místě u vás doma nebo v práci. Platba hotově nebo převodem po dokončení." },
 ];
 
@@ -57,11 +57,10 @@ const gallery = [
 // Shown until the pricing API answers; mirrors the seed content of the design.
 const fallbackPackages: PricePackage[] = [
   { id: 1, name: "Exteriér", price: "Domluvou", showCurrency: false, featured: false, durationMinutes: 180, items: ["Ruční mytí karoserie", "Čištění kol a pneu", "Ochranný vosk na několik týdnů"] },
-  { id: 2, name: "Basic interiér", price: "1 500", showCurrency: true, featured: false, durationMinutes: 150, items: ["Vysávání", "Čištění plastů, kůže a textilu", "Vnitřní okna", "Impregnace kůže a plastů", "Čištění koberců"] },
-  { id: 3, name: "Premium interiér", price: "2 000", showCurrency: true, featured: true, durationMinutes: 240, items: ["Vše z balíčku Basic", "Čištění a impregnace kožených sedaček", "Tepování sedaček a koberce"] },
+  { id: 2, name: "Interiér", price: "1 500", showCurrency: true, featured: false, durationMinutes: 180, items: ["Vysávání", "Čištění plastů, kůže a textilu", "Vnitřní okna", "Impregnace kůže a plastů", "Čištění koberců", "Čištění a impregnace kožených sedaček", "Tepování sedaček a koberce"] },
 ];
 
-const marqueeText = "Basic interiér · Premium interiér · Exteriér · Ostrava · Poruba · Havířov · Frýdek-Místek · Přijedeme k vám ·";
+const marqueeText = "Interiér · Exteriér · Ostrava · Poruba · Havířov · Frýdek-Místek · Přijedeme k vám ·";
 
 const siteUrl = "https://homedetailing.cz";
 const businessId = `${siteUrl}/#business`;
@@ -90,7 +89,7 @@ const localBusinessJsonLd = {
         `${siteUrl}/images/dvere-po.jpeg`,
       ],
       description: "Mobilní čištění interiéru a exteriéru aut v Ostravě, Havířově, Frýdku-Místku a okolí.",
-      priceRange: "1 500–2 000 Kč",
+      priceRange: "1 500 Kč",
       telephone: "+420777011690",
       contactPoint: [
         { "@type": "ContactPoint", telephone: "+420777011690", contactType: "rezervace", availableLanguage: "Czech" },
@@ -108,13 +107,7 @@ const localBusinessJsonLd = {
             "@type": "Offer",
             price: "1500",
             priceCurrency: "CZK",
-            itemOffered: { "@type": "Service", name: "Basic čištění interiéru auta", areaServed: serviceAreas },
-          },
-          {
-            "@type": "Offer",
-            price: "2000",
-            priceCurrency: "CZK",
-            itemOffered: { "@type": "Service", name: "Premium čištění interiéru a tepování auta", areaServed: serviceAreas },
+            itemOffered: { "@type": "Service", name: "Kompletní čištění interiéru a tepování auta", areaServed: serviceAreas },
           },
           {
             "@type": "Offer",
@@ -363,7 +356,7 @@ export default function Home() {
               <Heading level={2} size="section">
                 Tři kroky <em>k čistému autu.</em>
               </Heading>
-              <Text tone="muted">Rezervaci potvrdíme do několika hodin. Pokud bude třeba čas posunout, zavoláme a domluvíme se.</Text>
+              <Text tone="muted">Rezervaci potvrdíme během několika minut. Pokud bude třeba čas posunout, zavoláme a domluvíme se.</Text>
             </div>
             <div className={`${styles.steps} ${styles.revealLate}`}>
               {steps.map((step) => (
@@ -409,7 +402,7 @@ export default function Home() {
             Vyberte péči pro <em>vaše auto.</em>
           </Heading>
           <Text tone="muted" lead>
-            Ceny jsou konečné, doprava po Ostravě je v ceně. Pro interiér zvolte Basic, nebo Premium; exteriér můžete přidat k oběma.
+            Ceny jsou konečné, doprava po Ostravě je v ceně. Interiér a exteriér můžete objednat samostatně nebo společně.
           </Text>
         </div>
         <div className={`${styles.priceGrid} ${styles.revealLate}`}>

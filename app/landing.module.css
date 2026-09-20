@@ -512,6 +512,24 @@
   gap: 16px;
 }
 
+.bookingSurchargeNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid rgb(255 255 255 / 32%);
+  color: rgb(255 255 255 / 90%);
+  background: rgb(8 11 18 / 12%);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.bookingSurchargeNotice svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
 .stepLabel {
   font-family: var(--hd-font-mono);
   font-size: 11px;
