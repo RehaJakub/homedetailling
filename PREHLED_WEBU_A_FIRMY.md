@@ -60,6 +60,8 @@ U výrazně znečištěného vozu může být po domluvě účtován příplatek
 - formulář kontroluje jméno, telefon, e-mail, adresu a vybrané služby;
 - zákazník může vybrat Interiér, Exteriér nebo obě služby společně;
 - po odeslání se zobrazí potvrzení a informace o následném telefonickém kontaktu.
+- po vytvoření rezervace může server odeslat push upozornění do aplikace ntfy;
+- ntfy upozornění obsahuje termín a služby a odkazuje do zabezpečené administrace, osobní údaje zákazníka do něj neposílá.
 
 ### Viditelnost ve vyhledávačích
 

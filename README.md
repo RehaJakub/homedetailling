@@ -30,6 +30,22 @@ Role:
 
 JWT session je uložena v HttpOnly cookie a platí 8 hodin.
 
+## Upozornění na nové rezervace přes ntfy
+
+Po vytvoření veřejné rezervace může server poslat push notifikaci do aplikace [ntfy](https://ntfy.sh). Integrace je volitelná; bez `NTFY_TOPIC` rezervace fungují dál bez upozornění.
+
+1. Nainstalujte ntfy pro Android nebo iOS a přidejte odběr vlastního dlouhého náhodného topicu.
+2. Do lokálního `.env` nebo produkčního `/opt/homedetailing/.env.production` nastavte:
+
+```env
+NTFY_BASE_URL=https://ntfy.sh
+NTFY_TOPIC=vas-dlouhy-nahodny-topic
+NTFY_TOKEN=
+NTFY_CLICK_URL=https://homedetailing.cz/admin
+```
+
+Pro chráněný topic vložte do `NTFY_TOKEN` přístupový token z ntfy. Topic ani token nezačínejte `NEXT_PUBLIC_`; musí zůstat pouze na serveru. Notifikace obsahuje termín a služby, ale neobsahuje jméno, telefon, e-mail ani adresu zákazníka. Klepnutí otevře zabezpečenou administraci.
+
 ## Příkazy
 
 `make help` vypíše všechny cíle. Nejčastější:

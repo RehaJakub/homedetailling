@@ -42,6 +42,10 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       JWT_SECRET: ${JWT_SECRET}
       ADMIN_REGISTRATION_CODE: ${ADMIN_REGISTRATION_CODE}
+      NTFY_BASE_URL: ${NTFY_BASE_URL:-https://ntfy.sh}
+      NTFY_TOPIC: ${NTFY_TOPIC:-}
+      NTFY_TOKEN: ${NTFY_TOKEN:-}
+      NTFY_CLICK_URL: ${NTFY_CLICK_URL:-https://homedetailing.cz/admin}
     depends_on:
       postgres:
         condition: service_healthy
