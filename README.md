@@ -83,7 +83,7 @@ Postgres v produkčním stacku není vystavený mimo compose síť.
 Každý merge do `main` projde CI, sestaví image `ghcr.io/rehajakub/homedetailling:sha-<commit>` (a `:latest`) a job `Deploy to ct302` ho nasadí přes self-hosted runner běžící v LXC kontejneru ct302:
 
 1. Runner se instaluje skriptem `scripts/deploy/install-runner.sh` (spouští se jako root uvnitř ct302 přes jump host `homelab`). Registrační token vydá admin repozitáře v Settings → Actions → Runners → New self-hosted runner, platí hodinu.
-2. Tajné hodnoty žijí jen v ct302 v `/opt/homedetailing/.env.production` (stejný formát jako `.env.production.example`, `APP_BIND=0.0.0.0`, aby na aplikaci dosáhla reverse proxy z jiného kontejneru). Workflow je nečte, jen předá `APP_IMAGE`.
+2. Databázové a přihlašovací tajné hodnoty žijí jen v ct302 v `/opt/homedetailing/.env.production` (stejný formát jako `.env.production.example`, `APP_BIND=0.0.0.0`, aby na aplikaci dosáhla reverse proxy z jiného kontejneru). Topic pro push notifikace se předává jako šifrovaný GitHub Actions secret `NTFY_TOPIC`.
 3. Deploy job udělá `docker compose pull`, `up -d` (migrace proběhnou v jednorázové službě `migrate`) a čeká na `/api/health`. Při neúspěchu vypíše logy a job selže; běžící verze zůstává, dokud nový kontejner nenastartuje.
 
 Ruční nasazení na ct302: znovu spustit workflow `CI` pro `main` v záložce Actions (Re-run jobs).

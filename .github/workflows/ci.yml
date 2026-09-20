@@ -153,8 +153,8 @@ jobs:
 
   deploy:
     # Runs on the self-hosted runner inside the ct302 LXC container
-    # (scripts/deploy/install-runner.sh). Secrets live only on the runner in
-    # /opt/homedetailing/.env.production; the workflow never reads them.
+    # (scripts/deploy/install-runner.sh). Database and auth secrets live on the
+    # runner; NTFY_TOPIC is injected from an encrypted repository secret.
     name: Deploy to ct302
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [checks, release, docker]
@@ -166,6 +166,7 @@ jobs:
       ENV_FILE: /opt/homedetailing/.env.production
       APP_IMAGE: ghcr.io/rehajakub/homedetailling:${{ needs.docker.outputs.tag }}
       EXPECTED_VERSION: ${{ needs.release.outputs.version }}
+      NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
     steps:
       - uses: actions/checkout@v4
         with:
