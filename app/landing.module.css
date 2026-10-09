@@ -106,6 +106,12 @@
   color: #1769ff;
 }
 
+.footerCities {
+  display: inline-flex;
+  gap: 12px;
+  margin-left: 16px;
+}
+
 .headerLogo,
 .footerLogo {
   display: block;
@@ -131,6 +137,34 @@
   position: relative;
   aspect-ratio: 4 / 5;
   overflow: visible;
+}
+
+.cityHeroImage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: #e9edf3;
+}
+
+.cityHeroImage img {
+  object-fit: cover;
+}
+
+.breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #687080;
+  font-family: var(--hd-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.breadcrumbs a {
+  color: #1769ff;
+  text-decoration: none;
 }
 
 .carModel {
@@ -361,7 +395,9 @@
 .locationCard {
   min-width: 0;
   padding: 24px;
+  color: inherit;
   background: #fff;
+  text-decoration: none;
 }
 
 .locationCard h3 {
@@ -377,6 +413,16 @@
   line-height: 1.65;
 }
 
+.notFound {
+  display: grid;
+  min-height: 62vh;
+  max-width: 920px;
+  align-content: center;
+  justify-items: start;
+  gap: 24px;
+  padding-block: 100px;
+}
+
 .priceGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
@@ -390,6 +436,14 @@
 
   .locationGrid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+  .footerCities {
+    justify-content: center;
+    margin-top: 10px;
+    margin-left: 0;
   }
 }
 

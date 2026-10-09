@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { useState } from "react";
 
 function ArrowsIcon() {
@@ -18,6 +19,9 @@ export type BeforeAfterSliderProps = {
   /** Image URLs. Without them the card paints the brand's placeholder gradients. */
   beforeImage?: string;
   afterImage?: string;
+  beforeAlt?: string;
+  afterAlt?: string;
+  sizes?: string;
   beforeLabel?: string;
   afterLabel?: string;
   /** Initial divider position in percent (5–95). */
@@ -33,6 +37,9 @@ export function BeforeAfterSlider({
   number,
   beforeImage,
   afterImage,
+  beforeAlt = "",
+  afterAlt = "",
+  sizes = "(max-width: 600px) 82vw, (max-width: 950px) 50vw, 25vw",
   beforeLabel = "PŘED",
   afterLabel = "PO",
   initialPosition = 50,
@@ -42,7 +49,8 @@ export function BeforeAfterSlider({
   return (
     <article className="hd-compare">
       <div className="hd-compare__image">
-        <div className="hd-compare__after" style={afterImage ? { backgroundImage: `url(${afterImage})` } : undefined}>
+        <div className="hd-compare__after">
+          {afterImage && <Image src={afterImage} alt={afterAlt} fill sizes={sizes} className="hd-compare__media" />}
           <span className="hd-compare__tag">{afterLabel}</span>
         </div>
 
@@ -50,9 +58,9 @@ export function BeforeAfterSlider({
           className="hd-compare__before"
           style={{
             clipPath: `inset(0 ${100 - position}% 0 0)`,
-            ...(beforeImage ? { backgroundImage: `url(${beforeImage})` } : {}),
           }}
         >
+          {beforeImage && <Image src={beforeImage} alt={beforeAlt} fill sizes={sizes} className="hd-compare__media" />}
           <span className="hd-compare__tag">{beforeLabel}</span>
         </div>
 

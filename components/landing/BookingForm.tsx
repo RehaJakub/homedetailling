@@ -75,6 +75,24 @@ export function BookingForm({ packages, onToast, active = true }: BookingFormPro
         setError("Dostupné termíny se nepodařilo načíst. Zkuste rezervaci znovu otevřít.");
       }), []);
 
+  // Recalculate the real current day in the browser whenever the dialog opens.
+  // This prevents a statically built deployment from keeping the build month's calendar.
+  useEffect(() => {
+    if (!active) return;
+    const timer = window.setTimeout(() => {
+      const now = new Date();
+      const runtimeToday = toIso(now);
+      const runtimeMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      setToday(runtimeToday);
+      setMonth((current) => (current < runtimeMonth ? runtimeMonth : current));
+      if (day && day < runtimeToday) {
+        setDay(null);
+        setA(null);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [active, day]);
+
   // Refresh the displayed month on each opening so saved hours are reflected.
   useEffect(() => {
     if (!active) return;

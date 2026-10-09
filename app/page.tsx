@@ -1,13 +1,13 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   BeforeAfterSlider,
   Button,
   Container,
   Eyebrow,
-  Footer,
   Heading,
   Icon,
   PriceCard,
@@ -17,9 +17,11 @@ import {
   Text,
   type IconName,
 } from "@homedetailing/ui";
-import { APP_VERSION } from "@/lib/version";
 import { BookingForm, type PricePackage } from "@/components/landing/BookingForm";
 import { FAQ, Faq } from "@/components/landing/Faq";
+import { ModelViewerLoader } from "@/components/ModelViewerLoader";
+import { PublicFooter } from "@/components/landing/PublicFooter";
+import { CITY_PAGES, cityJsonLd, homeJsonLd } from "@/lib/seo";
 import styles from "./landing.module.css";
 
 const navLinks = [
@@ -48,10 +50,10 @@ const steps: Array<{ icon: IconName; index: string; title: string; text: string 
 ];
 
 const gallery = [
-  { number: "01", title: "Interiér", description: "Palubní deska a středový panel před čištěním a po něm.", beforeImage: "/images/interier-pred.jpeg", afterImage: "/images/interier-po.jpeg", initialPosition: 50 },
-  { number: "02", title: "Středový panel", description: "Středový panel před čištěním a po něm.", beforeImage: "/images/stredpanel-v2-pred.jpeg", afterImage: "/images/stredpanel-v2-po.jpeg", initialPosition: 50 },
-  { number: "03", title: "Interiér – koberce", description: "Koberce a zadní prostor interiéru před čištěním a po něm.", beforeImage: "/images/interier-koberce-pred.jpeg", afterImage: "/images/interier-koberce-po.jpeg", initialPosition: 50 },
-  { number: "04", title: "Dveře", description: "Vnitřní výplň dveří před čištěním a po něm.", beforeImage: "/images/dvere-pred.jpeg", afterImage: "/images/dvere-po.jpeg", initialPosition: 50 },
+  { number: "01", title: "Interiér", description: "Palubní deska a středový panel před čištěním a po něm.", beforeImage: "/images/interier-pred.jpeg", beforeAlt: "Interiér auta před mobilním čištěním", afterImage: "/images/interier-po.jpeg", afterAlt: "Vyčištěný interiér auta po mobilním detailingu", initialPosition: 50 },
+  { number: "02", title: "Středový panel", description: "Středový panel před čištěním a po něm.", beforeImage: "/images/stredpanel-v2-pred.jpeg", beforeAlt: "Znečištěný středový panel auta před čištěním", afterImage: "/images/stredpanel-v2-po.jpeg", afterAlt: "Středový panel auta po důkladném vyčištění", initialPosition: 50 },
+  { number: "03", title: "Interiér – koberce", description: "Koberce a zadní prostor interiéru před čištěním a po něm.", beforeImage: "/images/interier-koberce-pred.jpeg", beforeAlt: "Koberce a zadní část interiéru auta před tepováním", afterImage: "/images/interier-koberce-po.jpeg", afterAlt: "Koberce a zadní část interiéru auta po tepování", initialPosition: 50 },
+  { number: "04", title: "Dveře", description: "Vnitřní výplň dveří před čištěním a po něm.", beforeImage: "/images/dvere-pred.jpeg", beforeAlt: "Výplň dveří auta před čištěním", afterImage: "/images/dvere-po.jpeg", afterAlt: "Výplň dveří auta po vyčištění", initialPosition: 50 },
 ];
 
 // Shown until the pricing API answers; mirrors the seed content of the design.
@@ -62,78 +64,10 @@ const fallbackPackages: PricePackage[] = [
 
 const marqueeText = "Interiér · Exteriér · Ostrava · Poruba · Havířov · Frýdek-Místek · Přijedeme k vám ·";
 
-const siteUrl = "https://homedetailing.cz";
-const businessId = `${siteUrl}/#business`;
-const serviceAreas = ["Ostrava", "Havířov", "Frýdek-Místek"];
-
-const localBusinessJsonLd = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "WebSite",
-      "@id": `${siteUrl}/#website`,
-      url: `${siteUrl}/`,
-      name: "Home Detailing",
-      inLanguage: "cs-CZ",
-      publisher: { "@id": businessId },
-    },
-    {
-      "@type": "AutomotiveBusiness",
-      "@id": businessId,
-      name: "Home Detailing",
-      url: `${siteUrl}/`,
-      logo: `${siteUrl}/images/home-detailing-logo.png`,
-      image: [
-        `${siteUrl}/images/interier-po.jpeg`,
-        `${siteUrl}/images/stredpanel-v2-po.jpeg`,
-        `${siteUrl}/images/dvere-po.jpeg`,
-      ],
-      description: "Mobilní čištění interiéru a exteriéru aut v Ostravě, Havířově, Frýdku-Místku a okolí.",
-      priceRange: "1 500 Kč",
-      telephone: "+420777011690",
-      contactPoint: [
-        { "@type": "ContactPoint", telephone: "+420777011690", contactType: "rezervace", availableLanguage: "Czech" },
-        { "@type": "ContactPoint", telephone: "+420733477254", contactType: "rezervace", availableLanguage: "Czech" },
-      ],
-      areaServed: [
-        ...serviceAreas.map((name) => ({ "@type": "City", name })),
-        { "@type": "AdministrativeArea", name: "okolí Ostravy do 30 km" },
-      ],
-      hasOfferCatalog: {
-        "@type": "OfferCatalog",
-        name: "Mobilní čištění a detailing aut",
-        itemListElement: [
-          {
-            "@type": "Offer",
-            price: "1500",
-            priceCurrency: "CZK",
-            itemOffered: { "@type": "Service", name: "Kompletní čištění interiéru a tepování auta", areaServed: serviceAreas },
-          },
-          {
-            "@type": "Offer",
-            itemOffered: { "@type": "Service", name: "Ruční mytí a detailing exteriéru auta", areaServed: serviceAreas },
-          },
-        ],
-      },
-      potentialAction: {
-        "@type": "ReserveAction",
-        target: `${siteUrl}/#rezervace`,
-        result: { "@type": "Reservation", name: "Rezervace mobilního čištění auta" },
-      },
-    },
-    {
-      "@type": "FAQPage",
-      "@id": `${siteUrl}/#faq-schema`,
-      mainEntity: FAQ.map(([question, answer]) => ({
-        "@type": "Question",
-        name: question,
-        acceptedAnswer: { "@type": "Answer", text: answer },
-      })),
-    },
-  ],
-};
-
 export default function Home() {
+  const pathname = usePathname();
+  const cityPage = CITY_PAGES.find((page) => pathname === `/${page.slug}`);
+  const structuredData = cityPage ? cityJsonLd(cityPage) : homeJsonLd(FAQ);
   const [packages, setPackages] = useState<PricePackage[]>(fallbackPackages);
   const [toast, setToast] = useState<{ message: string; icon: IconName } | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -142,6 +76,9 @@ export default function Home() {
 
   // Every "#rezervace" link opens the booking modal instead of scrolling.
   useEffect(() => {
+    const initialHashTimer = window.setTimeout(() => {
+      if (window.location.hash === "#rezervace") setBookingOpen(true);
+    }, 0);
     const onClick = (event: MouseEvent) => {
       const link = (event.target as HTMLElement | null)?.closest<HTMLAnchorElement>('a[href="#rezervace"]');
       if (!link) return;
@@ -149,7 +86,10 @@ export default function Home() {
       setBookingOpen(true);
     };
     document.addEventListener("click", onClick);
-    return () => document.removeEventListener("click", onClick);
+    return () => {
+      window.clearTimeout(initialHashTimer);
+      document.removeEventListener("click", onClick);
+    };
   }, []);
 
   // Lock page scroll and close on Escape while the modal is open.
@@ -203,12 +143,13 @@ export default function Home() {
 
   return (
     <main className={styles.page}>
+      <ModelViewerLoader />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd).replace(/</g, "\\u003c") }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
       />
       <SiteHeader
-        logo={<Image src="/images/home-detailing-logo.png" alt="Home Detailing" width={2073} height={758} sizes="(max-width: 650px) 160px, 180px" className={styles.headerLogo} loading="eager" />}
+        logo={<Image src="/images/home-detailing-logo.png" alt="Logo Home Detailing – mobilní čištění aut" width={2073} height={758} sizes="(max-width: 650px) 160px, 180px" className={styles.headerLogo} priority />}
         links={navLinks}
         cta={{ href: "#rezervace", label: "Rezervovat termín" }}
         sticky
@@ -219,18 +160,32 @@ export default function Home() {
         <div className={styles.hero}>
           <div className={styles.heroCopy}>
             <div className={styles.up} style={{ animationDuration: ".7s" }}>
-              <Eyebrow>Mobilní detailing · Ostrava a okolí</Eyebrow>
+              <Eyebrow>{cityPage?.eyebrow ?? "Mobilní detailing · Ostrava a okolí"}</Eyebrow>
             </div>
             <div className={styles.up} style={{ animationDelay: ".1s" }}>
               <Heading level={1} size="display">
-                Čištění aut <em>Ostrava a okolí.</em>
+                {cityPage ? (
+                  <>
+                    {cityPage.heading} <em>{cityPage.headingAccent}</em>
+                  </>
+                ) : (
+                  <>
+                    Čištění aut <em>Ostrava a okolí.</em>
+                  </>
+                )}
               </Heading>
             </div>
             <div className={styles.up} style={{ animationDelay: ".2s" }}>
               <Text tone="muted" lead>
-                <span className={styles.heroLeadLine}>Mobilní detailing v Ostravě, Havířově a okolí.</span>{" "}
-                <span className={styles.heroLeadLine}>Přijedeme k vám domů nebo do práce.</span>{" "}
-                <span className={styles.heroLeadLine}>Vyčistíme interiér i exteriér vozu.</span>
+                {cityPage ? (
+                  cityPage.lead
+                ) : (
+                  <>
+                    <span className={styles.heroLeadLine}>Mobilní detailing v Ostravě, Havířově a okolí.</span>{" "}
+                    <span className={styles.heroLeadLine}>Přijedeme k vám domů nebo do práce.</span>{" "}
+                    <span className={styles.heroLeadLine}>Vyčistíme interiér i exteriér vozu.</span>
+                  </>
+                )}
               </Text>
             </div>
             <div className={`${styles.heroButtons} ${styles.up}`} style={{ animationDelay: ".3s" }}>
@@ -307,10 +262,10 @@ export default function Home() {
         <div className={`${styles.sectionIntro} ${styles.reveal}`}>
           <Eyebrow>Co umíme</Eyebrow>
           <Heading level={2} size="section">
-            Kompletní péče <em>bez cestování.</em>
+            {cityPage ? cityPage.sectionHeading : <>Kompletní péče <em>bez cestování.</em></>}
           </Heading>
           <Text tone="muted" lead>
-            Vše potřebné máme s sebou včetně vody a elektřiny. Stačí nám místo k zaparkování.
+            {cityPage?.sectionText ?? "Vše potřebné máme s sebou včetně vody a elektřiny. Stačí nám místo k zaparkování."}
           </Text>
         </div>
         <div className={styles.revealLate}>
@@ -332,18 +287,18 @@ export default function Home() {
             </Text>
           </div>
           <div className={styles.locationGrid}>
-            <article className={styles.locationCard}>
+            <Link href={`/${CITY_PAGES[0].slug}`} className={styles.locationCard}>
               <h3>Čištění aut Ostrava</h3>
               <p>Mobilní čištění interiéru, tepování a ruční mytí auta přímo u vás doma nebo v práci v Ostravě.</p>
-            </article>
-            <article className={styles.locationCard}>
+            </Link>
+            <Link href={`/${CITY_PAGES[1].slug}`} className={styles.locationCard}>
               <h3>Čištění aut Havířov</h3>
               <p>Za zákazníky v Havířově přijedeme kompletně vybaveni a vyčistíme interiér i exteriér vozu na místě.</p>
-            </article>
-            <article className={styles.locationCard}>
+            </Link>
+            <Link href={`/${CITY_PAGES[2].slug}`} className={styles.locationCard}>
               <h3>Čištění aut Frýdek-Místek</h3>
               <p>Mobilní detailing ve Frýdku-Místku objednáte online. Termín s vámi následně potvrdíme telefonicky.</p>
-            </article>
+            </Link>
           </div>
         </section>
       </Container>
@@ -458,7 +413,7 @@ export default function Home() {
             </button>
           </div>
           <div className={styles.bookingModalBody}>
-            <BookingForm packages={packages} onToast={showToast} active={bookingOpen} />
+            {bookingOpen && <BookingForm packages={packages} onToast={showToast} active />}
           </div>
         </div>
       </div>
@@ -486,19 +441,7 @@ export default function Home() {
         </div>
       </Container>
 
-      <Footer
-        logo={<Image src="/images/home-detailing-logo.png" alt="Home Detailing" width={2073} height={758} sizes="220px" className={styles.footerLogo} />}
-        tagline="Mobilní detailing · Ostrava, Havířov a okolí"
-        note={
-          <>
-            © 2026 Home Detailing. Všechna práva vyhrazena. ·{" "}
-            <Link href="/admin" className={styles.footerLink}>
-              Administrace
-            </Link>{" "}
-            · <span className={styles.monoLabel} style={{ textTransform: "none" }}>version: {APP_VERSION}</span>
-          </>
-        }
-      />
+      <PublicFooter />
 
       {toast && (
         <div role="status" className={styles.toast}>

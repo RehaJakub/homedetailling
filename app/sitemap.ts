@@ -1,24 +1,29 @@
 import type { MetadataRoute } from "next";
-
-const siteUrl = "https://homedetailing.cz";
+import { CITY_PAGES, SITE_URL } from "@/lib/seo";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
-      url: siteUrl,
+      url: SITE_URL,
       changeFrequency: "weekly",
       priority: 1,
       images: [
-        `${siteUrl}/images/home-detailing-logo.png`,
-        `${siteUrl}/images/interier-pred.jpeg`,
-        `${siteUrl}/images/interier-po.jpeg`,
-        `${siteUrl}/images/stredpanel-v2-pred.jpeg`,
-        `${siteUrl}/images/stredpanel-v2-po.jpeg`,
-        `${siteUrl}/images/interier-koberce-pred.jpeg`,
-        `${siteUrl}/images/interier-koberce-po.jpeg`,
-        `${siteUrl}/images/dvere-pred.jpeg`,
-        `${siteUrl}/images/dvere-po.jpeg`,
+        `${SITE_URL}/images/home-detailing-logo.png`,
+        `${SITE_URL}/images/interier-pred.jpeg`,
+        `${SITE_URL}/images/interier-po.jpeg`,
+        `${SITE_URL}/images/stredpanel-v2-pred.jpeg`,
+        `${SITE_URL}/images/stredpanel-v2-po.jpeg`,
+        `${SITE_URL}/images/interier-koberce-pred.jpeg`,
+        `${SITE_URL}/images/interier-koberce-po.jpeg`,
+        `${SITE_URL}/images/dvere-pred.jpeg`,
+        `${SITE_URL}/images/dvere-po.jpeg`,
       ],
     },
+    ...CITY_PAGES.map((page) => ({
+      url: `${SITE_URL}/${page.slug}`,
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+      images: [`${SITE_URL}${page.image}`],
+    })),
   ];
 }

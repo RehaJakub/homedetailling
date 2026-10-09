@@ -38,6 +38,9 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  images: {
+    formats: ["image/avif", "image/webp"],
+  },
   outputFileTracingIncludes: {
     "/api/*": ["./drizzle/**/*", "./node_modules/drizzle-orm/**/*"],
   },
@@ -47,6 +50,16 @@ const nextConfig: NextConfig = {
       {
         source: "/api/v2/:path*",
         headers: [{ key: "Cache-Control", value: "no-store, max-age=0" }],
+      },
+    ];
+  },
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.homedetailing.cz" }],
+        destination: "https://homedetailing.cz/:path*",
+        permanent: true,
       },
     ];
   },

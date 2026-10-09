@@ -489,6 +489,10 @@
   background-size: cover;
 }
 
+.hd-compare__media {
+  object-fit: cover;
+}
+
 .hd-compare__after {
   background-image: linear-gradient(145deg, #8ec7f4 0%, #315d86 42%, #e8f4ff 43%, #14304b 72%);
 }
@@ -501,6 +505,8 @@
 }
 
 .hd-compare__tag {
+  position: relative;
+  z-index: 1;
   display: inline-block;
   padding: 6px 8px;
   color: var(--hd-black);
